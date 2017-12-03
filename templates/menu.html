@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Simplifica</title>
+  <base href="/">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="static/img/favicon.ico">
+  <link media="all" type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.3.0/css/foundation-flex.min.css">
+  <link href="https://fonts.googleapis.com/css?family=Raleway:300,500" rel="stylesheet">
+  <link href="/static/css/simpligo-pln.css" rel="stylesheet">  
+  <link href="/static/css/font-awesome.min.css" rel="stylesheet">  
+</head>
+<body>
+  <a href="https://github.com/sidleal/simplifica"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+  
+  
+<div id="header">
+    <div id="logo">Simplifica</div>
+    <div id="slogan">Plataforma de Simplificação para a Língua Portuguesa</div>
+    <div id="userInfo">[[ .Email ]] <a id="logout" href="#" onClick="logout()">( Sair )</a></div>
+  </div>
+  <div id="subheader"></div>
+  
+  <div class="row">
+    <div class="small-12 centered columns">
+      <div>  
+        <div id="breadcrumb">: : menu principal</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="small-8 large-3 centered columns">
+      <button (click)="abrirAnotador()" id="btnAnotador"><i class="fa fa-file-text fa-2x"></i><br/>Editor de Anotação</button>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="small-8 large-3 centered columns">
+      <button (click)="abrirSenter()" id="btnSenter"><i class="fa fa-list-ol fa-2x"></i><br/>SENTER Web</button>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="small-8 large-3 centered columns">
+      <button (click)="abrirPalavras()" id="btnPalavras"><i class="fa fa-tags fa-2x"></i><br/>Palavras</button>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="small-8 large-3 centered columns">
+      <button onclick="alert('Oops. Em breve! Muito em breve!');" id="btnCorpora"><i class="fa fa-th-large fa-2x"></i><br/>Portal de Corpora Paralelos</button>
+    </div>
+  </div>
+  
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="/static/js/simpligo-pln.js"></script>
+</body>
+</html>
