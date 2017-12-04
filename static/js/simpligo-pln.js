@@ -21,25 +21,21 @@ function loadMenu() {
 }
 
 function abrirSenter() {
-    $.ajax({
-        type: 'GET',
-        url: '/senter',
-        headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
-        }
-    }).done(function(data) {
-        document.write(data);
-        document.close();
-    }).fail(function(error) {
-        alert( "Erro" );
-    });
-
+    abrirPagina("senter");
 }
 
 function abrirPalavras() {
+    abrirPagina("palavras");
+}
+
+function abrirAnotador() {
+    abrirPagina("anotador");
+}
+
+function abrirPagina(pagina) {
     $.ajax({
         type: 'GET',
-        url: '/palavras',
+        url: '/' + pagina,
         headers: {
             "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
         }

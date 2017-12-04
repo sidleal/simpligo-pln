@@ -71,6 +71,10 @@ func Router() *mux.Router {
 	r.HandleFunc("/senter/abbrev/{id}", SenterAbbrevRemoveHandler).Methods("DELETE")
 	r.HandleFunc("/palavras", PalavrasHandler).Methods("GET")
 	r.HandleFunc("/palavras/parse", PalavrasParseHandler).Methods("POST")
+	r.HandleFunc("/anotador", AnotadorHandler).Methods("GET")
+	r.HandleFunc("/anotador/corpus/new", AnotadorCorpusNewHandler).Methods("POST")
+	r.HandleFunc("/anotador/corpus/list", AnotadorCorpusListHandler)
+	r.HandleFunc("/anotador/corpus/{id}", AnotadorCorpusRemoveHandler).Methods("DELETE")
 
 	return r
 }
@@ -103,6 +107,10 @@ func SenterHandler(w http.ResponseWriter, r *http.Request) {
 
 func PalavrasHandler(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, "palavras")
+}
+
+func AnotadorHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "anotador")
 }
 
 func validateSession(w http.ResponseWriter, r *http.Request) error {
@@ -439,5 +447,109 @@ func PalavrasParseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text")
 	fmt.Fprint(w, "SAÍDA: \n"+bodyString)
+
+}
+
+// -----
+
+type Corpus struct {
+	Id     string `json:"id"`
+	Name   string `json:"name"`
+	Source string `json:"source"`
+	Genre  string `json:"genre"`
+}
+
+func AnotadorCorpusNewHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var corpus Corpus
+	err = decoder.Decode(&corpus)
+	if err != nil {
+		log.Printf("Erro ao tratar payload: %v", err)
+	}
+
+	createIndexIfNotExists("corpus")
+
+	put, err := elClient.Index().
+		Refresh("true").
+		Index(indexPrefix + "corpus").
+		Type("corpus").
+		BodyJson(corpus).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Corpus criado %s\n", put.Id)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
+}
+
+func AnotadorCorpusListHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "corpus").
+		Type("corpus").
+		From(0).Size(100).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao listar: %v", err)
+	}
+
+	ret := "{\"list\":["
+	if searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var c Corpus
+			err := json.Unmarshal(*hit.Source, &c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			c.Id = hit.Id
+			cJson, err := json.Marshal(c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret += string(cJson) + ","
+		}
+	}
+	ret = ret[0 : len(ret)-1]
+	ret += "]}"
+
+	fmt.Fprintf(w, ret)
+
+}
+
+func AnotadorCorpusRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	_, err = elClient.Delete().
+		Refresh("true").
+		Index(indexPrefix + "corpus").
+		Type("corpus").
+		Id(id).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao remover: %v", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
 
 }

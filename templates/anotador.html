@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Simpligo.pln</title>
+  <base href="/">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="static/img/favicon.ico">
+  <link media="all" type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.3.0/css/foundation-flex.min.css">
+  <link href="https://fonts.googleapis.com/css?family=Raleway:300,500" rel="stylesheet">
+  <link href="/static/css/simpligo-pln.css" rel="stylesheet">  
+  <link href="/static/css/font-awesome.min.css" rel="stylesheet">
+  <link href="/static/css/jquery-ui.css" rel="stylesheet">  
+</head>
+<body>
+  <a href="https://github.com/sidleal/simplifica"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+  
+  
+<div id="header">
+    <div id="logo">Simpligo.pln</div>
+    <div id="slogan">Plataforma de Simplificação para a Língua Portuguesa</div>
+    <div id="userInfo">[[ .Email ]] <a id="logout" href="#" onClick="logout()">( Sair )</a></div>
+  </div>
+  <div id="subheader"></div>
+  
+  
+  <div class="row">
+    <div class="small-12 centered columns">
+      <div>  
+        <div id="breadcrumb">: : editor</div>
+        <a class="btn btn-danger" onclick="back()" data-toggle="tooltip" title="Voltar">
+          <i class="fa fa-arrow-left fa-2x"></i>
+        </a>
+      </div>
+      
+      <div id="menu">
+        <div class="row">
+          <div class="small-8 large-3 centered columns">
+            <button onclick="newCorpus()" id="btnNewCorpus" class="natural"><i class="fa fa-file-o fa-2x"></i><br/>Criar Novo Córpus</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-8 large-3 centered columns">
+            <button onclick="listCorpora()" id="btnListCorpus" class="natural"><i class="fa fa-th fa-2x"></i><br/>Meus Corpora</button>
+          </div>
+        </div>
+      </div>
+  
+      <div id="corpora" style="display:none">
+        <p>(clique sobre o nome do corpus para selecioná-lo)</p>
+        <div id="details-container-corpora" class="details-container"> 
+        </div>
+      </div>
+  
+      <div id="textMenu" style="display:none">
+        <div class="row">
+          <div class="small-8 large-3 centered columns">
+            <button onclick="newText()" class="default"><i class="fa fa-arrow-circle-o-up fa-2x"></i><br/>Importar Novo Texto</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-8 large-3 centered columns">
+            <button onclick="listTexts()" class="default"><i class="fa fa-files-o fa-2x"></i><br/>Simplificar Texto</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-8 large-3 centered columns">
+            <button onclick="listSimplifications()" class="default"><i class="fa fa-file-text fa-2x"></i><br/>Editar Simplificação Existente</button>
+          </div>
+        </div>
+      </div>
+  
+      <div id="texts" style="display:none">
+        <input type="text" placeholder="Pesquisar" (keyup)="filterText()" id="searchText"/>
+        <input type="checkbox" checked="true"/>Original <input type="checkbox" checked="true"/>Simplificação
+  
+        <div class="details-container-lines"> 
+            <a onclick="selectText(text.$key, text.title)" onmousedown="$('#waiting').toggle();" *ngFor="let text of texts | async">
+              {{text.name}} 
+              <i class="fa fa-trash-o inner-button" data-toggle="tooltip" title="Excluir" onclick="deleteText(text.$key);event.stopPropagation();" (mousedown)="event.stopPropagation();"></i>
+              <i class="fa fa-spinner fa-pulse fa-fw" id='waiting' style="float:right;display:none;"></i>
+              <br/><p>{{text.title}} - {{text.source}} - Nível {{text.level}} ({{text.published}})</p>
+            </a>
+        </div>
+      </div>
+  
+      <div id="simplifications" style="display:none">
+        <input type="searchText" placeholder="Pesquisar" (keyup)="filterText()" id="searchText"/>
+  
+        <div class="details-container-lines"> 
+            <a onclick="selectSimplification(simp.$key, simp.name)" onmousedown="$('#waiting').toggle();" *ngFor="let simp of simplifications | async">
+              {{simp.title}} - {{simp.name}} 
+              <i class="fa fa-trash-o inner-button" data-toggle="tooltip" title="Excluir" onclick="deleteSimplification(simp.$key);event.stopPropagation();" (mousedown)="event.stopPropagation();"></i>
+              <i class="fa fa-spinner fa-pulse fa-fw" id='waiting' style="float:right;display:none;"></i>
+              <br/><p>{{simp.tags}} - {{simp.updated}}</p>
+            </a>
+        </div>
+      </div>
+  
+      <div id="newCorpus" style="display:none">
+        <div class="row">
+          <div class="small-12 large-6 columns centered">
+            <label for="corpusName">Nome:</label>
+            <input type="text" id="corpusName" placeholder="Nome"/>
+            <label for="corpusSource">Fonte:</label>
+            <input type="text" id="corpusSource" placeholder="Fonte"/>
+            <label for="corpusGenre">Gênero:</label>
+            <input type="text" id="corpusGenre" placeholder="Gênero"/>
+            <button onclick="saveCorpus()" id="btnSaveCorpus" class="default"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
+          </div>
+        </div>
+      </div>
+  
+      <div id="newText" style="display:none">
+        <input type="file" onchange="changeListener(event)" >
+        <label for="textName">Nome:</label>
+        <input type="text" placeholder="Nome do Arquivo" id="textName"/>
+        <label for="textTitle">Título:</label>
+        <input type="text" placeholder="Título" id="textTitle"/>
+        <label for="textSubTitle">SubTítulo:</label>
+        <input type="text" placeholder="SubTítulo" id="textSubTitle"/>
+        <label for="textAuthor">Autor:</label>
+        <input type="text" placeholder="Autor" id="textAuthor"/>
+        <label for="textPublished">Data:</label>
+        <input type="text" placeholder="Data Publicação" id="textPublished"/>
+        <label for="textSource">Fonte:</label>
+        <input type="text" placeholder="Fonte" id="textSource"/>
+        <label for="textContent">Conteúdo:</label>    
+        <textarea placeholder="Conteúdo" id="textContent" rows="20"></textarea>
+        <button onclick="saveText()" id="btnSaveText"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
+      </div>
+  
+      <div id='operations' class='operations' style='top: 15%;left: 70%;display:none;'>
+        <div class="operations-header">Operações</div>
+        <div class='operations-tools'>
+          <button onclick="$('#operations-sentenciais').hide();$('#operations-intra-sentenciais').hide();$('#hideOps').hide();$('#showOps').show();" style='display:none;' class="mini" id='hideOps' data-toggle="tooltip" title="Ocultar todas as operações"><i class="fa fa-chevron-up"></i></button>
+          <button onclick="$('#operations-sentenciais').show();$('#operations-intra-sentenciais').show();$('#hideOps').show();$('#showOps').hide();" class="mini" id='showOps' data-toggle="tooltip" title="Mostrar todas as operações"><i class="fa fa-chevron-down"></i></button>
+          <button onclick="markWords(false)" class="mini" id='markWords' data-toggle="tooltip" title="Marcando Palavras (clique para mudar para sentenças)" style='display:none;'><i class="fa fa-text-width"></i></button>
+          <button onclick="markWords(true)" class="mini" id='markSentences' data-toggle="tooltip" title="Marcando Sentenças (clique para mudar para palavras)" ><i class="fa fa-align-justify"></i></button>
+          <button onclick="clearSelection()" class="mini" id='clearSelection' data-toggle="tooltip" title="Limpar selecionadas"><i class="fa fa-eraser"></i></button>
+          <button onclick="saveSimplification()" class="mini" data-toggle="tooltip" title="Salvar Bitexto"><i class="fa fa-save"></i></button>
+          <i class="fa fa-spinner fa-pulse fa-fw" id='waiting' style="display:none;"></i>
+  
+          <span id="qtSelectedTokens" class='operations-qt-tokens' data-toggle="tooltip" title="Quantidade de palavras da sentença selecionada">0</span>
+          <span id="qtSentencesTo" class='operations-qt-sentences' data-toggle="tooltip" title="DESTINO: parágrafos - sentenças - palavras">{{totalParagraphsTo}} - {{totalSentencesTo}} - {{totalWordsTo}}</span>
+          <span id="qtSentences" class='operations-qt-sentences' data-toggle="tooltip" title="ORIGEM: parágrafos - sentenças - palavras">{{totalParagraphs}} - {{totalSentences}} - {{totalWords}}</span>
+        </div>
+  
+        <div style='width:100%;display:inline-block;'>
+          <span style='float:left;margin-left:10px;'><ul id="sentenceOperations"></ul></span>
+          <input type="hidden" id="selectedSentences"/>
+          <input type="hidden" id="selectedWords"/>
+        </div>
+  
+        <div><a onclick="$('#operations-sentenciais').toggle();"><i class="fa fa-align-justify"></i> Sentenciais</a></div>
+        <div id="operations-sentenciais" style="display:none;">
+          <a onclick="doOperation('division');"> - Divisão de sentença</a><br/>
+          <a onclick="doOperation('union');"> - União de sentenças</a><br/>
+          <a onclick="doOperation('remotion');"> - Remoção de sentença</a><br/>
+          <a onclick="doOperation('inclusion');"> - Inclusão de sentença</a><br/>
+          <a onclick="doOperation('rewrite');"> - Reescrita de sentença</a>
+        </div>
+        <div><a onclick="$('#operations-intra-sentenciais').toggle();"><i class="fa fa-text-width"></i> Intra-sentenciais</a></div>
+        <div id="operations-intra-sentenciais" style="display:none;">
+          <a onclick="doOperation('lexicalSubst');"> - Substituição lexical</a><br/>
+          <a onclick="doOperation('synonymListElab');"> - Elaboração com lista de sinônimos</a><br/>
+          <a onclick="doOperation('explainPhraseElab');"> - Elaboração com oração explicativa</a><br/>
+          <a onclick="doOperation('verbalTenseSubst');"> - Substituição de tempo verbal</a><br/>
+          <a onclick="doOperation('numericExprSimpl');"> - Simplificação de expressão numérica</a><br/>
+          <a onclick="doOperation('partRemotion');"> - Remoção de parte da sentença</a><br/>
+          <a onclick="doOperation('passiveVoiceChange');"> - Mudança de voz passiva para voz ativa</a><br/>
+          <a onclick="doOperation('phraseOrderChange');"> - Mudança da ordem das orações</a><br/>
+          <a onclick="doOperation('svoChange');"> - Mudança da ordem dos constituintes para SVO</a><br/>
+          <a onclick="doOperation('advAdjOrderChange');"> - Mudança da ordem de adjunto adverbial</a><br/>
+          <a onclick="doOperation('pronounToNoun');"> - Substituição de pronome por nome</a><br/>
+          <a onclick="doOperation('nounSintReduc');"> - Redução de sintagma nominal</a><br/>
+          <a onclick="doOperation('discMarkerChange');"> - Substituição de marcador discursivo</a><br/>
+          <a onclick="doOperation('definitionElab');"> - Elaboração léxica com definição</a><br/>
+          <a onclick="doOperation('notMapped');"> - Operação Não Mapeada</a>
+        </div>        
+      </div>
+  
+      <div id="doSimplification" style="display:none">
+        <div class="row">
+          <div class="small-12 large-6 columns centered">
+            <label for="simplificationName">Nome:</label>
+            <input type="text" id="simplificationName" placeholder="Nome simples para identificar o bitexto"/>
+          </div>
+          <div class="small-12 large-6 columns centered">
+            <label for="simplificationTag">Tags:</label>
+            <input type="text" id="simplificationTag" placeholder="Digite as tags separadas por vírgula"/>
+          </div> 
+        </div>
+        <div class="row">
+            <div class="small-12 large-12 columns centered">
+              <hr>
+            </div>
+        </div>
+  
+        <div class="row">
+          <div class="small-12 large-6 centered columns">
+            <div class="titles" style="display:none;">{{(simplificationTextFrom | async)?.title}}</div>
+            <div class="titles" style="display:none;">{{(simplificationTextFrom | async)?.subTitle}}</div>
+            <div class="editor">
+                <ng-template dynamic-template
+                  [template]="textFrom"
+                  [context]="context">
+                </ng-template>
+              </div>
+          </div>
+          <div class="small-12 large-6 centered columns">
+            <div contenteditable="true" class="titles" id="divTextToTitle" style="display:none;">{{simplificationToTitle}}</div>
+            <div contenteditable="true" class="titles" id="divTextToSubTitle" style="display:none;">{{simplificationToSubTitle}}</div>
+            <div contenteditable="true" class="editor" id="divTextTo">
+                <ng-template dynamic-template
+                  [template]="textTo"
+                  [context]="context">
+                </ng-template>
+              </div>
+            </div>
+        </div>
+  
+        <div class="row">
+          <div class="small-12 large-6 centered columns">
+            <button onclick="saveSimplification()" id="btnSaveSimplification" style="margin-bottom:100px;display:none;"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
+          </div>
+        </div>
+        <input type="text" id="tokenList" [(ngModel)]="tokenList" style="display:none;"/>
+  
+      </div>
+  
+    </div>
+  </div>
+  
+  
+
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/jquery-ui.min.js"></script>
+  <script src="/static/js/simpligo-pln.js"></script>
+  <script src="/static/js/anotador.js"></script>
+</body>
+</html>
