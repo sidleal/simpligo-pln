@@ -19,3 +19,20 @@ function loadMenu() {
     });
 
 }
+
+
+function abrirSenter() {
+    $.ajax({
+        type: 'GET',
+        url: '/senter',
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        }
+    }).done(function(data) {
+        document.write(data);
+        document.close();
+    }).fail(function(error) {
+        alert( error );
+    });
+
+}

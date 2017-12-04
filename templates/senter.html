@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Simplifica</title>
+  <base href="/">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="static/img/favicon.ico">
+  <link media="all" type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.3.0/css/foundation-flex.min.css">
+  <link href="https://fonts.googleapis.com/css?family=Raleway:300,500" rel="stylesheet">
+  <link href="/static/css/simpligo-pln.css" rel="stylesheet">  
+  <link href="/static/css/font-awesome.min.css" rel="stylesheet">  
+</head>
+<body>
+  <a href="https://github.com/sidleal/simplifica"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+  
+  
+<div id="header">
+    <div id="logo">Simplifica</div>
+    <div id="slogan">Plataforma de Simplificação para a Língua Portuguesa</div>
+    <div id="userInfo">[[ .Email ]] <a id="logout" href="#" onClick="logout()">( Sair )</a></div>
+  </div>
+  <div id="subheader"></div>
+  
+  
+  <div class="row">
+        <div class="small-12 centered columns">
+          <h3>SENTER Web - SENtence spliTer (and tokenizER)</h3>
+          <p>Baseado em (Pardo, 2006): <a href="http://www.icmc.usp.br/~taspardo/NILCTR0601-Pardo.pdf" target="_blank">http://www.icmc.usp.br/~taspardo/NILCTR0601-Pardo.pdf</a></p>
+          <textarea id="rawContent" placeholder="Conteúdo" rows="20"></textarea>
+          <button (click)="split()" id="btnSplit" class="default"><i class="fa fa-list-ul fa-2x"></i><br/>Dividir Sentenças</button>
+          <button (click)="listAbbrev()" id="btnShowAbbrev" onclick="showAbbreviations()" class="default"><i class="fa fa-toggle-down fa-2x"></i><br/>Mostrar Abreviaturas</button>
+          <button (click)="hideAbbrev()" id="btnHideAbbrev" onclick="hideAbbreviations()" class="default" style="display:none;"><i class="fa fa-toggle-up fa-2x"></i><br/>Ocultar Abreviaturas</button>
+          <button (click)="backToMenu()" id="btnBackMenu" class="natural"><i class="fa fa-arrow-left fa-2x"></i><br/>Voltar</button>
+          
+          <div id="abbreviations" style="display:none;">
+            <h4>Abreviaturas</h4>
+             <input type="text" id="newAbbrev" placeholder="Ajude-nos a melhorar. Digite a nova abreviatura e tecle Enter." />
+             <span id="listaAbbrev"></span>
+          </div>
+      
+          <div id="results" style="display:none;">
+            <h4>Resultados:</h4>
+            <p>{{totalParagraphs}} Parágrafos.</p>
+            <p>{{totalSentences}} Sentenças.</p>
+            <h4>Saída Em Lista</h4>
+            <div [innerHTML]="rawOutput"></div>
+            <h4>Saída JSON</h4>
+            <textarea id="jsonOutput" rows="20"></textarea>
+            <h4>Saída JSON sem formatação</h4>
+            <textarea id="jsonOutputNoFormat" rows="20"></textarea>
+            <h4>Saída XML</h4>
+            <textarea id="xmlOutput" rows="20"></textarea>
+          </div>
+      
+        </div>
+      </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="/static/js/simpligo-pln.js"></script>
+  <script src="/static/js/senter.js"></script>
+</body>
+</html>

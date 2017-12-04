@@ -36,6 +36,10 @@ var err error
 
 func Init() {
 
+	pageInfo = PageInfo{
+		Version: "0.5.1",
+	}
+
 	elClient, err = elastic.NewClient(
 		elastic.SetURL(elAddress),
 		elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
@@ -59,6 +63,7 @@ func Router() *mux.Router {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 	r.HandleFunc("/", IndexHandler)
 	r.HandleFunc("/login", LoginHandler)
+	r.HandleFunc("/senter", SenterHandler)
 	//r.HandleFunc("/anotador", AnotadorHandler)
 	return r
 }
@@ -82,10 +87,14 @@ func main() {
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	pageInfo = PageInfo{
-		Version: "0.5.1",
-	}
+	TemplateHandler(w, r, "menu")
+}
 
+func SenterHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "senter")
+}
+
+func validateSession(w http.ResponseWriter, r *http.Request) error {
 	err := validateJWT(r)
 	if err != nil {
 		log.Printf("jwt validate: %v", err)
@@ -99,11 +108,19 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Fprintf(w, "Error parsing template: %v.", err)
 		}
+		return fmt.Errorf("Sessao inválida")
+	}
+	return nil
+}
+
+func TemplateHandler(w http.ResponseWriter, r *http.Request, pageName string) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
 		return
 	}
 
-	// carrega main page
-	t, err := template.New("menu.html").Delims("[[", "]]").ParseFiles("./templates/menu.html")
+	t, err := template.New(pageName+".html").Delims("[[", "]]").ParseFiles("./templates/" + pageName + ".html")
 	if err != nil {
 		fmt.Fprintf(w, "Error openning template: %v", err)
 	}
@@ -131,8 +148,6 @@ func validateJWT(r *http.Request) error {
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-
-		log.Println(claims["usr"])
 		pageInfo.Email = claims["usr"].(string)
 		return nil
 
