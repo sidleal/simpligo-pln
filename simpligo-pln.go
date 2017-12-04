@@ -29,7 +29,7 @@ var elAddress = "http://localhost:9200" // TODO: yml
 var jwtKey = "a2lskdjf4jaks2dhfks"
 var admEmail = "teste@teste.com"
 var admKey = "simplifica"
-var index = "simpligo-pln"
+var indexPrefix = "simpligo-pln-"
 
 var elClient *elastic.Client
 var err error
@@ -49,7 +49,7 @@ func Init() {
 		panic(err)
 	}
 
-	createIndexIfNotExists()
+	createIndexIfNotExists("user")
 	createAdminIfNotExists()
 
 }
@@ -64,6 +64,8 @@ func Router() *mux.Router {
 	r.HandleFunc("/", IndexHandler)
 	r.HandleFunc("/login", LoginHandler)
 	r.HandleFunc("/senter", SenterHandler)
+	r.HandleFunc("/senter/abbrev/new", SenterAbbrevNewHandler)
+	r.HandleFunc("/senter/abbrev/list", SenterAbbrevListHandler)
 	//r.HandleFunc("/anotador", AnotadorHandler)
 	return r
 }
@@ -181,7 +183,7 @@ func createAdminIfNotExists() {
 
 		admUser := User{admEmail, "Admin", pwdHash}
 		put, err := elClient.Index().
-			Index(index).
+			Index(indexPrefix + "user").
 			Type("user").
 			Id("1").
 			BodyJson(admUser).
@@ -203,9 +205,9 @@ func getUser(email string) (User, error) {
 	query = query.Must(elastic.NewMatchQuery("email", email))
 
 	searchResult, err := elClient.Search().
-		Index(index).
-		Query(query).
+		Index(indexPrefix + "user").
 		Type("user").
+		Query(query).
 		From(0).Size(1).
 		Do(context.Background())
 	if err != nil {
@@ -222,9 +224,9 @@ func getUser(email string) (User, error) {
 
 }
 
-func createIndexIfNotExists() {
+func createIndexIfNotExists(indexSuffix string) {
 
-	exists, err := elClient.IndexExists(index).Do(context.Background())
+	exists, err := elClient.IndexExists(indexPrefix + indexSuffix).Do(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -233,19 +235,10 @@ func createIndexIfNotExists() {
 			"settings":{
 				"number_of_shards":5,
 				"number_of_replicas":1
-			},
-			"mappings" : {
-				"user" : {
-					"properties" : {
-						"email" : { "type" : "text" },
-						"name" : { "type" : "text" },
-						"pwd" : { "type" : "text" }
-					}
-				}
-			}			
+			}
 		}`
 
-		createIndex, err := elClient.CreateIndex(index).
+		createIndex, err := elClient.CreateIndex(indexPrefix + indexSuffix).
 			BodyString(settings).
 			Do(context.Background())
 		if err != nil {
@@ -254,7 +247,7 @@ func createIndexIfNotExists() {
 		if !createIndex.Acknowledged {
 			panic("Erro ao criar indice.")
 		} else {
-			log.Printf("Índice criado: %v", index)
+			log.Printf("Índice criado: %v", indexPrefix+indexSuffix)
 		}
 	}
 }
@@ -303,4 +296,65 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(tokenString))
+}
+
+type Abbreviation struct {
+	Name string `json:"name"`
+}
+
+func SenterAbbrevNewHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var abbrev Abbreviation
+	err = decoder.Decode(&abbrev)
+	if err != nil {
+		log.Printf("Erro ao tratar payload: %v", err)
+	}
+
+	createIndexIfNotExists("abbrev")
+
+	put, err := elClient.Index().
+		Index(indexPrefix + "abbrev").
+		Type("abbrev").
+		BodyJson(abbrev).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Abreviação criada %s\n", put.Id)
+
+}
+
+func SenterAbbrevListHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "abbrev").
+		Type("abbrev").
+		From(0).Size(100).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao listar abbrevs: %v", err)
+	}
+
+	ret := "{\"list\":["
+	var abbrev Abbreviation
+	for _, item := range searchResult.Each(reflect.TypeOf(abbrev)) {
+		abbrev = item.(Abbreviation)
+		ret += "\"" + abbrev.Name + "\","
+	}
+	ret = ret[0 : len(ret)-1]
+	ret += "]}"
+
+	fmt.Fprintf(w, ret)
+
 }

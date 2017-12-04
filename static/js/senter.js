@@ -1,6 +1,7 @@
 $('#newAbbrev').keypress(function (e) {
     if (e.which == 13) {
-       alert('enter');
+       saveAbbrev();
+       $('#newAbbrev').val('');
     }
   });
 
@@ -26,7 +27,8 @@ function saveAbbrev() {
         headers: {
             "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
         },
-        data: {name: $('#newAbbrev').val()}
+        data: JSON.stringify({name: $('#newAbbrev').val()}),
+        contentType: "application/json"
     }).done(function(data) {
         loadAbbreviations();
     }).fail(function(error) {
@@ -36,8 +38,27 @@ function saveAbbrev() {
 }
 
 function loadAbbreviations() {
-    // alert($('#listaAbbrev').innerHtml);
-    $('#listaAbbrev').html("teste <a onclick='removeAbbrev(abbrev.$key)'><i class='fa fa-trash-o inline-inner-button' data-toggle='tooltip' title='Excluir'></i> </a>");
+    $.ajax({
+        type: 'GET',
+        url: '/senter/abbrev/list',
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        }
+    }).done(function(data) {
+        var result = JSON.parse(data);
+        console.log(result);
+
+        var lista = ""
+        result.list.forEach(item => {
+            console.log(item);
+            lista += item + "<span><a onclick='removeAbbrev(abbrev.$key)'><i class='fa fa-trash-o inline-inner-button' data-toggle='tooltip' title='Excluir'></i> </a></span>"
+        })
+
+        $('#listaAbbrev').html(lista);
+        
+    }).fail(function(error) {
+        alert( error );
+    });
 }
 
 
