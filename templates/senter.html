@@ -25,38 +25,38 @@
   
   
   <div class="row">
-        <div class="small-12 centered columns">
-          <h3>SENTER Web - SENtence spliTer (and tokenizER)</h3>
-          <p>Baseado em (Pardo, 2006): <a href="http://www.icmc.usp.br/~taspardo/NILCTR0601-Pardo.pdf" target="_blank">http://www.icmc.usp.br/~taspardo/NILCTR0601-Pardo.pdf</a></p>
-          <textarea id="rawContent" placeholder="Conteúdo" rows="20"></textarea>
-          <button id="btnSplit" onclick="split()" class="default"><i class="fa fa-list-ul fa-2x"></i><br/>Dividir Sentenças</button>
-          <button id="btnShowAbbrev" onclick="showAbbreviations()" class="default"><i class="fa fa-toggle-down fa-2x"></i><br/>Mostrar Abreviaturas</button>
-          <button id="btnHideAbbrev" onclick="hideAbbreviations()" class="default" style="display:none;"><i class="fa fa-toggle-up fa-2x"></i><br/>Ocultar Abreviaturas</button>
-          <button id="btnBackMenu" onclick="backToMenu()" class="natural"><i class="fa fa-arrow-left fa-2x"></i><br/>Voltar</button>
-          
-          <div id="abbreviations" style="display:none;">
-            <h4>Abreviaturas</h4>
-             <input type="text" id="newAbbrev" placeholder="Ajude-nos a melhorar. Digite a nova abreviatura e tecle Enter." />
-             <span id="listaAbbrev"></span>
-          </div>
+    <div class="small-12 centered columns">
+      <h3>SENTER Web - SENtence spliTer (and tokenizER)</h3>
+      <p>Baseado em (Pardo, 2006): <a href="http://www.icmc.usp.br/~taspardo/NILCTR0601-Pardo.pdf" target="_blank">http://www.icmc.usp.br/~taspardo/NILCTR0601-Pardo.pdf</a></p>
+      <textarea id="rawContent" placeholder="Conteúdo" rows="20"></textarea>
+      <button id="btnSplit" onclick="split()" class="default"><i class="fa fa-list-ul fa-2x"></i><br/>Dividir Sentenças</button>
+      <button id="btnShowAbbrev" onclick="showAbbreviations()" class="default"><i class="fa fa-toggle-down fa-2x"></i><br/>Mostrar Abreviaturas</button>
+      <button id="btnHideAbbrev" onclick="hideAbbreviations()" class="default" style="display:none;"><i class="fa fa-toggle-up fa-2x"></i><br/>Ocultar Abreviaturas</button>
+      <button id="btnBackMenu" onclick="backToMenu()" class="natural"><i class="fa fa-arrow-left fa-2x"></i><br/>Voltar</button>
       
-          <div id="results" style="display:none;">
-            <h4>Resultados:</h4>
-            <p><span id="totalParagraphs"></span> Parágrafos.</p>
-            <p><span id="totalSentences"></span> Sentenças.</p>
-            <p><span id="totalTokens"></span> Tokens.</p>
-            <h4>Saída Em Lista</h4>
-            <div id="rawOutput"></div>
-            <h4>Saída JSON</h4>
-            <textarea id="jsonOutput" rows="20"></textarea>
-            <h4>Saída JSON sem formatação</h4>
-            <textarea id="jsonOutputNoFormat" rows="20"></textarea>
-            <h4>Saída XML</h4>
-            <textarea id="xmlOutput" rows="20"></textarea>
-          </div>
-      
-        </div>
+      <div id="abbreviations" style="display:none;">
+        <h4>Abreviaturas</h4>
+          <input type="text" id="newAbbrev" placeholder="Ajude-nos a melhorar. Digite a nova abreviatura e tecle Enter." />
+          <span id="listaAbbrev"></span>
       </div>
+  
+      <div id="results" style="display:none;">
+        <h4>Resultados:</h4>
+        <p><span id="totalParagraphs"></span> Parágrafos.</p>
+        <p><span id="totalSentences"></span> Sentenças.</p>
+        <p><span id="totalTokens"></span> Tokens.</p>
+        <h4>Saída Em Lista</h4>
+        <div id="rawOutput"></div>
+        <h4>Saída JSON</h4>
+        <textarea id="jsonOutput" rows="20"></textarea>
+        <h4>Saída JSON sem formatação</h4>
+        <textarea id="jsonOutputNoFormat" rows="20"></textarea>
+        <h4>Saída XML</h4>
+        <textarea id="xmlOutput" rows="20"></textarea>
+      </div>
+  
+    </div>
+  </div>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>

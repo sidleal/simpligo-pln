@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"time"
@@ -67,7 +69,9 @@ func Router() *mux.Router {
 	r.HandleFunc("/senter/abbrev/new", SenterAbbrevNewHandler).Methods("POST")
 	r.HandleFunc("/senter/abbrev/list", SenterAbbrevListHandler)
 	r.HandleFunc("/senter/abbrev/{id}", SenterAbbrevRemoveHandler).Methods("DELETE")
-	//r.HandleFunc("/anotador", AnotadorHandler)
+	r.HandleFunc("/palavras", PalavrasHandler).Methods("GET")
+	r.HandleFunc("/palavras/parse", PalavrasParseHandler).Methods("POST")
+
 	return r
 }
 
@@ -95,6 +99,10 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 func SenterHandler(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, "senter")
+}
+
+func PalavrasHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "palavras")
 }
 
 func validateSession(w http.ResponseWriter, r *http.Request) error {
@@ -396,5 +404,40 @@ func SenterAbbrevListHandler(w http.ResponseWriter, r *http.Request) {
 	ret += "]}"
 
 	fmt.Fprintf(w, ret)
+
+}
+
+func PalavrasParseHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	content := r.FormValue("content")
+	retType := r.FormValue("type")
+	options := r.FormValue("options")
+
+	palavrasIP := "143.107.183.175"
+	palavrasPort := "23380"
+
+	resp, err := http.PostForm("http://"+palavrasIP+":"+palavrasPort+"/"+retType,
+		url.Values{"sentence": {content}, "options": {options}})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error: %v\n", err)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(fmt.Errorf("Error reading response: %v.", err))
+	}
+
+	bodyString := string(body)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text")
+	fmt.Fprint(w, "SAÍDA: \n"+bodyString)
 
 }

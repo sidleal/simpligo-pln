@@ -32,7 +32,7 @@ function saveAbbrev() {
         data: JSON.stringify({name: $('#newAbbrev').val()}),
         contentType: "application/json"
     }).done(function(data) {
-        setTimeout(loadAbbreviations(), 1000);
+        loadAbbreviations()
     }).fail(function(error) {
         alert( "Erro" );
     });
@@ -69,7 +69,7 @@ function removeAbbrev(abbrevKey) {
             "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
         },
     }).done(function(data) {
-        setTimeout(loadAbbreviations(), 1000);
+        loadAbbreviations()
     }).fail(function(error) {
         alert( "Erro" );
     });
