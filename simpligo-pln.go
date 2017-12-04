@@ -331,8 +331,6 @@ func SenterAbbrevNewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Abreviação criada %s\n", put.Id)
 
-	// time.Sleep(1 * time.Second)
-
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "ok")
 }
@@ -356,8 +354,6 @@ func SenterAbbrevRemoveHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Erro ao remover: %v", err)
 	}
-
-	// time.Sleep(1 * time.Second)
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "ok")

@@ -48,13 +48,12 @@ function loadAbbreviations() {
         }
     }).done(function(data) {
         var result = JSON.parse(data);
-        console.log(data);
         var lista = "";
+        abbreviations = [];
         result.list.forEach(item => {
-            abbreviations.push(item);
+            abbreviations.push(item.name);
             lista += item.name + "<span><a onclick='removeAbbrev(\"" + item.id + "\")'><i class='fa fa-trash-o inline-inner-button' data-toggle='tooltip' title='Excluir'></i> </a></span>"
         })
-
         $('#listaAbbrev').html(lista);
         
     }).fail(function(error) {
@@ -88,7 +87,7 @@ var jsonOutput = '';
 var jsonOutputNoFormat = '';
 
 function backToMenu() {
-  window.location = '/';
+  loadMenu();
 }
 
 function split() {
