@@ -15,7 +15,7 @@ function loadMenu() {
         document.write(data);
         document.close();
     }).fail(function(error) {
-        alert( error );
+        alert( "Erro" );
     });
 
 }
@@ -32,7 +32,7 @@ function abrirSenter() {
         document.write(data);
         document.close();
     }).fail(function(error) {
-        alert( error );
+        alert( "Erro" );
     });
 
 }

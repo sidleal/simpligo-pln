@@ -64,8 +64,9 @@ func Router() *mux.Router {
 	r.HandleFunc("/", IndexHandler)
 	r.HandleFunc("/login", LoginHandler)
 	r.HandleFunc("/senter", SenterHandler)
-	r.HandleFunc("/senter/abbrev/new", SenterAbbrevNewHandler)
+	r.HandleFunc("/senter/abbrev/new", SenterAbbrevNewHandler).Methods("POST")
 	r.HandleFunc("/senter/abbrev/list", SenterAbbrevListHandler)
+	r.HandleFunc("/senter/abbrev/{id}", SenterAbbrevRemoveHandler).Methods("DELETE")
 	//r.HandleFunc("/anotador", AnotadorHandler)
 	return r
 }
@@ -299,6 +300,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type Abbreviation struct {
+	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -319,6 +321,7 @@ func SenterAbbrevNewHandler(w http.ResponseWriter, r *http.Request) {
 	createIndexIfNotExists("abbrev")
 
 	put, err := elClient.Index().
+		Refresh("true").
 		Index(indexPrefix + "abbrev").
 		Type("abbrev").
 		BodyJson(abbrev).
@@ -327,6 +330,37 @@ func SenterAbbrevNewHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	log.Printf("Abreviação criada %s\n", put.Id)
+
+	// time.Sleep(1 * time.Second)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
+}
+
+func SenterAbbrevRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	abbrevId := vars["id"]
+
+	_, err = elClient.Delete().
+		Refresh("true").
+		Index(indexPrefix + "abbrev").
+		Type("abbrev").
+		Id(abbrevId).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao remover: %v", err)
+	}
+
+	// time.Sleep(1 * time.Second)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
 
 }
 
@@ -347,10 +381,20 @@ func SenterAbbrevListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := "{\"list\":["
-	var abbrev Abbreviation
-	for _, item := range searchResult.Each(reflect.TypeOf(abbrev)) {
-		abbrev = item.(Abbreviation)
-		ret += "\"" + abbrev.Name + "\","
+	if searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var a Abbreviation
+			err := json.Unmarshal(*hit.Source, &a)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			a.Id = hit.Id
+			aJson, err := json.Marshal(a)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret += string(aJson) + ","
+		}
 	}
 	ret = ret[0 : len(ret)-1]
 	ret += "]}"
