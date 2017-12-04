@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -453,10 +454,15 @@ func PalavrasParseHandler(w http.ResponseWriter, r *http.Request) {
 // -----
 
 type Corpus struct {
-	Id     string `json:"id"`
-	Name   string `json:"name"`
-	Source string `json:"source"`
-	Genre  string `json:"genre"`
+	Id     string   `json:"id"`
+	Name   string   `json:"name"`
+	Source string   `json:"source"`
+	Genre  string   `json:"genre"`
+	Owners []string `json:"owners"`
+}
+
+func normalizeEmail(email string) string {
+	return strings.Replace(email, "@", "_at_", -1)
 }
 
 func AnotadorCorpusNewHandler(w http.ResponseWriter, r *http.Request) {
@@ -472,6 +478,8 @@ func AnotadorCorpusNewHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Erro ao tratar payload: %v", err)
 	}
+
+	corpus.Owners = []string{normalizeEmail(pageInfo.Email)}
 
 	createIndexIfNotExists("corpus")
 
@@ -497,16 +505,18 @@ func AnotadorCorpusListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	query := elastic.NewTermQuery("owners", normalizeEmail(pageInfo.Email))
 	searchResult, err := elClient.Search().
 		Index(indexPrefix + "corpus").
 		Type("corpus").
+		Query(query).
 		From(0).Size(100).
 		Do(context.Background())
 	if err != nil {
 		log.Printf("Erro ao listar: %v", err)
 	}
 
-	ret := "{\"list\":["
+	ret := "{\"list\":[ "
 	if searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var c Corpus

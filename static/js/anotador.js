@@ -516,6 +516,7 @@ function listCorpora() {
             "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
         }
     }).done(function(data) {
+        console.log(data);
         var result = JSON.parse(data);
         var lista = "";
         result.list.forEach(item => {
@@ -545,6 +546,9 @@ function selectCorpus(corpusId, corpusName) {
 function newCorpus() {
     this.stage = "newCorpus";
     this.breadcrumb = "editor > novo córpus";
+    $('#corpusName').val("");
+    $('#corpusSource').val("")
+    $('#corpusGenre').val("");
     this.refresh();
 }
 
