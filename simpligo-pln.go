@@ -30,8 +30,8 @@ var pageInfo PageInfo
 
 var elAddress = "http://localhost:9200" // TODO: yml
 var jwtKey = "a2lskdjf4jaks2dhfks"
-var admEmail = "teste@teste.com"
-var admKey = "simplifica"
+var admEmail = "admin@sidle.al"
+var admKey = "simples"
 var indexPrefix = "simpligo-pln-"
 
 var elClient *elastic.Client
@@ -76,6 +76,9 @@ func Router() *mux.Router {
 	r.HandleFunc("/anotador/corpus/new", AnotadorCorpusNewHandler).Methods("POST")
 	r.HandleFunc("/anotador/corpus/list", AnotadorCorpusListHandler)
 	r.HandleFunc("/anotador/corpus/{id}", AnotadorCorpusRemoveHandler).Methods("DELETE")
+	r.HandleFunc("/anotador/corpus/{corpusId}/text/new", AnotadorTextNewHandler).Methods("POST")
+	r.HandleFunc("/anotador/corpus/{corpusId}/text/list", AnotadorTextListHandler)
+	r.HandleFunc("/anotador/corpus/{corpusId}/text/{id}", AnotadorTextRemoveHandler).Methods("DELETE")
 
 	return r
 }
@@ -461,6 +464,15 @@ type Corpus struct {
 	Owners []string `json:"owners"`
 }
 
+type Text struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	Title     string `json:"title"`
+	Source    string `json:"source"`
+	Level     int    `json:"level"`
+	Published string `json:"published"`
+}
+
 func normalizeEmail(email string) string {
 	return strings.Replace(email, "@", "_at_", -1)
 }
@@ -479,7 +491,7 @@ func AnotadorCorpusNewHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Erro ao tratar payload: %v", err)
 	}
 
-	corpus.Owners = []string{normalizeEmail(pageInfo.Email)}
+	corpus.Owners = []string{normalizeEmail(pageInfo.Email), normalizeEmail(admEmail)}
 
 	createIndexIfNotExists("corpus")
 
@@ -553,6 +565,123 @@ func AnotadorCorpusRemoveHandler(w http.ResponseWriter, r *http.Request) {
 		Refresh("true").
 		Index(indexPrefix + "corpus").
 		Type("corpus").
+		Id(id).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao remover: %v", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
+
+}
+
+func AnotadorTextNewHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	//debug
+	// requestDump, err := httputil.DumpRequest(r, true)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println(string(requestDump))
+
+	// decoder := json.NewDecoder(r.Body)
+	// var corpus Corpus
+	// err = decoder.Decode(&corpus)
+	// if err != nil {
+	// 	log.Printf("Erro ao tratar payload: %v", err)
+	// }
+
+	// corpus.Owners = []string{normalizeEmail(pageInfo.Email), normalizeEmail(admEmail)}
+
+	createIndexIfNotExists("corpus-text")
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(fmt.Errorf("Error reading req: %v.", err))
+	}
+
+	put, err := elClient.Index().
+		Refresh("true").
+		Index(indexPrefix + "corpus-text").
+		Type("text").
+		BodyString(string(body)).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Text criado %s\n", put.Id)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
+}
+
+func AnotadorTextListHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	corpusId := vars["corpusId"]
+
+	log.Println(corpusId)
+
+	query := elastic.NewTermQuery("corpusId.keyword", corpusId)
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "corpus-text").
+		Type("text").
+		Query(query).
+		From(0).Size(100).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao listar: %v", err)
+	}
+
+	ret := "{\"list\":[ "
+	if searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var t Text
+			err := json.Unmarshal(*hit.Source, &t)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			t.Id = hit.Id
+			tJson, err := json.Marshal(t)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret += string(tJson) + ","
+		}
+	}
+	ret = ret[0 : len(ret)-1]
+	ret += "]}"
+
+	fmt.Fprintf(w, ret)
+
+}
+
+func AnotadorTextRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	_, err = elClient.Delete().
+		Refresh("true").
+		Index(indexPrefix + "corpus-text").
+		Type("text").
 		Id(id).
 		Do(context.Background())
 	if err != nil {

@@ -75,13 +75,7 @@
         <input type="text" placeholder="Pesquisar" (keyup)="filterText()" id="searchText"/>
         <input type="checkbox" checked="true"/>Original <input type="checkbox" checked="true"/>Simplificação
   
-        <div class="details-container-lines"> 
-            <a onclick="selectText(text.$key, text.title)" onmousedown="$('#waiting').toggle();" *ngFor="let text of texts | async">
-              {{text.name}} 
-              <i class="fa fa-trash-o inner-button" data-toggle="tooltip" title="Excluir" onclick="deleteText(text.$key);event.stopPropagation();" (mousedown)="event.stopPropagation();"></i>
-              <i class="fa fa-spinner fa-pulse fa-fw" id='waiting' style="float:right;display:none;"></i>
-              <br/><p>{{text.title}} - {{text.source}} - Nível {{text.level}} ({{text.published}})</p>
-            </a>
+        <div id="details-container-texts" class="details-container-lines"> 
         </div>
       </div>
   
@@ -238,6 +232,7 @@
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/js/jquery-ui.min.js"></script>
   <script src="/static/js/simpligo-pln.js"></script>
+  <script src="/static/js/senter.js"></script>
   <script src="/static/js/anotador.js"></script>
 </body>
 </html>

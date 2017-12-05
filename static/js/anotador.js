@@ -516,7 +516,6 @@ function listCorpora() {
             "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
         }
     }).done(function(data) {
-        console.log(data);
         var result = JSON.parse(data);
         var lista = "";
         result.list.forEach(item => {
@@ -606,13 +605,34 @@ function showTextMenu() {
 }
 
 function listTexts() {
+
+
+    $.ajax({
+        type: 'GET',
+        url: '/anotador/corpus/' + selectedCorpusId + '/text/list',
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        }
+    }).done(function(data) {
+        var result = JSON.parse(data);
+        var lista = "";
+        result.list.forEach(item => {
+            lista += "<a onclick=\"selectText('" + item.id + "','" + item.title+"')\" onmousedown=\"$('#waiting').toggle();\">";
+            lista += item.name;
+            lista += "<i class=\"fa fa-trash-o inner-button\" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"deleteText('" + item.id + "');event.stopPropagation();\" onmousedown=\"event.stopPropagation();\"></i>";
+            lista += "<i class=\"fa fa-spinner fa-pulse fa-fw\" id='waiting' style=\"float:right;display:none;\"></i>";
+            lista += "<br/><p>" + item.title + " - " + item.source + " - Nível " + item.level + "(" + item.published + ")</p>";
+            lista += "</a>";
+        })
+        $('#details-container-texts').html(lista);
+       
+    }).fail(function(error) {
+        alert( "Erro" );
+    });
+
+
     this.stage = "texts";
     this.breadcrumb = "editor > meus corpora > " + this.selectedCorpusName + " > textos";
-    this.texts = this.af.list('/corpora/' + this.selectedCorpusId + "/texts", {
-      query: {
-        limitToLast: 50
-      }
-    });
     this.refresh();
 }
 
@@ -633,7 +653,19 @@ function newText() {
 function deleteText(textId) {
     this.confirmDialog('Confirma a exclusão?', ret => {
       if (ret) {
-        this.af.object('/corpora/' + this.selectedCorpusId + '/texts/' + textId).remove();
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/anotador/corpus/' + selectedCorpusId + "/text/" + textId,
+            headers: {
+                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            },
+        }).done(function(data) {
+            listTexts();
+        }).fail(function(error) {
+            alert( "Erro" );
+        });
+        
       }
     });
     this.refresh();
@@ -641,97 +673,134 @@ function deleteText(textId) {
 
 function saveText() {
 
-    if (this.textRawContent == null) {
-      this.textRawContent = this.textContent;
-    }
+    // if (this.textRawContent == null) {
+    //   this.textRawContent = $("#textContent").val();
+    // }
 
-    this.texts = this.af.list('/corpora/' + this.selectedCorpusId + "/texts");
-    this.texts.push(
-      {
-        name: this.textName,
-        title: this.textTitle,
-        subTitle: this.textSubTitle, 
-        content: this.textContent, 
-        published: this.textPublished, 
-        author: this.textAuthor,
-        source: this.textSource,
-        rawContent: this.textRawContent,
-        level: 0
-      }
-    ).then((text) => { 
-      var textContentFull = "";
-      textContentFull += "# " + this.textTitle + "\n";
-      textContentFull += "## " + this.textSubTitle + "\n";
-      textContentFull += this.textContent;     
-      var parsedText = this.senterService.splitText(textContentFull);
-      this.saveParagraphs(text, parsedText); 
+    this.textTitle = $("#textTitle").val();
+    this.textSubTitle = $("#textSubTitle").val();
+    this.textContent = $("#textContent").val();
+
+    var textContentFull = "";
+    textContentFull += "# " + this.textTitle + "\n";
+    textContentFull += "## " + this.textSubTitle + "\n";
+    textContentFull += this.textContent;     
+    var parsedText = splitText(textContentFull);
+
+    $.ajax({
+        type: 'POST',
+        url: '/anotador/corpus/' + selectedCorpusId + '/text/new',
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        },
+        data: JSON.stringify({
+            corpusId: selectedCorpusId,
+            name: $("#textName").val(),
+            title: $("#textTitle").val(),
+            subTitle: $("#textSubTitle").val(),
+            author: $("#textAuthor").val(),
+            published: $("#textPublished").val(),
+            source: $("#textSource").val(),
+            content: $("#textContent").val(),
+            parsed: parsedText,
+            level: 0
+        }),
+        contentType: "application/json"
+    }).done(function(data) {
+        showTextMenu();
+    }).fail(function(error) {
+        alert( "Erro" );
     });
 
-    this.showTextMenu();
+
+
+    // this.texts = this.af.list('/corpora/' + this.selectedCorpusId + "/texts");
+    // this.texts.push(
+    //   {
+    //     name: this.textName,
+    //     title: this.textTitle,
+    //     subTitle: this.textSubTitle, 
+    //     content: this.textContent, 
+    //     published: this.textPublished, 
+    //     author: this.textAuthor,
+    //     source: this.textSource,
+    //     rawContent: this.textRawContent,
+    //     level: 0
+    //   }
+    // ).then((text) => { 
+    //   var textContentFull = "";
+    //   textContentFull += "# " + this.textTitle + "\n";
+    //   textContentFull += "## " + this.textSubTitle + "\n";
+    //   textContentFull += this.textContent;     
+    //   var parsedText = this.senterService.splitText(textContentFull);
+    //   this.saveParagraphs(text, parsedText); 
+    // });
+
+    // this.showTextMenu();
 }
 
-function saveParagraphs(text, parsedText) {
-    var textObj = this.af.object('/corpora/' + this.selectedCorpusId + "/texts/" + text.key);
-    textObj.update(
-      {
-        totP: parsedText['totP'],
-        totS:  parsedText['totS'],
-        totT:  parsedText['totT'],
-        totW:  parsedText['totW'],
-      });
+// function saveParagraphs(text, parsedText) {
+//     var textObj = this.af.object('/corpora/' + this.selectedCorpusId + "/texts/" + text.key);
+//     textObj.update(
+//       {
+//         totP: parsedText['totP'],
+//         totS:  parsedText['totS'],
+//         totT:  parsedText['totT'],
+//         totW:  parsedText['totW'],
+//       });
 
-    var paragraphs = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs");
+//     var paragraphs = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs");
 
-    parsedText['paragraphs'].forEach(p => {
-      paragraphs.push(
-        {
-          idx: p['idx'],
-          text: p['text']
-        }
-      ).then((par) => {
-        this.saveSentences(text, par, p);
-      });
-    });
+//     parsedText['paragraphs'].forEach(p => {
+//       paragraphs.push(
+//         {
+//           idx: p['idx'],
+//           text: p['text']
+//         }
+//       ).then((par) => {
+//         this.saveSentences(text, par, p);
+//       });
+//     });
 
-}
+// }
 
-function saveSentences(text, par, p) {
-    var sentences = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs/" + par.key + "/sentences");
-    p['sentences'].forEach(s => {
-      sentences.push(
-        {
-          idx: s['idx'],
-          text: s['text'],
-          qtw: s['qtw'],
-          qtt: s['qtt']
-        }
-      ).then((sent) => {
-        s['newId'] = sent.key;
+// function saveSentences(text, par, p) {
+//     var sentences = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs/" + par.key + "/sentences");
+//     p['sentences'].forEach(s => {
+//       sentences.push(
+//         {
+//           idx: s['idx'],
+//           text: s['text'],
+//           qtw: s['qtw'],
+//           qtt: s['qtt']
+//         }
+//       ).then((sent) => {
+//         s['newId'] = sent.key;
         
-        if (this.simplificationParsedText != null) {
-          if (this.simplificationParsedText.totS == s['idx']) {
-                this.saveOperationList(text);
-          }
-        }
+//         if (this.simplificationParsedText != null) {
+//           if (this.simplificationParsedText.totS == s['idx']) {
+//                 this.saveOperationList(text);
+//           }
+//         }
  
-        this.saveTokens(text, par, sent, s);
-      });
-    });
+//         this.saveTokens(text, par, sent, s);
+//       });
+//     });
 
-}
+// }
 
-function saveTokens(text, par, sent, s) {
-    var tokens = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs/" + par.key + "/sentences/" + sent.key + "/tokens");
-    s['tokens'].forEach(t => {
-      tokens.push(
-        {
-          idx: t['idx'],
-          token: t['token'],
-          lemma: t['token']
-        }
-      );
-    });
-}
+// function saveTokens(text, par, sent, s) {
+//     var tokens = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs/" + par.key + "/sentences/" + sent.key + "/tokens");
+//     s['tokens'].forEach(t => {
+//       tokens.push(
+//         {
+//           idx: t['idx'],
+//           token: t['token'],
+//           lemma: t['token']
+//         }
+//       );
+//     });
+// }
 
 function selectText(textId, textTitle) {
     this.selectedTextId = textId;
@@ -1159,7 +1228,7 @@ function parseTextToOut(textTo, simp) {
 
 
 function changeListener(event) {
-
+    
     var reader = new FileReader();
     var fileTokens = event.target.value.split('\\')[2].split('.');
     var fileName = fileTokens[0] + ' nível_0';
@@ -1224,8 +1293,17 @@ function changeListener(event) {
 
         this.textContent = parsedText;
 
+        $("#textName").val(fileName);
+        $("#textTitle").val(textTitle);
+        $("#textSubTitle").val(textSubTitle);
+        $("#textAuthor").val(textAuthor);
+        $("#textPublished").val(textPublished);
+        $("#textSource").val(textSource);
+        $("#textContent").val(textContent);
+
     }
     reader.readAsText(event.target.files[0], 'UTF-8');
+
 }
 
 // OPERATIONS
