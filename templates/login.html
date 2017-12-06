@@ -52,7 +52,7 @@
   <script>
 
     var jwtKey = sessionStorage.getItem('simpligo.pln.jtw.key');
-    if (jwtKey != null && jwtKey != "null") {
+    if (jwtKey != null && jwtKey != "null" && ![[ .SessionExpired ]]) {
       loadMenu();
     } 
 

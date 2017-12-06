@@ -22,8 +22,9 @@ import (
 )
 
 type PageInfo struct {
-	Version string `json:"version"`
-	Email   string `json:"email"`
+	Version        string `json:"version"`
+	Email          string `json:"email"`
+	SessionExpired bool   `json:"sessionExp"`
 }
 
 var pageInfo PageInfo
@@ -40,7 +41,8 @@ var err error
 func Init() {
 
 	pageInfo = PageInfo{
-		Version: "0.5.1",
+		Version:        "0.5.1",
+		SessionExpired: false,
 	}
 
 	elClient, err = elastic.NewClient(
@@ -79,6 +81,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/anotador/corpus/{corpusId}/text/new", AnotadorTextNewHandler).Methods("POST")
 	r.HandleFunc("/anotador/corpus/{corpusId}/text/list", AnotadorTextListHandler)
 	r.HandleFunc("/anotador/corpus/{corpusId}/text/{id}", AnotadorTextRemoveHandler).Methods("DELETE")
+	r.HandleFunc("/anotador/corpus/{corpusId}/text/{id}", AnotadorTextGetHandler).Methods("GET")
 
 	return r
 }
@@ -177,6 +180,8 @@ func validateJWT(r *http.Request) error {
 	} else {
 		log.Println(err)
 	}
+
+	pageInfo.SessionExpired = true
 
 	return fmt.Errorf("Acesso negado.")
 }
@@ -466,11 +471,45 @@ type Corpus struct {
 
 type Text struct {
 	Id        string `json:"id"`
+	CorpusId  string `json:"corpusId"`
 	Name      string `json:"name"`
 	Title     string `json:"title"`
 	Source    string `json:"source"`
 	Level     int    `json:"level"`
 	Published string `json:"published"`
+}
+
+type TextFull struct {
+	Id        string `json:"id"`
+	CorpusId  string `json:"corpusId"`
+	Name      string `json:"name"`
+	Title     string `json:"title"`
+	SubTitle  string `json:"subTitle"`
+	Source    string `json:"source"`
+	Level     int    `json:"level"`
+	Published string `json:"published"`
+	Author    string `json:"author"`
+	Content   string `json:"content"`
+	Parsed    struct {
+		Paragraphs []struct {
+			Idx       int    `json:"idx"`
+			Text      string `json:"text"`
+			Sentences []struct {
+				Idx    int    `json:"idx"`
+				Text   string `json:"text"`
+				Qtt    int    `json:"qtt"`
+				Qtw    int    `json:"qtw"`
+				Tokens []struct {
+					Idx   int    `json:"idx"`
+					Token string `json:"token"`
+				} `json:"tokens"`
+			} `json:"sentences"`
+		} `json:"paragraphs"`
+		TotP int `json:"totP"`
+		TotS int `json:"totS"`
+		TotT int `json:"totT"`
+		TotW int `json:"totW"`
+	} `json:"parsed"`
 }
 
 func normalizeEmail(email string) string {
@@ -632,8 +671,6 @@ func AnotadorTextListHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	corpusId := vars["corpusId"]
 
-	log.Println(corpusId)
-
 	query := elastic.NewTermQuery("corpusId.keyword", corpusId)
 	searchResult, err := elClient.Search().
 		Index(indexPrefix + "corpus-text").
@@ -690,5 +727,49 @@ func AnotadorTextRemoveHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "ok")
+
+}
+
+func AnotadorTextGetHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	// corpusId := vars["corpusId"]
+	id := vars["id"]
+
+	query := elastic.NewTermQuery("_id", id)
+
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "corpus-text").
+		Type("text").
+		Query(query).
+		From(0).Size(1).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Não encontrado: %v", err)
+	}
+
+	ret := ""
+	if searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var t TextFull
+			err := json.Unmarshal(*hit.Source, &t)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			t.Id = hit.Id
+			tJson, err := json.Marshal(t)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret = string(tJson)
+		}
+	}
+
+	fmt.Fprintf(w, ret)
 
 }

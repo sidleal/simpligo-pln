@@ -665,7 +665,7 @@ function deleteText(textId) {
         }).fail(function(error) {
             alert( "Erro" );
         });
-        
+
       }
     });
     this.refresh();
@@ -997,30 +997,45 @@ function doSimplification() {
     
     this.stage = "doSimplification";
     this.breadcrumb = "editor > meus corpora > " + this.selectedCorpusName + " > textos > " + this.selectedTextTitle + " > Nova Simplificação";
-    this.simplificationTextFrom = this.af.object('/corpora/' + this.selectedCorpusId  + "/texts/" + this.selectedTextId);
 
-    this.simplificationTextFrom.take(1).subscribe(text => {
-      this.simplificationToTitle = text.title;
-      this.simplificationToSubTitle = text.subTitle;
-      this.simplificationName = "Natural " + (text.level) + ' -> ' + (text.level + 1);
-      this.simplificationTag = "Nível " + (text.level + 1);
+    this.refresh();
+
+
+    $.ajax({
+        type: 'GET',
+        url: '/anotador/corpus/' + selectedCorpusId + '/text/' + selectedTextId,
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        }
+    }).done(function(data) {
+        var text = JSON.parse(data);
+
+        this.simplificationToTitle = text.title;
+        this.simplificationToSubTitle = text.subTitle;
+        this.simplificationName = "Natural " + (text.level) + ' -> ' + (text.level + 1);
+        this.simplificationTag = "Nível " + (text.level + 1);
+    
+        this.totalParagraphs = text.totP;
+        this.totalSentences =  text.totS;
+        this.totalWords =  text.totW;
+        this.totalTokens =  text.totT;
+        
+        this.totalParagraphsTo = text.totP;
+        this.totalSentencesTo =  text.totS;
+        this.totalWordsTo =  text.totW;
+        this.totalTokensTo =  text.totT;
   
-      this.totalParagraphs = text.totP;
-      this.totalSentences =  text.totS;
-      this.totalWords =  text.totW;
-      this.totalTokens =  text.totT;
-      
-      this.totalParagraphsTo = text.totP;
-      this.totalSentencesTo =  text.totS;
-      this.totalWordsTo =  text.totW;
-      this.totalTokensTo =  text.totT;
+        this.textFrom = this.parseTextFromOut(text, null);
+        this.textTo = this.parseTextToOut(text, null);
+  
+        $('#operations').show();
+        $('#selected-sentence').show();
+  
 
-      this.textFrom = this.parseTextFromOut(text, null);
-      this.textTo = this.parseTextToOut(text, null);
-
+    }).fail(function(error) {
+        alert( "Erro" );
     });
-    $('#operations').show();
-    $('#selected-sentence').show();
+
 }
 
 function editSimplification() {
