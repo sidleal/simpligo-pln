@@ -90,7 +90,7 @@ function sentenceClick(sentence) {
             });
             document.getElementById("qtSelectedTokens").innerHTML = sentence.getAttribute("data-qtw") + " -> " + qtTokensPair.toString();
             document.getElementById("qtSelectedTokens").title = sentence.getAttribute("data-qtw") + " palavras ( e " + sentence.getAttribute("data-qtt") + " tokens) na sentença de origem, destino: " + qtTokensPair.toString();
-            updateOperationsList(sentence);
+            refreshOperationsList(sentence);
         }
         $("#selectedSentences").val(selectedSentences.toString());
     }    
@@ -119,7 +119,7 @@ function clearSentenceSelection() {
         selectSentence(document.getElementById(s), '', 'false');
         document.getElementById("qtSelectedTokens").innerHTML = '';
         document.getElementById("qtSelectedTokens").title = "Quantidade de palavras da sentença";
-        updateOperationsList(null);
+        refreshOperationsList(null);
     });
     selectedSentences = []
     $("#selectedSentences").val('');
@@ -146,7 +146,7 @@ function clearSentenceSelection() {
 
 }
 
-function updateOperationsList(sentence) {
+function refreshOperationsList(sentence) {
     var operationsHtml = '';
     if (sentence != null) {    
         var operations = sentence.getAttribute('data-operations');
@@ -154,35 +154,52 @@ function updateOperationsList(sentence) {
             var operationsList = operations.split(";");
             operationsList.forEach( op => {
                 if (op != '') {
-                    var opKey = op.split('(')[0];
-                    var opDesc = operationsMap[opKey];
-                    var details = '';                    
 
-                    var substOps = ['lexicalSubst', 'synonymListElab', 'explainPhraseElab', 'verbalTenseSubst', 'numericExprSimpl', 'pronounToNoun', 'passiveVoiceChange', 'phraseOrderChange', 'svoChange', 'advAdjOrderChange', 'discMarkerChange', 'doNounSintReduc', 'definitionElab'];
-                    if (substOps.indexOf(opKey) >= 0) {
-                        var match = /\((.*)\|(.*)\|(.*)\)/g.exec(op);
-                        if (match) {
-                        details = match[2] + ' --> ' + match[3];
-                        }
-                    } else if (opKey == 'partRemotion') {
-                        var match = /\((.*)\|(.*)\)/g.exec(op);
-                        if (match) {
-                        details = match[2];
-                        }              
-                    } else if (opKey == 'notMapped') {
-                        var match = /\((.*)\|(.*)\|(.*)\|(.*)\)/g.exec(op);
-                        if (match) {
-                          details = match[4] + ': ' + match[2] + ' --> ' + match[3];
-                        }              
-                    }
-                   
-                    operationsHtml += "<li data-toggle=\"tooltip\" title=\"" + details + "\">" + opDesc + " <i class=\"fa fa-trash-o \" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"window.dispatchEvent(new CustomEvent('undoOperation', { bubbles: true, detail: '" + op + "' }));\" onMouseOver=\"this.style='cursor:pointer;color:red;';\" onMouseOut=\"this.style='cursor:pointer;';\"></i>"
+                    var opTokens = op.split('(');
+                    var opKey = opTokens[0];
                     
+                    var opDesc = this.operationsMap[opKey];
+                    var details = '';
+        
+                    if (this.substOps.indexOf(opKey) >= 0) {
+                      var match = /\((.*)\|(.*)\|(.*)\)/g.exec(op);
+                      if (match) {
+                        details = match[2] + ' --> ' + match[3];
+                      }
+                    } else if (opKey == 'partRemotion') {
+                      var match = /\((.*)\|(.*)\)/g.exec(op);
+                      if (match) {
+                        details = match[2];
+                      }              
+                    } else if (opKey == 'notMapped') {
+                      var match = /\((.*)\|(.*)\|(.*)\|(.*)\)/g.exec(op);
+                      if (match) {
+                        details = match[4] + ': ' + match[2] + ' --> ' + match[3];
+                      }              
+                    }
+        
+                    operationsHtml += "<li data-toggle=\"tooltip\" title=\"" + details + "\">" + opDesc + " <i class=\"fa fa-trash-o \" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"window.dispatchEvent(new CustomEvent('undoOperation', { bubbles: true, detail: '" + op + "' }));\" onMouseOver=\"this.style='cursor:pointer;color:red;';\" onMouseOut=\"this.style='cursor:pointer;';\"></i>"
+
                 }
             });
         }
     }
     $("#sentenceOperations").html(operationsHtml);
+}
+
+
+function updateOperationsList(sentenceId, type) {
+    
+    var sentence = document.getElementById(sentenceId);
+
+    var operations = sentence.getAttribute('data-operations');
+    if (type != null) {
+      operations += type;
+    }
+    sentence.setAttribute('data-operations', operations);
+
+    refreshOperationsList(sentence);
+
 }
 
 
@@ -218,7 +235,7 @@ function wordClick(word, right) {
                 var firstWordIdx = document.getElementById(selectedWords[0]).getAttribute('data-idx');
                 var lastWordIdx = word.getAttribute('data-idx');
                 for (var i = parseInt(firstWordIdx); i < parseInt(lastWordIdx);i++) {
-                    var midWordId = getTokenIdFromIdx(i);
+                    var midWordId = 'f.t.' + i;
                     if (selectedWords.indexOf(midWordId) < 0) {
                         var midWord = document.getElementById(midWordId);
                         selectWord(midWord, 'background: #edb65d;font-weight: bold;', 'true');    
@@ -240,30 +257,6 @@ function selectWord(word, style, selected) {
     $("#selectedWords").val(selectedWords.toString());
 }
 
-
-function getTokenIdFromIdx(idx) {
-    var ret = '';
-    var tokens = $('#tokenList').val().split('|/|');
-    tokens.forEach(t => {
-        var items = t.split('||');
-        if (parseInt(items[0]) == parseInt(idx)) {
-            ret = items[2];
-        }
-    });
-    return ret;
-}
-
-function getTokenIdxFromId(id) {
-    var ret = '';
-    var tokens = $('#tokenList').val().split('|/|');
-    tokens.forEach(t => {
-        var items = t.split('||');
-        if (parseInt(items[2]) == parseInt(id)) {
-            ret = items[0];
-        }
-    });
-    return ret;
-}
 
 /*----------------------------------------------*/
 
@@ -291,8 +284,6 @@ var textTo = '';
 var searchText;
 
 var loggedUser;
-
-var tokenList = '';
 
 var simplificationParsedText;
 
@@ -1114,8 +1105,7 @@ function parseTextFromOut(textFrom, simp) {
             out += ' oncontextmenu=\'wordClick(this, true); return false;\'';
             out += ' onmouseover=\'overToken(this);\' onmouseout=\'outToken(this);\'>' + token + '</span>';
             lastToken = token;
-            this.tokenList += (idx + "||" + token + "||" + 'f.t.' + t + '|/|');
-          }
+           }
           out += ' </span>';
           
         }
@@ -1123,7 +1113,6 @@ function parseTextFromOut(textFrom, simp) {
       }
       out += "</p>"
     }
-    console.log(out);
 
     return out; 
 }
@@ -1313,50 +1302,6 @@ function doOperation(type) {
     $('#hideOps').hide();
     $('#showOps').show();
 
-}
-
-function updateOperationsList(sentenceId, type) {
-    
-    var sentence = document.getElementById(sentenceId);
-
-    var operations = sentence.getAttribute('data-operations');
-    if (type != null) {
-      operations += type;
-    }
-    sentence.setAttribute('data-operations', operations);
-
-    var operationsHtml = '';
-    var operationsList = operations.split(";");
-    operationsList.forEach( op => {
-        if (op != '') {
-            var opTokens = op.split('(');
-            var opKey = opTokens[0];
-            
-            var opDesc = this.operationsMap[opKey];
-            var details = '';
-
-            if (this.substOps.indexOf(opKey) >= 0) {
-              var match = /\((.*)\|(.*)\|(.*)\)/g.exec(op);
-              if (match) {
-                details = match[2] + ' --> ' + match[3];
-              }
-            } else if (opKey == 'partRemotion') {
-              var match = /\((.*)\|(.*)\)/g.exec(op);
-              if (match) {
-                details = match[2];
-              }              
-            } else if (opKey == 'notMapped') {
-              var match = /\((.*)\|(.*)\|(.*)\|(.*)\)/g.exec(op);
-              if (match) {
-                details = match[4] + ': ' + match[2] + ' --> ' + match[3];
-              }              
-            }
-
-            operationsHtml += "<li data-toggle=\"tooltip\" title=\"" + details + "\">" + opDesc + " <i class=\"fa fa-trash-o \" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"window.dispatchEvent(new CustomEvent('undoOperation', { bubbles: true, detail: '" + op + "' }));\" onMouseOver=\"this.style='cursor:pointer;color:red;';\" onMouseOut=\"this.style='cursor:pointer;';\"></i>"
-        }
-    });
-
-    $("#sentenceOperations").html(operationsHtml);
 }
 
 function rewriteTextTo(type, selectedSentence, selectedWords) {
