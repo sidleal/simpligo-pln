@@ -138,7 +138,7 @@
   
           <span id="qtSelectedTokens" class='operations-qt-tokens' data-toggle="tooltip" title="Quantidade de palavras da sentença selecionada">0</span>
           <span id="qtSentencesTo" class='operations-qt-sentences' data-toggle="tooltip" title="DESTINO: parágrafos - sentenças - palavras">{{totalParagraphsTo}} - {{totalSentencesTo}} - {{totalWordsTo}}</span>
-          <span id="qtSentences" class='operations-qt-sentences' data-toggle="tooltip" title="ORIGEM: parágrafos - sentenças - palavras">{{totalParagraphs}} - {{totalSentences}} - {{totalWords}}</span>
+          <span id="qtSentencesFrom" class='operations-qt-sentences' data-toggle="tooltip" title="ORIGEM: parágrafos - sentenças - palavras">{{totalParagraphs}} - {{totalSentences}} - {{totalWords}}</span>
         </div>
   
         <div style='width:100%;display:inline-block;'>
@@ -194,25 +194,13 @@
   
         <div class="row">
           <div class="small-12 large-6 centered columns">
-            <div class="titles" style="display:none;">{{(simplificationTextFrom | async)?.title}}</div>
-            <div class="titles" style="display:none;">{{(simplificationTextFrom | async)?.subTitle}}</div>
-            <div class="editor">
-                <ng-template dynamic-template
-                  [template]="textFrom"
-                  [context]="context">
-                </ng-template>
-              </div>
+            <div class="editor" id="divTextFrom">
+            </div>
           </div>
           <div class="small-12 large-6 centered columns">
-            <div contenteditable="true" class="titles" id="divTextToTitle" style="display:none;">{{simplificationToTitle}}</div>
-            <div contenteditable="true" class="titles" id="divTextToSubTitle" style="display:none;">{{simplificationToSubTitle}}</div>
             <div contenteditable="true" class="editor" id="divTextTo">
-                <ng-template dynamic-template
-                  [template]="textTo"
-                  [context]="context">
-                </ng-template>
-              </div>
             </div>
+          </div>
         </div>
   
         <div class="row">

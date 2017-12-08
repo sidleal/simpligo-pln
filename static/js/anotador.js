@@ -284,38 +284,9 @@ var selectedSimplificationName;
 var selectedTextId;
 var selectedTextTitle;
 
-var corpusName;
-var corpusSource;
-var corpusGenre;
-
-var textName;
-var textTitle;
-var textSubTitle;
-var textAuthor;
-var textPublished;
-var textSource;
-var textContent;
-var textRawContent;
-
-var simplificationName;
-var simplificationFrom;
-var simplificationTag;
-var simplificationToTitle;
-var simplificationToSubTitle;
-
 var textFrom = '';
 var context = this;
 var textTo = '';
-
-var totalParagraphs;
-var totalSentences;
-var totalWords;
-var totalTokens;
-
-var totalParagraphsTo;
-var totalSentencesTo;
-var totalWordsTo;
-var totalTokensTo;
 
 var searchText;
 
@@ -1007,27 +978,24 @@ function doSimplification() {
         headers: {
             "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
         }
-    }).done(function(data) {
+    }).done((data) => {
         var text = JSON.parse(data);
 
-        this.simplificationToTitle = text.title;
-        this.simplificationToSubTitle = text.subTitle;
-        this.simplificationName = "Natural " + (text.level) + ' -> ' + (text.level + 1);
-        this.simplificationTag = "Nível " + (text.level + 1);
+        simplificationName = "Natural " + (text.level) + ' -> ' + (text.level + 1);
+        simplificationTag = "Nível " + (text.level + 1);
     
-        this.totalParagraphs = text.totP;
-        this.totalSentences =  text.totS;
-        this.totalWords =  text.totW;
-        this.totalTokens =  text.totT;
-        
-        this.totalParagraphsTo = text.totP;
-        this.totalSentencesTo =  text.totS;
-        this.totalWordsTo =  text.totW;
-        this.totalTokensTo =  text.totT;
-  
-        this.textFrom = this.parseTextFromOut(text, null);
-        this.textTo = this.parseTextToOut(text, null);
-  
+        $('#simplificationName').val(simplificationName);
+        $('#simplificationTag').val(simplificationTag);
+
+        $('#qtSentencesFrom').text(text.parsed.totP + ' - ' + text.parsed.totS + ' - ' + text.parsed.totW );
+        $('#qtSentencesTo').text(text.parsed.totP + ' - ' + text.parsed.totS + ' - ' + text.parsed.totW );
+
+        textFrom = parseTextFromOut(text, null);
+        textTo = parseTextToOut(text, null);
+    
+        $('#divTextFrom').html(textFrom);
+        $('#divTextTo').html(textTo);
+
         $('#operations').show();
         $('#selected-sentence').show();
   
@@ -1076,8 +1044,8 @@ function editSimplificationText(textFrom, textTo, simp) {
     this.totalWordsTo =  textTo.totW;
     this.totalTokensTo =  textTo.totT;
 
-    this.textFrom = this.parseTextFromOut(textFrom, simp);
-    this.textTo = this.parseTextToOut(textTo, simp);
+    this.textFrom = parseTextFromOut(textFrom, simp);
+    this.textTo = parseTextToOut(textTo, simp);
 
     $('#operations').show();
     $('#selected-sentence').show();
@@ -1104,21 +1072,23 @@ function parseTextFromOut(textFrom, simp) {
     var out = '';
     out += "<style type='text/css'>";
     out += " p span:hover {background:#cdff84;cursor:pointer;}";
-    out += " p span div {display:inline-block;}";
-    out += " p span div:hover {font-weight:bold;text-decoration:underline;cursor:pointer;}";
+    out += " p span span {display:inline-block; margin:0px;}";
+    out += " p span span:hover {font-weight:bold;text-decoration:underline;cursor:pointer;}";
     out += "</style>";
     var openQuotes = false;
     var lastToken = '';
-    for(var p in textFrom.paragraphs) {
-      out += '<p id=\'f.p.' + p + '\'>';
-      for(var s in textFrom.paragraphs[p].sentences) {
-        var sObj = textFrom.paragraphs[p].sentences[s];
+
+    for(var p in textFrom.parsed.paragraphs) {
+      var par = textFrom.parsed.paragraphs[p];
+      out += '<p id=\'f.p.' + par.idx + '\'>';
+      for(var s in par.sentences) {
+        var sObj = par.sentences[s];
 
         if (sObj.text != '#rem#') {
 
-          var po = this.getPairAndOperations(simp, s, 'to'); 
+          var po = this.getPairAndOperations(simp, sObj.idx, 'to'); 
           
-          out += '<span id=\'f.s.' + s + '\' data-selected=\'false\' data-pair=\'' + po['pair'] + '\'';
+          out += '<span id=\'f.s.' + sObj.idx + '\' data-selected=\'false\' data-pair=\'' + po['pair'] + '\'';
           out += ' data-qtt=\'' + sObj.qtt + '\' data-qtw=\'' + sObj.qtw + '\'';
           out += ' data-operations=\'' + po['operations'] + '\'';
           out += ' onclick=\'sentenceClick(this)\'';
@@ -1138,11 +1108,11 @@ function parseTextFromOut(textFrom, simp) {
               out += ' ';
             }
   
-            out += '<div id=\'f.t.' + t + '\' data-selected=\'false\' data-pair=\'t.t.' + t + '\'';
+            out += '<span id=\'f.t.' + idx + '\' data-selected=\'false\' data-pair=\'t.t.' + idx + '\'';
             out += ' data-idx=\'' + idx + '\'';            
             out += ' onclick=\'wordClick(this, false)\'';
             out += ' oncontextmenu=\'wordClick(this, true); return false;\'';
-            out += ' onmouseover=\'overToken(this);\' onmouseout=\'outToken(this);\'>' + token + '</div>';
+            out += ' onmouseover=\'overToken(this);\' onmouseout=\'outToken(this);\'>' + token + '</span>';
             lastToken = token;
             this.tokenList += (idx + "||" + token + "||" + 'f.t.' + t + '|/|');
           }
@@ -1153,6 +1123,8 @@ function parseTextFromOut(textFrom, simp) {
       }
       out += "</p>"
     }
+    console.log(out);
+
     return out; 
 }
 
@@ -1202,18 +1174,19 @@ function parseTextToOut(textTo, simp) {
     out += " p span:hover {background:#cdff84;cursor:text;}";
     out += "</style>";
     var openQuotes = false;
-    for(var p in textTo.paragraphs) {
-      out += '<p id=\'t.p.' + p + '\'>';
-      for(var s in textTo.paragraphs[p].sentences) {
-        var sObj = textTo.paragraphs[p].sentences[s];
+    for(var p in textTo.parsed.paragraphs) {
+      var par = textTo.parsed.paragraphs[p];
+      out += '<p id=\'t.p.' + par.idx + '\'>';
+      for(var s in par.sentences) {
+        var sObj = par.sentences[s];
         
         if (simp == null && sObj.text == '#rem#') {
           //ignore
         } else {
 
-            var po = this.getPairAndOperations(simp, s, 'from'); 
+            var po = this.getPairAndOperations(simp, sObj.idx, 'from'); 
 
-            out += '<span id=\'t.s.' + s + '\'  data-selected=\'false\' data-pair=\'' + po['pair'] + '\'';
+            out += '<span id=\'t.s.' + sObj.idx + '\'  data-selected=\'false\' data-pair=\'' + po['pair'] + '\'';
             out += ' data-qtt=\'' + sObj.qtt + '\' data-qtw=\'' + sObj.qtw + '\'';
             out += ' data-operations=\'' + po['operations'] + '\'';
             out += ' onmouseover=\'overSentence(this);\' onmouseout=\'outSentence(this);\'>';
