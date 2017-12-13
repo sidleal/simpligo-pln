@@ -78,10 +78,16 @@ func Router() *mux.Router {
 	r.HandleFunc("/anotador/corpus/new", AnotadorCorpusNewHandler).Methods("POST")
 	r.HandleFunc("/anotador/corpus/list", AnotadorCorpusListHandler)
 	r.HandleFunc("/anotador/corpus/{id}", AnotadorCorpusRemoveHandler).Methods("DELETE")
+
 	r.HandleFunc("/anotador/corpus/{corpusId}/text/new", AnotadorTextNewHandler).Methods("POST")
 	r.HandleFunc("/anotador/corpus/{corpusId}/text/list", AnotadorTextListHandler)
 	r.HandleFunc("/anotador/corpus/{corpusId}/text/{id}", AnotadorTextRemoveHandler).Methods("DELETE")
 	r.HandleFunc("/anotador/corpus/{corpusId}/text/{id}", AnotadorTextGetHandler).Methods("GET")
+
+	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/new", AnotadorSimplNewHandler).Methods("POST")
+	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/list", AnotadorSimplListHandler)
+	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/{id}", AnotadorSimplRemoveHandler).Methods("DELETE")
+	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/{id}", AnotadorSimplGetHandler).Methods("GET")
 
 	return r
 }
@@ -512,6 +518,33 @@ type TextFull struct {
 	} `json:"parsed"`
 }
 
+type Simplification struct {
+	Id       string `json:"id"`
+	CorpusId string `json:"corpusId"`
+	Name     string `json:"name"`
+	Title    string `json:"title"`
+	Tags     string `json:"tags"`
+	From     string `json:"from"`
+	To       string `json:"to"`
+	Updated  string `json:"updated"`
+}
+
+type SimplificationFull struct {
+	Id        string `json:"id"`
+	CorpusId  string `json:"corpusId"`
+	Name      string `json:"name"`
+	Title     string `json:"title"`
+	Tags      string `json:"tags"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Updated   string `json:"updated"`
+	Sentences []struct {
+		From       string `json:"from"`
+		To         string `json:"to"`
+		Operations string `json:"operations"`
+	} `json:"sentences"`
+}
+
 func normalizeEmail(email string) string {
 	return strings.Replace(email, "@", "_at_", -1)
 }
@@ -615,6 +648,8 @@ func AnotadorCorpusRemoveHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// TEXTS
+
 func AnotadorTextNewHandler(w http.ResponseWriter, r *http.Request) {
 	err := validateSession(w, r)
 	if err != nil {
@@ -658,7 +693,7 @@ func AnotadorTextNewHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Text criado %s\n", put.Id)
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "ok")
+	fmt.Fprint(w, put.Id)
 }
 
 func AnotadorTextListHandler(w http.ResponseWriter, r *http.Request) {
@@ -767,6 +802,151 @@ func AnotadorTextGetHandler(w http.ResponseWriter, r *http.Request) {
 				log.Printf("Erro: %v", err)
 			}
 			ret = string(tJson)
+		}
+	}
+
+	fmt.Fprintf(w, ret)
+
+}
+
+// SIMPLIFICATIONS
+
+func AnotadorSimplNewHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	createIndexIfNotExists("corpus-simpl")
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(fmt.Errorf("Error reading req: %v.", err))
+	}
+
+	put, err := elClient.Index().
+		Refresh("true").
+		Index(indexPrefix + "corpus-simpl").
+		Type("simplification").
+		BodyString(string(body)).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Simplification created %s\n", put.Id)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, put.Id)
+}
+
+func AnotadorSimplListHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	corpusId := vars["corpusId"]
+
+	query := elastic.NewTermQuery("corpusId.keyword", corpusId)
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "corpus-simpl").
+		Type("simplification").
+		Query(query).
+		From(0).Size(100).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao listar: %v", err)
+	}
+
+	ret := "{\"list\":[ "
+	if searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var s Simplification
+			err := json.Unmarshal(*hit.Source, &s)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			s.Id = hit.Id
+			sJson, err := json.Marshal(s)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret += string(sJson) + ","
+		}
+	}
+	ret = ret[0 : len(ret)-1]
+	ret += "]}"
+
+	fmt.Fprintf(w, ret)
+
+}
+
+func AnotadorSimplRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	_, err = elClient.Delete().
+		Refresh("true").
+		Index(indexPrefix + "corpus-simpl").
+		Type("simplification").
+		Id(id).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao remover: %v", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
+
+}
+
+func AnotadorSimplGetHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	// corpusId := vars["corpusId"]
+	id := vars["id"]
+
+	query := elastic.NewTermQuery("_id", id)
+
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "corpus-simpl").
+		Type("simplification").
+		Query(query).
+		From(0).Size(1).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Não encontrado: %v", err)
+	}
+
+	ret := ""
+	if searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var s SimplificationFull
+			err := json.Unmarshal(*hit.Source, &s)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			s.Id = hit.Id
+			sJson, err := json.Marshal(s)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret = string(sJson)
 		}
 	}
 

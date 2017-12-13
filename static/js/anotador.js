@@ -273,9 +273,12 @@ var selectedCorpusName;
  
 var selectedSimplificationId;
 var selectedSimplificationName;
+var selectedSimplificationTextTo;
 
 var selectedTextId;
 var selectedTextTitle;
+var selectedTextName;
+var selectedTextLevel;
 
 var textFrom = '';
 var context = this;
@@ -579,7 +582,7 @@ function listTexts() {
         var result = JSON.parse(data);
         var lista = "";
         result.list.forEach(item => {
-            lista += "<a onclick=\"selectText('" + item.id + "','" + item.title+"')\" onmousedown=\"$('#waiting').toggle();\">";
+            lista += "<a onclick=\"selectText('" + item.id + "','" + item.title + "','" + item.name + "'," + item.level + ")\" onmousedown=\"$('#waiting').toggle();\">";
             lista += item.name;
             lista += "<i class=\"fa fa-trash-o inner-button\" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"deleteText('" + item.id + "');event.stopPropagation();\" onmousedown=\"event.stopPropagation();\"></i>";
             lista += "<i class=\"fa fa-spinner fa-pulse fa-fw\" id='waiting' style=\"float:right;display:none;\"></i>";
@@ -674,99 +677,14 @@ function saveText() {
         alert( "Erro" );
     });
 
-
-
-    // this.texts = this.af.list('/corpora/' + this.selectedCorpusId + "/texts");
-    // this.texts.push(
-    //   {
-    //     name: this.textName,
-    //     title: this.textTitle,
-    //     subTitle: this.textSubTitle, 
-    //     content: this.textContent, 
-    //     published: this.textPublished, 
-    //     author: this.textAuthor,
-    //     source: this.textSource,
-    //     rawContent: this.textRawContent,
-    //     level: 0
-    //   }
-    // ).then((text) => { 
-    //   var textContentFull = "";
-    //   textContentFull += "# " + this.textTitle + "\n";
-    //   textContentFull += "## " + this.textSubTitle + "\n";
-    //   textContentFull += this.textContent;     
-    //   var parsedText = this.senterService.splitText(textContentFull);
-    //   this.saveParagraphs(text, parsedText); 
-    // });
-
-    // this.showTextMenu();
 }
 
-// function saveParagraphs(text, parsedText) {
-//     var textObj = this.af.object('/corpora/' + this.selectedCorpusId + "/texts/" + text.key);
-//     textObj.update(
-//       {
-//         totP: parsedText['totP'],
-//         totS:  parsedText['totS'],
-//         totT:  parsedText['totT'],
-//         totW:  parsedText['totW'],
-//       });
 
-//     var paragraphs = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs");
-
-//     parsedText['paragraphs'].forEach(p => {
-//       paragraphs.push(
-//         {
-//           idx: p['idx'],
-//           text: p['text']
-//         }
-//       ).then((par) => {
-//         this.saveSentences(text, par, p);
-//       });
-//     });
-
-// }
-
-// function saveSentences(text, par, p) {
-//     var sentences = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs/" + par.key + "/sentences");
-//     p['sentences'].forEach(s => {
-//       sentences.push(
-//         {
-//           idx: s['idx'],
-//           text: s['text'],
-//           qtw: s['qtw'],
-//           qtt: s['qtt']
-//         }
-//       ).then((sent) => {
-//         s['newId'] = sent.key;
-        
-//         if (this.simplificationParsedText != null) {
-//           if (this.simplificationParsedText.totS == s['idx']) {
-//                 this.saveOperationList(text);
-//           }
-//         }
- 
-//         this.saveTokens(text, par, sent, s);
-//       });
-//     });
-
-// }
-
-// function saveTokens(text, par, sent, s) {
-//     var tokens = this.af.list('/corpora/' + this.selectedCorpusId + "/texts/" + text.key + "/paragraphs/" + par.key + "/sentences/" + sent.key + "/tokens");
-//     s['tokens'].forEach(t => {
-//       tokens.push(
-//         {
-//           idx: t['idx'],
-//           token: t['token'],
-//           lemma: t['token']
-//         }
-//       );
-//     });
-// }
-
-function selectText(textId, textTitle) {
+function selectText(textId, textTitle, textName, textLevel) {
     this.selectedTextId = textId;
     this.selectedTextTitle = textTitle;
+    this.selectedTextName = textName;
+    this.selectedTextLevel = textLevel;    
     this.selectedSimplificationId = null;
     this.doSimplification();
 }
@@ -795,8 +713,13 @@ function saveSimplification() {
     
     $("#waiting").show();
 
-    var textToTitle = document.getElementById("divTextToTitle").innerHTML;
-    var textToSubTitle = document.getElementById("divTextToSubTitle").innerHTML;
+    var regexp = /> #\s(.*?)<\/span>/g
+    var match = regexp.exec($("#divTextTo").html());
+    var textToTitle = match[1];
+
+    regexp = /> ##\s(.*?)<\/span>/g
+    match = regexp.exec($("#divTextTo").html());
+    var textToSubTitle = match[1];
 
     var parsedParagraphs = [];
     var idxParagraphs = 0;
@@ -874,84 +797,127 @@ function saveSimplification() {
 
     this.simplificationParsedText = {"totP": idxParagraphs, "totS": idxSentences - qtRemoved, "totT": idxTokens, "totW": idxWords, "paragraphs": parsedParagraphs};
 
-    this.simplificationTextFrom = this.af.object('/corpora/' + this.selectedCorpusId  + "/texts/" + this.selectedTextId);
-    this.simplificationTextFrom.take(1).subscribe(text => {
 
-      var newName = text.name;
-      newName = newName.replace(/nível_[0-9]+/g, "nível_" + (text.level + 1));
+    var newName = selectedTextName;
+    newName = newName.replace(/nível_[0-9]+/g, "nível_" + (selectedTextLevel + 1));
 
-      if (this.selectedSimplificationId != null) {
-        this.simplification = this.af.object('/corpora/' + this.selectedCorpusId  + "/simplifications/" + this.selectedSimplificationId);
-        this.simplification.take(1).subscribe(simp => {
-          this.af.object('/corpora/' + this.selectedCorpusId + '/texts/' + simp.to).remove();
-          this.af.object('/corpora/' + this.selectedCorpusId + '/simplifications/' + this.selectedSimplificationId).remove();
-          this.selectedSimplificationId = null;
+    if (this.selectedSimplificationId != null) {
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/anotador/corpus/' + selectedCorpusId + "/text/" + selectedSimplificationTextTo,
+            headers: {
+                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            },
+        }).done(function(data) {
+            //ok
+        }).fail(function(error) {
+            alert( "Erro" );
         });
-      } 
 
-      this.texts = this.af.list('/corpora/' + this.selectedCorpusId + "/texts");
-      
-      this.texts.push(
-        {
-          name: newName,
-          title: textToTitle,
-          subTitle: textToSubTitle, 
-          content: newTextcontent,
-          published: moment().format("YYYY-MM-DD"),
-          updated: moment().format("YYYY-MM-DD"),
-          author: text.author + ' / ' + this.loggedUser,
-          source: 'Simplificação Nível ' + (text.level + 1),
-          level: text.level + 1
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/anotador/corpus/' + selectedCorpusId + "/simpl/" + selectedSimplificationId,
+            headers: {
+                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            },
+        }).done(function(data) {
+            //ok
+        }).fail(function(error) {
+            alert( "Erro" );
+        });
+        
+    } 
+
+    var parsedText = splitText(newTextcontent);
+
+    $.ajax({
+        type: 'POST',
+        url: '/anotador/corpus/' + selectedCorpusId + '/text/new',
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        },
+        data: JSON.stringify({
+            corpusId: selectedCorpusId,
+            name: newName,
+            title: textToTitle,
+            subTitle: textToSubTitle,
+            author: loggedUser,
+            published: moment().format("YYYY-MM-DD"),
+            updated: moment().format("YYYY-MM-DD"),
+            source: 'Simplificação Nível ' + (selectedTextLevel + 1),
+            content: newTextcontent,
+            parsed: parsedText,
+            level: selectedTextLevel + 1
+        }),
+        contentType: "application/json"
+    }).done(function(data) {
+        saveOperationList(data)
+    }).fail(function(error) {
+        alert( "Erro" );
+    });
+
+
+}
+
+function saveOperationList(textToId) {
+
+    var simplSentences = [];
+
+    this.simplificationParsedText.paragraphs.forEach(p => {
+      p.sentences.forEach(s => {
+
+        var from = s.pair.replace(/f\.s\./g, '');
+        var operations = s.operations.replace(/f\.s\./g, '');
+        if (operations == '') {
+          operations = 'none();'
         }
-      ).then((text) => {
-        this.saveParagraphs(text, this.simplificationParsedText);
-      });
-    });
-
-}
-
-function saveOperationList(text) {
-    this.simplifications = this.af.list('/corpora/' + this.selectedCorpusId + "/simplifications");
-    this.simplifications.push(
-      {
-        name: this.simplificationName,
-        title: this.selectedTextTitle,
-        from: this.selectedTextId,
-        to: text.key,
-        tags: this.simplificationTag,
-        updated: moment().format("YYYY-MM-DD")
-      }
-    ).then(simpl => {
-      var simplSentences = this.af.list('/corpora/' + this.selectedCorpusId + "/simplifications/" + simpl.key + "/sentences");
-      this.simplificationParsedText.paragraphs.forEach(p => {
-        p.sentences.forEach(s => {
-
-          var from = s.pair.replace(/f\.s\./g, '');
-          var operations = s.operations.replace(/f\.s\./g, '');
-          if (operations == '') {
-            operations = 'none();'
+        
+        simplSentences.push(
+          {
+            from: from,
+            to: s.idx,
+            operations: operations
           }
-          
-          simplSentences.push(
-            {
-              idx: s.idx,
-              from: from,
-              to: s.newId,
-              operations: operations
-            }
-          );
-        });
+        );
       });
+    });
 
-      this.selectSimplification(simpl.key, this.simplificationName);
+    $.ajax({
+        type: 'POST',
+        url: '/anotador/corpus/' + selectedCorpusId + '/simpl/new',
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        },
+        data: JSON.stringify({
+            corpusId: selectedCorpusId,
+            name: $('#simplificationName').val(),
+            title: selectedTextTitle,
+            from: selectedTextId,
+            to: textToId,
+            tags: $('#simplificationTag').val(),
+            updated: moment().format("YYYY-MM-DD"),
+            sentences: simplSentences
 
+        }),
+        contentType: "application/json"
+    }).done(function(data) {
+        
+        console.log(data);
+        selectSimplification(data, $('#simplificationName').val(), textToId);
+
+    }).fail(function(error) {
+        alert( "Erro" );
     });
 
 }
 
-function selectSimplification(simplId, simplName) {
+function selectSimplification(simplId, simplName, simplTextTo) {
     this.selectedSimplificationId = simplId;
     this.selectedSimplificationName = simplName;
+    this.selectedSimplificationTextTo = simplTextTo;
+    
     this.editSimplification();
 }
 
@@ -998,19 +964,63 @@ function doSimplification() {
 }
 
 function editSimplification() {
-  this.simplification = this.af.object('/corpora/' + this.selectedCorpusId  + "/simplifications/" + this.selectedSimplificationId);
-  this.simplification.take(1).subscribe(simp => {
-    this.simplificationTextFrom = this.af.object('/corpora/' + this.selectedCorpusId  + "/texts/" + simp.from);
-    this.simplificationTextFrom.take(1).subscribe(textFrom => {
-      var simplificationTextTo = this.af.object('/corpora/' + this.selectedCorpusId  + "/texts/" + simp.to);
-      this.selectedTextId = simp.from;
-      this.selectedTextTitle = textFrom.title;
-      simplificationTextTo.take(1).subscribe(textTo => {
-        this.editSimplificationText(textFrom, textTo, simp);
-      });        
-    });   
 
-  });
+    $.ajax({
+        type: 'GET',
+        url: '/anotador/corpus/' + selectedCorpusId + '/simpl/' + selectedSimplificationId,
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        }
+    }).done((data) => {
+        var simpl = JSON.parse(data);
+
+
+        $.ajax({
+            type: 'GET',
+            url: '/anotador/corpus/' + selectedCorpusId + '/text/' + simpl.from,
+            headers: {
+                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            }
+        }).done((data) => {
+            var textFrom = JSON.parse(data);
+    
+
+            $.ajax({
+                type: 'GET',
+                url: '/anotador/corpus/' + selectedCorpusId + '/text/' + simpl.to,
+                headers: {
+                    "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                }
+            }).done((data) => {
+                var textTo = JSON.parse(data);
+        
+                
+                selectedTextId = simpl.from;
+                selectedTextTitle = textFrom.title;
+                selectedTextName = textFrom.name;
+                selectedTextLevel = textFrom.level;
+                
+                editSimplificationText(textFrom, textTo, simpl);
+          
+
+            }).fail(function(error) {
+                alert( "Erro" );
+            });
+    
+    
+        }).fail(function(error) {
+            alert( "Erro" );
+        });
+
+
+    }).fail(function(error) {
+        alert( "Erro" );
+    });
+
+
+
+
+
 }
 
 function editSimplificationText(textFrom, textTo, simp) {
@@ -1035,14 +1045,14 @@ function editSimplificationText(textFrom, textTo, simp) {
     this.totalWordsTo =  textTo.totW;
     this.totalTokensTo =  textTo.totT;
 
-    this.textFrom = parseTextFromOut(textFrom, simp);
-    this.textTo = parseTextToOut(textTo, simp);
+    parsedTextFrom = parseTextFromOut(textFrom, simp);
+    parsedTextTo = parseTextToOut(textTo, simp);
 
     $('#operations').show();
     $('#selected-sentence').show();
 
-    $("#divTextFrom").html(this.textFrom);
-    $("#divTextTo").html(this.textTo);
+    $("#divTextFrom").html(parsedTextFrom);
+    $("#divTextTo").html(parsedTextTo);
 
     $("#waiting").hide();  
 
