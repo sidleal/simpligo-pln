@@ -853,7 +853,7 @@ function saveSimplification() {
         
         var parsedSentence = {"idx": idxSentences, "text": sContent, "id": sId, "pair": sPair, "operations": operations, "tokens": []};
         
-        var parsedText = this.senterService.splitText(sContent);
+        var parsedText = splitText(sContent);
         var parsedS = parsedText['paragraphs'][0]['sentences'][0];
         parsedSentence["qtt"] = parsedS["qtt"];
         parsedSentence["qtw"] = parsedS["qtw"];
@@ -1403,18 +1403,18 @@ function parseSentence(sentence) {
 function doUnion(sentences, selectedSentence) {
     var previousSentence = '';
     sentences.forEach(s => {
-        if (s.indexOf(selectedSentence) > 0) {
+        if (s.indexOf("pair=\"" + selectedSentence + "\"") > 0) {
             var ps = this.parseSentence(s);
             var pps = this.parseSentence(previousSentence);
   
             this.editSentenceDialog(this, "União de Sentença", pps['content'] + ' ' + ps['content'], function (context, ret, text) {
                 if (ret) {
-                    var parsedText = context.senterService.splitText(text);
+                    var parsedText = splitText(text);
                     var parsedSentence = parsedText['paragraphs'][0]['sentences'][0]; 
 
                     var newId = pps['id'] + '|' + ps['id'];
 
-                    var newSentHtml = "<span _ngcontent-" + ps['ngContent'] + "=\"\" data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
+                    var newSentHtml = "<span data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
                     newSentHtml = newSentHtml.replace("{id}", newId);
                     newSentHtml = newSentHtml.replace("{pair}", pps['pair'] + ',' + ps['pair']);
                     newSentHtml = newSentHtml.replace("{qtt}", parsedSentence['qtt']);
@@ -1439,20 +1439,20 @@ function doUnion(sentences, selectedSentence) {
 
 
 function doDivision(sentences, selectedSentence) {
+
     sentences.forEach(s => {
-        if (s.indexOf(selectedSentence) > 0) {
+        if (s.indexOf("pair=\"" + selectedSentence + "\"") > 0) {
             var ps = this.parseSentence(s);
 
-
-            this.editSentenceDialog(this, "Divisão de Sentença", ps['content'], function (context, ret, text) {
+           this.editSentenceDialog(this, "Divisão de Sentença", ps['content'], function (context, ret, text) {
                 if (ret) {
-                    var parsedText = context.senterService.splitText(text);
+                    var parsedText = splitText(text);
                     var parsedSentences = parsedText['paragraphs'][0]['sentences']; 
 
                     var newHtml = "";
                     var newIds = [];
                     parsedSentences.forEach(ns => {
-                      var newSentHtml = "<span _ngcontent-" + ps['ngContent'] + "=\"\" data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
+                      var newSentHtml = "<span data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
                       newSentHtml = newSentHtml.replace("{id}", ps['id'] + '_new_' + ns['idx']);
                       newSentHtml = newSentHtml.replace("{pair}", ps['pair']);
                       newSentHtml = newSentHtml.replace("{qtt}", ns['qtt']);
@@ -1478,17 +1478,17 @@ function doDivision(sentences, selectedSentence) {
 
 function doInclusion(sentences, selectedSentence) {
     sentences.forEach(s => {
-        if (s.indexOf(selectedSentence) > 0) {
+        if (s.indexOf("pair=\"" + selectedSentence + "\"") > 0) {
             var ps = this.parseSentence(s);
   
             this.editSentenceDialogInclusion(this, "Inclusão de Sentença", '', function (context, ret, text) {
                 if (ret > 0) {
-                    var parsedText = context.senterService.splitText(text);
+                    var parsedText = splitText(text);
                     var parsedSentence = parsedText['paragraphs'][0]['sentences'][0]; 
 
                     var newId = ps['id'] + '_new';
 
-                    var newSentHtml = "<span _ngcontent-" + ps['ngContent'] + "=\"\" data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
+                    var newSentHtml = "<span data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
                     newSentHtml = newSentHtml.replace("{id}", newId);
                     newSentHtml = newSentHtml.replace("{pair}", ps['pair']);
                     newSentHtml = newSentHtml.replace("{qtt}", parsedSentence['qtt']);
@@ -1515,15 +1515,15 @@ function doInclusion(sentences, selectedSentence) {
 
 function doRewrite(sentences, selectedSentence) {
     sentences.forEach(s => {
-        if (s.indexOf(selectedSentence) > 0) {
+        if (s.indexOf("pair=\"" + selectedSentence + "\"") > 0) {
             var ps = this.parseSentence(s);
 
             this.editSentenceDialog(this, "Reescrita de Sentença", ps['content'], function (context, ret, text) {
                 if (ret) {
-                    var parsedText = context.senterService.splitText(text);
+                    var parsedText = splitText(text);
                     var ns = parsedText['paragraphs'][0]['sentences'][0]; 
 
-                    var newSentHtml = "<span _ngcontent-" + ps['ngContent'] + "=\"\" data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
+                    var newSentHtml = "<span data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
                     newSentHtml = newSentHtml.replace("{id}", ps['id']);
                     newSentHtml = newSentHtml.replace("{pair}", ps['pair']);
                     newSentHtml = newSentHtml.replace("{qtt}", ns['qtt']);
@@ -1543,7 +1543,7 @@ function doRewrite(sentences, selectedSentence) {
 
 function doRemotion(sentences, selectedSentence) {
     sentences.forEach(s => {
-        if (s.indexOf(selectedSentence) > 0) {
+            if (s.indexOf("pair=\"" + selectedSentence + "\"") > 0) {
             var ps = this.parseSentence(s);
   
             $("#divTextTo").html($("#divTextTo").html().replace(s, s.replace(ps['content'], '#rem#')));
@@ -1754,7 +1754,7 @@ function undoDivision(sentences, sentenceId, operation) {
     var unitedSentence = "";
     sentences.forEach(s => {
       pairSentences.forEach(pair => {
-        if (s.indexOf(pair) > 0) {
+        if (s.indexOf("id=\"" + pair + "\"") > 0) {    
           var ps = this.parseSentence(s);
           unitedSentence += ps['content'];
           pairSentences.splice(pairSentences.indexOf(pair), 1);
@@ -1764,7 +1764,7 @@ function undoDivision(sentences, sentenceId, operation) {
           } else {
             var newId = sentenceId.replace('f.s', 't.s');
 
-            var newSentHtml = "<span _ngcontent-" + ps['ngContent'] + "=\"\" data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
+            var newSentHtml = "<span data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
             newSentHtml = newSentHtml.replace("{id}", newId);
             newSentHtml = newSentHtml.replace("{pair}", sentenceId);
             newSentHtml = newSentHtml.replace("{qtt}", ps['qtt']);
@@ -1790,12 +1790,12 @@ function undoUnion(sentences, sentenceId, operation) {
     var fromPair = fromSentence.getAttribute("data-pair");
 
     sentences.forEach(s => {
-        if (s.indexOf(fromPair) > 0) {
+        if (s.indexOf("id=\"" + fromPair + "\"") > 0) {        
             var ps = this.parseSentence(s);
 
             this.editSentenceDialog(this, "Desfazer União de Sentença", ps['content'], function (context, ret, text) {
                 if (ret) {
-                    var parsedText = context.senterService.splitText(text);
+                    var parsedText = splitText(text);
                     var parsedSentences = parsedText['paragraphs'][0]['sentences']; 
 
                     var toPairs = ps['pair'].split(',');
@@ -1806,7 +1806,7 @@ function undoUnion(sentences, sentenceId, operation) {
                     var newHtml = "";
 
                     for (var i = 0; i < 2; i++) {
-                      var newSentHtml = "<span _ngcontent-" + ps['ngContent'] + "=\"\" data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
+                      var newSentHtml = "<span data-pair=\"{pair}\" data-qtt=\"{qtt}\" data-qtw=\"{qtw}\" data-selected=\"true\" id=\"{id}\" onmouseout=\"outSentence(this);\" onmouseover=\"overSentence(this);\" style=\"font-weight: bold;background: #EDE981;\"> {content}</span>";
                       newSentHtml = newSentHtml.replace("{id}", toPairs[i].replace('f.s.', 't.s.'));
                       newSentHtml = newSentHtml.replace("{pair}", toPairs[i]);
                       newSentHtml = newSentHtml.replace("{qtt}", parsedSentences[i]['qtt']);
