@@ -436,7 +436,7 @@ function back() {
         if (this.selectedSimplificationId == null) {
           this.listTexts();          
         } else {
-          this.listSimplifications();
+          listSimplifications();
         }
         $("#operations").hide();
         $("#selected-sentence").hide();
@@ -690,13 +690,33 @@ function selectText(textId, textTitle, textName, textLevel) {
 }
 
 function listSimplifications() {
+
+
+    $.ajax({
+        type: 'GET',
+        url: '/anotador/corpus/' + selectedCorpusId + '/simpl/list',
+        headers: {
+            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+        }
+    }).done(function(data) {
+        var result = JSON.parse(data);
+        var lista = "";
+        result.list.forEach(item => {
+            lista += "<a onclick=\"selectSimplification('" + item.id + "','" + item.name + "','" + item.to + "')\" onmousedown=\"$('#waiting').toggle();\">";
+            lista += item.title + ' - ' + item.name;
+            lista += "<i class=\"fa fa-trash-o inner-button\" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"deleteSimplification('" + item.id + "');event.stopPropagation();\" onmousedown=\"event.stopPropagation();\"></i>";
+            lista += "<i class=\"fa fa-spinner fa-pulse fa-fw\" id='waiting' style=\"float:right;display:none;\"></i>";
+            lista += "<br/><p>" + item.tags + " - " + item.updated + ")</p>";
+            lista += "</a>";
+        })
+        $('#details-container-simpl').html(lista);
+       
+    }).fail(function(error) {
+        alert( "Erro" );
+    });
+    
     this.stage = "simplifications";
     this.breadcrumb = "editor > meus corpora > " + this.selectedCorpusName + " > Simplificações";
-    this.simplifications = this.af.list('/corpora/' + this.selectedCorpusId + "/simplifications", {
-      query: {
-        limitToLast: 50
-      }
-    });
     this.refresh();
 }
    
@@ -877,7 +897,7 @@ function saveOperationList(textToId) {
         simplSentences.push(
           {
             from: from,
-            to: s.idx,
+            to: s.idx.toString(),
             operations: operations
           }
         );
@@ -918,7 +938,7 @@ function selectSimplification(simplId, simplName, simplTextTo) {
     this.selectedSimplificationName = simplName;
     this.selectedSimplificationTextTo = simplTextTo;
     
-    this.editSimplification();
+    editSimplification();
 }
 
 function doSimplification() {
@@ -964,7 +984,7 @@ function doSimplification() {
 }
 
 function editSimplification() {
-
+    
     $.ajax({
         type: 'GET',
         url: '/anotador/corpus/' + selectedCorpusId + '/simpl/' + selectedSimplificationId,
@@ -1028,31 +1048,24 @@ function editSimplificationText(textFrom, textTo, simp) {
     this.stage = "doSimplification";
     this.breadcrumb = "editor > meus corpora > " + this.selectedCorpusName + " > textos > " + this.selectedTextTitle + " > Editar Simplificação";
 
+    this.refresh();
+
     $("#sentenceOperations").html('');
 
-    this.simplificationToTitle = textTo.title;
-    this.simplificationToSubTitle = textTo.subTitle;
-    this.simplificationName = simp.name;
-    this.simplificationTag = simp.tags;
+    $('#simplificationName').val(simp.name);
+    $('#simplificationTag').val(simp.tags);
 
-    this.totalParagraphs = textFrom.totP;
-    this.totalSentences =  textFrom.totS;
-    this.totalWords =  textFrom.totW;
-    this.totalTokens =  textFrom.totT;
-
-    this.totalParagraphsTo = textTo.totP;
-    this.totalSentencesTo =  textTo.totS;
-    this.totalWordsTo =  textTo.totW;
-    this.totalTokensTo =  textTo.totT;
+    $('#qtSentencesFrom').text(textFrom.parsed.totP + ' - ' + textFrom.parsed.totS + ' - ' + textFrom.parsed.totW );
+    $('#qtSentencesTo').text(textTo.parsed.totP + ' - ' + textTo.parsed.totS + ' - ' + textTo.parsed.totW );
 
     parsedTextFrom = parseTextFromOut(textFrom, simp);
     parsedTextTo = parseTextToOut(textTo, simp);
 
+    $('#divTextFrom').html(parsedTextFrom);
+    $('#divTextTo').html(parsedTextTo);
+
     $('#operations').show();
     $('#selected-sentence').show();
-
-    $("#divTextFrom").html(parsedTextFrom);
-    $("#divTextTo").html(parsedTextTo);
 
     $("#waiting").hide();  
 
@@ -1061,8 +1074,9 @@ function editSimplificationText(textFrom, textTo, simp) {
 function getSimplificationSentences(simp, sentenceId, source) {
     var ret = [];
     for (var s in simp.sentences) {
-      var simpSentence = simp.sentences[s]; 
-      if (simpSentence[source].indexOf(sentenceId) >= 0) {
+      var simpSentence = simp.sentences[s];
+      listIds = simpSentence[source].split(",");
+      if (listIds.indexOf(sentenceId.toString()) >= 0) {
         ret.push(simpSentence);
       }
     }
@@ -1087,7 +1101,7 @@ function parseTextFromOut(textFrom, simp) {
 
         if (sObj.text != '#rem#') {
 
-          var po = this.getPairAndOperations(simp, sObj.idx, 'to'); 
+          var po = getPairAndOperations(simp, sObj.idx, 'to'); 
           
           out += '<span id=\'f.s.' + sObj.idx + '\' data-selected=\'false\' data-pair=\'' + po['pair'] + '\'';
           out += ' data-qtt=\'' + sObj.qtt + '\' data-qtw=\'' + sObj.qtw + '\'';
@@ -1144,7 +1158,7 @@ function getPairAndOperations(simp, s, source) {
     
     if (simp != null) {
       var newPairList = [];
-      var simpSentences = this.getSimplificationSentences(simp, s, inverseSource);
+      var simpSentences = getSimplificationSentences(simp, s, inverseSource);
       for (var j in simpSentences) {
         var pairList = simpSentences[j][source].split(','); 
         for (var i in pairList) {

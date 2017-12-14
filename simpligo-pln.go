@@ -34,6 +34,7 @@ var jwtKey = "a2lskdjf4jaks2dhfks"
 var admEmail = "admin@sidle.al"
 var admKey = "simples"
 var indexPrefix = "simpligo-pln-"
+var abbrevList = []string{"Prof.", "A.C.", "a.C.", "prof."}
 
 var elClient *elastic.Client
 var err error
@@ -56,6 +57,7 @@ func Init() {
 
 	createIndexIfNotExists("user")
 	createAdminIfNotExists()
+	createAbbrevIfNotExists()
 
 }
 
@@ -231,6 +233,22 @@ func createAdminIfNotExists() {
 
 }
 
+func createAbbrevIfNotExists() {
+
+	_, err := elClient.Search().
+		Index(indexPrefix + "abbrev").
+		Type("abbrev").
+		From(0).Size(100).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao listar abbrevs: %v", err)
+
+		for _, a := range abbrevList {
+			SaveAbbrev(Abbreviation{Name: a})
+		}
+	}
+}
+
 func getUser(email string) (User, error) {
 
 	query := elastic.NewBoolQuery()
@@ -349,6 +367,14 @@ func SenterAbbrevNewHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Erro ao tratar payload: %v", err)
 	}
 
+	SaveAbbrev(abbrev)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
+}
+
+func SaveAbbrev(abbrev Abbreviation) {
+
 	createIndexIfNotExists("abbrev")
 
 	put, err := elClient.Index().
@@ -362,8 +388,6 @@ func SenterAbbrevNewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Abreviação criada %s\n", put.Id)
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "ok")
 }
 
 func SenterAbbrevRemoveHandler(w http.ResponseWriter, r *http.Request) {
@@ -408,7 +432,7 @@ func SenterAbbrevListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := "{\"list\":["
-	if searchResult.Hits.TotalHits > 0 {
+	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var a Abbreviation
 			err := json.Unmarshal(*hit.Source, &a)
@@ -601,7 +625,7 @@ func AnotadorCorpusListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := "{\"list\":[ "
-	if searchResult.Hits.TotalHits > 0 {
+	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var c Corpus
 			err := json.Unmarshal(*hit.Source, &c)
@@ -718,7 +742,7 @@ func AnotadorTextListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := "{\"list\":[ "
-	if searchResult.Hits.TotalHits > 0 {
+	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var t Text
 			err := json.Unmarshal(*hit.Source, &t)
@@ -789,7 +813,7 @@ func AnotadorTextGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := ""
-	if searchResult.Hits.TotalHits > 0 {
+	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var t TextFull
 			err := json.Unmarshal(*hit.Source, &t)
@@ -863,7 +887,7 @@ func AnotadorSimplListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := "{\"list\":[ "
-	if searchResult.Hits.TotalHits > 0 {
+	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var s Simplification
 			err := json.Unmarshal(*hit.Source, &s)
@@ -934,9 +958,13 @@ func AnotadorSimplGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := ""
-	if searchResult.Hits.TotalHits > 0 {
+	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var s SimplificationFull
+
+			// j, _ := hit.Source.MarshalJSON()
+			// log.Println(string(j))
+
 			err := json.Unmarshal(*hit.Source, &s)
 			if err != nil {
 				log.Printf("Erro: %v", err)

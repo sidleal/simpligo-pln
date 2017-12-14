@@ -80,15 +80,9 @@
       </div>
   
       <div id="simplifications" style="display:none">
-        <input type="searchText" placeholder="Pesquisar" (keyup)="filterText()" id="searchText"/>
+        <input type="text" placeholder="Pesquisar" (keyup)="filterText()" id="searchText"/>
   
-        <div class="details-container-lines"> 
-            <a onclick="selectSimplification(simp.$key, simp.name)" onmousedown="$('#waiting').toggle();" *ngFor="let simp of simplifications | async">
-              {{simp.title}} - {{simp.name}} 
-              <i class="fa fa-trash-o inner-button" data-toggle="tooltip" title="Excluir" onclick="deleteSimplification(simp.$key);event.stopPropagation();" (mousedown)="event.stopPropagation();"></i>
-              <i class="fa fa-spinner fa-pulse fa-fw" id='waiting' style="float:right;display:none;"></i>
-              <br/><p>{{simp.tags}} - {{simp.updated}}</p>
-            </a>
+        <div class="details-container-lines" id="details-container-simpl"> 
         </div>
       </div>
   
@@ -101,7 +95,7 @@
             <input type="text" id="corpusSource" placeholder="Fonte"/>
             <label for="corpusGenre">Gênero:</label>
             <input type="text" id="corpusGenre" placeholder="Gênero"/>
-            <button onclick="saveCorpus()" id="btnSaveCorpus" class="default"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
+            <button onclick="this.style = 'cursor: wait;';saveCorpus()" id="btnSaveCorpus" class="default"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
           </div>
         </div>
       </div>
@@ -122,7 +116,7 @@
         <input type="text" placeholder="Fonte" id="textSource"/>
         <label for="textContent">Conteúdo:</label>    
         <textarea placeholder="Conteúdo" id="textContent" rows="20"></textarea>
-        <button onclick="saveText()" id="btnSaveText"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
+        <button onclick="this.style = 'cursor: wait;';saveText()" id="btnSaveText"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
       </div>
   
       <div id='operations' class='operations' style='top: 15%;left: 70%;display:none;'>
