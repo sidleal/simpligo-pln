@@ -3,7 +3,7 @@
 ## Plataforma de Simplificação para a Língua Portuguesa
 
 ### Projeto em desenvolvimento...
-Continuação em Go do projeto anterior que utilizava Firebase: https://github.com/sidleal/simplifica
+Continuação em Go e Elasticsearch do projeto anterior que utilizava Firebase: https://github.com/sidleal/simplifica
 
 ### Ambiente
 
