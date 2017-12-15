@@ -704,7 +704,7 @@ function listSimplifications() {
         result.list.forEach(item => {
             lista += "<a onclick=\"selectSimplification('" + item.id + "','" + item.name + "','" + item.to + "')\" onmousedown=\"$('#waiting').toggle();\">";
             lista += item.title + ' - ' + item.name;
-            lista += "<i class=\"fa fa-trash-o inner-button\" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"deleteSimplification('" + item.id + "');event.stopPropagation();\" onmousedown=\"event.stopPropagation();\"></i>";
+            lista += "<i class=\"fa fa-trash-o inner-button\" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"deleteSimplification('" + item.id + "','" + item.to + "');event.stopPropagation();\" onmousedown=\"event.stopPropagation();\"></i>";
             lista += "<i class=\"fa fa-spinner fa-pulse fa-fw\" id='waiting' style=\"float:right;display:none;\"></i>";
             lista += "<br/><p>" + item.tags + " - " + item.updated + ")</p>";
             lista += "</a>";
@@ -720,10 +720,36 @@ function listSimplifications() {
     this.refresh();
 }
    
-function deleteSimplification(simpId) {
+function deleteSimplification(simpId, textToId) {
     this.confirmDialog('Confirma a exclusão?', ret => {
       if (ret) {
-        this.af.object('/corpora/' + this.selectedCorpusId + '/simplifications/' + simpId).remove();
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/anotador/corpus/' + selectedCorpusId + "/text/" + textToId,
+            headers: {
+                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            },
+        }).done(function(data) {
+            //ok          
+        }).fail(function(error) {
+            alert( "Erro" );
+        });
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/anotador/corpus/' + selectedCorpusId + "/simpl/" + simpId,
+            headers: {
+                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            },
+        }).done(function(data) {
+            
+            listSimplifications();
+
+        }).fail(function(error) {
+            alert( "Erro" );
+        });
+
       }
     });
 
