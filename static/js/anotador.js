@@ -162,23 +162,23 @@ function refreshOperationsList(sentence) {
                     var details = '';
         
                     if (this.substOps.indexOf(opKey) >= 0) {
-                      var match = /\((.*)\|(.*)\|(.*)\)/g.exec(op);
+                      var match = /\((.*)\|(.*)\|(.*)\|(.*)\)/g.exec(op);
                       if (match) {
                         details = match[2] + ' --> ' + match[3];
                       }
                     } else if (opKey == 'partRemotion') {
-                      var match = /\((.*)\|(.*)\)/g.exec(op);
+                      var match = /\((.*)\|(.*)\|(.*)\)/g.exec(op);
                       if (match) {
                         details = match[2];
                       }              
                     } else if (opKey == 'notMapped') {
-                      var match = /\((.*)\|(.*)\|(.*)\|(.*)\)/g.exec(op);
+                      var match = /\((.*)\|(.*)\|(.*)\|(.*)\|(.*)\)/g.exec(op);
                       if (match) {
                         details = match[4] + ': ' + match[2] + ' --> ' + match[3];
                       }              
                     }
         
-                    operationsHtml += "<li data-toggle=\"tooltip\" title=\"" + details + "\">" + opDesc + " <i class=\"fa fa-trash-o \" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"window.dispatchEvent(new CustomEvent('undoOperation', { bubbles: true, detail: '" + op + "' }));\" onMouseOver=\"this.style='cursor:pointer;color:red;';\" onMouseOut=\"this.style='cursor:pointer;';\"></i>"
+                    operationsHtml += "<li data-toggle=\"tooltip\" title=\"" + details + "\">" + opDesc + "(<i>" + details + "</i>)" + " <i class=\"fa fa-trash-o \" data-toggle=\"tooltip\" title=\"Excluir\" onclick=\"undoOperation('" + op + "');\" onMouseOver=\"this.style='cursor:pointer;color:red;';\" onMouseOut=\"this.style='cursor:pointer;';\"></i>"
 
                 }
             });
@@ -1640,10 +1640,11 @@ function parseSelectedWordTokens(selectedWords) {
 function doIntraSentenceSubst(selectedSentence, selectedWords, operation) {
     var opDesc = this.operationsMap[operation];
     var parsedTokens = this.parseSelectedWordTokens(selectedWords);
+    var firstTokenIdx = document.getElementById(selectedWords[0]).getAttribute('data-idx');
 
     this.editSentenceDialog(this, opDesc, parsedTokens, function (context, ret, text) {
         if (ret) {
-            context.updateOperationsList(selectedSentence, operation + '(' + selectedSentence + '|' + parsedTokens + '|' + text + ');');
+            context.updateOperationsList(selectedSentence, operation + '(' + selectedSentence + '|' + parsedTokens + '|' + text + '|' + firstTokenIdx + ');');
         }
 
     });
@@ -1700,15 +1701,18 @@ function doDiscMarkerChange(selectedSentence, selectedWords) {
 
 function doPartRemotion(selectedSentence, selectedWords) {
     var parsedTokens = this.parseSelectedWordTokens(selectedWords);
-    this.updateOperationsList(selectedSentence, 'partRemotion(' + selectedSentence + '|' + parsedTokens + ');');
+    var firstTokenIdx = document.getElementById(selectedWords[0]).getAttribute('data-idx');
+    
+    this.updateOperationsList(selectedSentence, 'partRemotion(' + selectedSentence + '|' + parsedTokens + '|' + firstTokenIdx+ ');');
 }
 
 function doNotMapped(selectedSentence, selectedWords) {
     var parsedTokens = this.parseSelectedWordTokens(selectedWords);
+    var firstTokenIdx = document.getElementById(selectedWords[0]).getAttribute('data-idx');
 
     this.editSentenceDialogNotMapped(this, this.operationsMap["notMapped"], parsedTokens, function (context, ret, opDesc, text) {
         if (ret) {
-            context.updateOperationsList(selectedSentence, 'notMapped(' + selectedSentence + '|' + parsedTokens + '|' + text + '|' + opDesc + ');');
+            context.updateOperationsList(selectedSentence, 'notMapped(' + selectedSentence + '|' + parsedTokens + '|' + text + '|' + opDesc + '|' + firstTokenIdx + ');');
         }
 
     });
