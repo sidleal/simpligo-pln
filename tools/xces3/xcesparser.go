@@ -41,7 +41,7 @@ func main() {
 
 	productions := []Production{}
 
-	for i := 1; i <= 1; i++ { //165
+	for i := 1; i <= 165; i++ { //165
 
 		sentencesAlign := []SentenceAlign{}
 		production := fmt.Sprintf("production%v", i)
@@ -133,6 +133,17 @@ func main() {
 		for j, s := range prd.Sentences {
 			log.Println("----------------------------")
 
+			if s.From.ToPos < s.From.FromPos {
+				s.From.ToPos = productions[i].Sentences[j+1].From.ToPos
+			}
+			if j > 0 && s.From.FromPos == 37 && s.From.ToPos > 1000 {
+				s.From.FromPos = productions[i].Sentences[j-1].From.FromPos
+			}
+
+			// if j > 0 && s.To.FromPos < productions[i].Sentences[j-1].To.FromPos {
+			// 	s.To.FromPos = productions[i].Sentences[j-1].To.ToPos + 1
+			// }
+
 			regExStr := fmt.Sprintf(`(?s)from='%v'(?P<c>.*to='%v'.*?<\/struct>)`, s.From.FromPos, s.From.ToPos)
 			regEx := regexp.MustCompile(regExStr)
 			matchFrom := regEx.FindStringSubmatch(fromTokensFrom)
@@ -144,9 +155,15 @@ func main() {
 			textFrom := ""
 			textTo := ""
 			regEx = regexp.MustCompile(`name='base' value='(?P<val>.*)'`)
-			matchesFrom := regEx.FindAllStringSubmatch(matchFrom[1], -1)
-			for _, match := range matchesFrom {
-				textFrom += match[1] + " "
+
+			if len(matchFrom) == 0 {
+				log.Println("---------ERRO - não encontrado: from ", s.From.FromPos, s.From.ToPos)
+				textFrom = "ERRO"
+			} else {
+				matchesFrom := regEx.FindAllStringSubmatch(matchFrom[1], -1)
+				for _, match := range matchesFrom {
+					textFrom += match[1] + " "
+				}
 			}
 			productions[i].Sentences[j].From.Text = textFrom
 
@@ -166,102 +183,53 @@ func main() {
 
 	}
 
+	regEx1 := regexp.MustCompile(`(?P<t>[A-zà\$á]+)(?P<s>=)`)
+	regEx2 := regexp.MustCompile(`(?P<t>[A-z0-9\)"]+) (?P<s>[\)\.,])`)
+	regEx3 := regexp.MustCompile(`(?P<s>[A-z0-9\s]+[\(\-]) (?P<t>[A-z0-9]+)`)
+	regEx4 := regexp.MustCompile(`(")\s(.*?)\s(")`)
 	for i, prd := range productions {
 		log.Println("===========================", prd.Name, "=====================")
 		for j, s := range prd.Sentences {
-			log.Println(i, j, ":\n\n", s.From.Text, "\n", s.To.Text, "\n")
+			from := regEx1.ReplaceAllString(s.From.Text, `$1 `)
+			to := regEx1.ReplaceAllString(s.To.Text, `$1 `)
+
+			from = regEx2.ReplaceAllString(from, `$1$2`)
+			to = regEx2.ReplaceAllString(to, `$1$2`)
+
+			from = regEx3.ReplaceAllString(from, `$1$2`)
+			to = regEx3.ReplaceAllString(to, `$1$2`)
+
+			from = regEx4.ReplaceAllString(from, `$1$2$3`)
+			to = regEx4.ReplaceAllString(to, `$1$2$3`)
+
+			from = regEx2.ReplaceAllString(from, `$1$2`)
+			to = regEx2.ReplaceAllString(to, `$1$2`)
+
+			productions[i].Sentences[j].From.Text = from
+			productions[i].Sentences[j].To.Text = to
+
+			log.Println(i, j, s.From.FromPos, s.From.ToPos, s.To.FromPos, s.To.ToPos, ":\n\n", from, "\n", to, "\n")
 
 		}
 	}
-	// 	regEx := regexp.MustCompile(`name='base' value='(?P<val>.*)'`)
-	// 	matches := regEx.FindAllStringSubmatch(fromTokens, -1)
-	// 	textFrom := ""
-	// 	for _, match := range matches {
-	// 		textFrom += match[1] + " "
-	// 	}
 
-	// 	log.Println(textFrom)
-	// 	regEx = regexp.MustCompile(`(?P<t>[A-z0-9]+) (?P<s>[\.,])`)
-	// 	textFrom = regEx.ReplaceAllString(textFrom, `$1$2`)
+	// f, err := os.Create("/home/sidleal/usp/align1.txt")
+	// if err != nil {
+	// 	log.Println("ERRO", err)
+	// }
 
-	// 	// textFrom = strings.Replace(textFrom, "de o", "do", -1)
+	// defer f.Close()
 
-	// 	// regEx = regexp.MustCompile(`(?P<t>[A-z]+)(?P<s>=)`)
-	// 	// textFrom = regEx.ReplaceAllString(textFrom, `$1`)
-	// 	// regEx = regexp.MustCompile(`(?P<t>[A-z]+)(?P<s>=)`)
-	// 	// textFrom = regEx.ReplaceAllString(textFrom, `$1 $2 `)
-
-	// 	original := readFile(path + prd.Name + "/" + prd.Name + ".txt")
-	// 	log.Println(original)
-
-	// 	firstLine := strings.Index(original, "\n")
-	// 	original = original[firstLine+2 : len(original)]
-	// 	// original = strings.Replace(original, " do ", " de o ", -1)
-	// 	// original = strings.Replace(original, " dos ", " de o ", -1)
-	// 	// original = strings.Replace(original, " da ", " de o ", -1)
-	// 	// original = strings.Replace(original, " das ", " de o ", -1)
-	// 	// original = strings.Replace(original, " no ", " em o ", -1)
-	// 	// original = strings.Replace(original, " nos ", " em o ", -1)
-	// 	// original = strings.Replace(original, " na ", " em o ", -1)
-	// 	// original = strings.Replace(original, " nas ", " em o ", -1)
-
-	// 	original = strings.Replace(original, "\n", "", -1)
-	// 	original = strings.Replace(original, "\r", "", -1)
-
-	// 	originalRunes := []rune(original)
-
-	// 	//log.Println(i, prd)
+	// for i, prd := range productions {
 	// 	for j, s := range prd.Sentences {
-	// 		log.Println("----------------------------")
-	// 		var begin int64 = s.From.FromPos
-	// 		var end int64 = s.From.ToPos
-	// 		if s.From.FromPos > 0 {
-	// 			begin--
+	// 		n, err := f.WriteString(fmt.Sprintf("%v\t%v\t%v\t%v\t%v\n", i, prd.Name, j, s.From.Text, s.To.Text))
+	// 		if err != nil {
+	// 			log.Println("ERRO", err)
 	// 		}
-	// 		log.Println(string(originalRunes[begin:end]))
-	// 		log.Println(i, j, prd.Name, s.From, "->", s.To)
+	// 		fmt.Printf("wrote %d bytes\n", n)
 	// 	}
 	// }
 
-	// for _, match := range matches {
-	// 	fromS := match[1]
-	// 	toS := match[2]
-	// 	log.Println(production, "From: ", fromS, "To:", toS)
-
-	// regEx = regexp.MustCompile(`struct type="s" from="(?P<from>[^"]+).*to="(?P<to>[^"]+)".*\n.*value="` + fromS + `"`)
-	// match := regEx.FindStringSubmatch(fromMap)
-	// fromT := match[1]
-	// toT := match[2]
-	// log.Println(production, "From: ", fromT, "To:", toT)
-
-	// from := readFile("/home/sidleal/usp/PROPOR2018/production108/production108.txt")
-	// log.Println(from)
-
-	// to := readFile("/home/sidleal/usp/PROPOR2018/production108/production108-natural.txt")
-	// log.Println(to)
-
-	// align := readFile("/home/sidleal/usp/PROPOR2018/production108/production108-align.xml")
-	// log.Println(align)
-
-	// from, err := ioutil.ReadFile("/home/sidleal/usp/PROPOR2018/production108/production108.txt")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// log.Println(string(from))
-
-	// to, err := ioutil.ReadFile("/home/sidleal/usp/PROPOR2018/production108/production108.txt")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// log.Println(string(to))
-
-	// align, err := ioutil.ReadFile("/home/sidleal/usp/PROPOR2018/production108/production108-align.xml")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// log.Println(string(align))
-
-	// log.Println("testex")
 }
 
 func fileExists(f string) bool {
