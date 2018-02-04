@@ -48,8 +48,9 @@ type ParsedSentence struct {
 }
 
 type ParsedToken struct {
-	Idx   int64
-	Token string
+	Idx    int64  `json:"idx"`
+	Token  string `json:"token"`
+	IsWord int64  `json:"w"`
 }
 
 var abbreviations []string = []string{
@@ -212,12 +213,13 @@ func processText(rawText string) ParsedText {
 						if len(t) > 0 {
 							idxTokens++
 							qtt++
-							token := ParsedToken{idxTokens, t}
-							parsedSentence.Tokens = append(parsedSentence.Tokens, token)
+							token := ParsedToken{idxTokens, t, 0}
 							if len(t) > 1 || strings.Index(`{[()]}.,"?!;:-'#`, t) < 0 {
 								qtw++
 								idxWords++
+								token.IsWord = 1
 							}
+							parsedSentence.Tokens = append(parsedSentence.Tokens, token)
 						}
 					}
 					parsedSentence.QtyTokens = qtt

@@ -34,6 +34,8 @@ type SentenceAlign struct {
 
 func main() {
 
+	strong := true
+
 	path := "/home/sidleal/usp/PROPOR2018/"
 
 	a := senter.ParseText("bla.")
@@ -41,12 +43,15 @@ func main() {
 
 	productions := []Production{}
 
-	for i := 1; i <= 165; i++ { //165
+	for i := 1; i <= 1; i++ { //165
 
 		sentencesAlign := []SentenceAlign{}
 		production := fmt.Sprintf("production%v", i)
 
 		alignPath := path + production + "/" + production + "-align.xml"
+		if strong {
+			alignPath = path + production + "/" + production + "_natural-align.xml"
+		}
 		if !fileExists(alignPath) {
 			log.Println("ERRO------------------, não existe: ", alignPath)
 			continue
@@ -105,6 +110,10 @@ func main() {
 
 			regEx := regexp.MustCompile(`struct type="s" from="(?P<from>[^"]+).*to="(?P<to>[^"]+)".*\n.*value="` + s.From.Id + `"`)
 			match := regEx.FindStringSubmatch(fromMap)
+			// log.Println("------------xxx------------", prd.Name)
+			// log.Println(`struct type="s" from="(?P<from>[^"]+).*to="(?P<to>[^"]+)".*\n.*value="` + s.From.Id + `"`)
+
+			// log.Println("------------xxx------------")
 			fromT, _ := strconv.ParseInt(match[1], 10, 64)
 			toT, _ := strconv.ParseInt(match[2], 10, 64)
 			productions[i].Sentences[j].From.FromPos = fromT
@@ -133,15 +142,56 @@ func main() {
 		for j, s := range prd.Sentences {
 			log.Println("----------------------------")
 
+			//FROM
 			if s.From.ToPos < s.From.FromPos {
 				s.From.ToPos = productions[i].Sentences[j+1].From.ToPos
+				if s.From.ToPos < s.From.FromPos {
+					s.From.ToPos = productions[i].Sentences[j+2].From.ToPos
+				}
+				if s.From.ToPos < s.From.FromPos {
+					s.From.ToPos = productions[i].Sentences[j+3].From.ToPos
+				}
+				if s.From.ToPos < s.From.FromPos {
+					s.From.ToPos = productions[i].Sentences[j+4].From.ToPos
+				}
 			}
-			if j > 0 && s.From.FromPos == 37 && s.From.ToPos > 1000 {
+			if j > 0 && s.From.FromPos == 37 {
+				s.From.FromPos = productions[i].Sentences[j-1].From.FromPos
+				if s.From.FromPos == 37 {
+					s.From.FromPos = productions[i].Sentences[j-2].From.FromPos
+				}
+			}
+
+			if j > 0 && productions[i].Sentences[j-1].From.ToPos < productions[i].Sentences[j-1].From.FromPos && s.From.FromPos == (productions[i].Sentences[j-1].From.ToPos+1) {
 				s.From.FromPos = productions[i].Sentences[j-1].From.FromPos
 			}
 
-			// if j > 0 && s.To.FromPos < productions[i].Sentences[j-1].To.FromPos {
-			// 	s.To.FromPos = productions[i].Sentences[j-1].To.ToPos + 1
+			//TO
+			if s.To.ToPos < s.To.FromPos && j+1 < len(productions[i].Sentences) {
+				s.To.ToPos = productions[i].Sentences[j+1].To.ToPos
+				if s.To.ToPos < s.To.FromPos && j+2 < len(productions[i].Sentences) {
+					s.To.ToPos = productions[i].Sentences[j+2].To.ToPos
+				}
+				if s.To.ToPos < s.To.FromPos && j+3 < len(productions[i].Sentences) {
+					s.To.ToPos = productions[i].Sentences[j+3].To.ToPos
+				}
+				if s.To.ToPos < s.To.FromPos && j+4 < len(productions[i].Sentences) {
+					s.To.ToPos = productions[i].Sentences[j+4].To.ToPos
+				}
+			}
+			if j > 0 && s.To.FromPos == 37 {
+				s.To.FromPos = productions[i].Sentences[j-1].To.FromPos
+				if s.To.FromPos == 37 {
+					s.To.FromPos = productions[i].Sentences[j-2].To.FromPos
+				}
+			}
+
+			if j > 0 && productions[i].Sentences[j-1].To.ToPos < productions[i].Sentences[j-1].To.FromPos && s.To.FromPos == (productions[i].Sentences[j-1].To.ToPos+1) {
+				s.To.FromPos = productions[i].Sentences[j-1].To.FromPos
+			}
+
+			// if j > 0 && s.From.ToPos < productions[i].Sentences[j-1].From.FromPos {
+			// 	s.From.ToPos = productions[i].Sentences[j-1].From.ToPos + 1
 			// }
 
 			regExStr := fmt.Sprintf(`(?s)from='%v'(?P<c>.*to='%v'.*?<\/struct>)`, s.From.FromPos, s.From.ToPos)
@@ -183,7 +233,7 @@ func main() {
 
 	}
 
-	regEx1 := regexp.MustCompile(`(?P<t>[A-zà\$á]+)(?P<s>=)`)
+	regEx1 := regexp.MustCompile(`(?P<t>[A-zà\$áã]+)(?P<s>=)`)
 	regEx2 := regexp.MustCompile(`(?P<t>[A-z0-9\)"]+) (?P<s>[\)\.,])`)
 	regEx3 := regexp.MustCompile(`(?P<s>[A-z0-9\s]+[\(\-]) (?P<t>[A-z0-9]+)`)
 	regEx4 := regexp.MustCompile(`(")\s(.*?)\s(")`)
@@ -213,22 +263,41 @@ func main() {
 		}
 	}
 
-	// f, err := os.Create("/home/sidleal/usp/align1.txt")
-	// if err != nil {
-	// 	log.Println("ERRO", err)
-	// }
+	f, err := os.Create("/home/sidleal/usp/align4-str.txt")
+	if err != nil {
+		log.Println("ERRO", err)
+	}
 
-	// defer f.Close()
+	defer f.Close()
 
-	// for i, prd := range productions {
-	// 	for j, s := range prd.Sentences {
-	// 		n, err := f.WriteString(fmt.Sprintf("%v\t%v\t%v\t%v\t%v\n", i, prd.Name, j, s.From.Text, s.To.Text))
-	// 		if err != nil {
-	// 			log.Println("ERRO", err)
-	// 		}
-	// 		fmt.Printf("wrote %d bytes\n", n)
-	// 	}
-	// }
+	for i, prd := range productions {
+		lastSentFrom := ""
+		lastSentTo := ""
+		for j, s := range prd.Sentences {
+			if s.From.Text != "ERRO" && s.To.Text != "ERRO" && s.From.Text != s.To.Text {
+
+				if lastSentFrom == s.From.Text && lastSentTo == s.To.Text {
+					//ignore dupls
+				} else {
+
+					if senter.ParseText(s.From.Text).TotalSentences > 1 || senter.ParseText(s.To.Text).TotalSentences > 1 {
+						log.Println("-----> mais de uma sentença")
+						log.Println(s.From.Text)
+						log.Println(s.To.Text)
+					} else {
+						n, err := f.WriteString(fmt.Sprintf("%v\t%v\t%v\t%v\t%v\n", i, prd.Name, j, s.From.Text, s.To.Text))
+						if err != nil {
+							log.Println("ERRO", err)
+						}
+						fmt.Printf("wrote %d bytes\n", n)
+					}
+					lastSentFrom = s.From.Text
+					lastSentTo = s.To.Text
+				}
+
+			}
+		}
+	}
 
 }
 
