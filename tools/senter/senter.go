@@ -14,6 +14,7 @@ import (
 // 	Acho que foi! E ainda assim funciona. Ele disse: "Aqui nao pode ter quebra. Mesmo tendo ponto."
 // 	E nem (aqui. Ignore isso.).
 // 	Nascido em 230 A.C. com louvor.
+// 	O Neil M. Ferguson apareceu naquela época.
 
 // 	`
 
@@ -22,6 +23,12 @@ import (
 
 // 	jsonText := ParseTextToJson(a)
 // 	log.Println(jsonText)
+
+// 	for _, p := range parsedText.Paragraphs {
+// 		for _, s := range p.Sentences {
+// 			log.Println(s.Text)
+// 		}
+// 	}
 
 // }
 
@@ -88,6 +95,7 @@ endereços de e-mail e páginas da Internet e não é o ponto que segue uma abre
 5. Delimita-se uma sentença quando uma letra maiúscula é encontrada após o sinal de
 reticências ou de fecha-aspas.
 (Pardo, 2006)
+6. Abreviações de nome próprio, espaçoMaisculaPonto
 */
 
 func preProcesText(rawText string) string {
@@ -139,6 +147,10 @@ func preProcesText(rawText string) string {
 	//rule 4 - reticences
 	regEx = regexp.MustCompile(`\.\.\.`)
 	out = regEx.ReplaceAllString(out, `|dot||dot||dot|`)
+
+	//rule 6 - nomes
+	regEx = regexp.MustCompile(`(\s[A-Z]{1})\.(\s)`)
+	out = regEx.ReplaceAllString(out, `$1|dot|$2`)
 
 	// rule 3
 	out = strings.Replace(out, ".", ".|||", -1)

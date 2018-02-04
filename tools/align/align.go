@@ -49,7 +49,7 @@ func main() {
 		}
 	}
 
-	f, err := os.Create("/home/sidleal/usp/align5.txt")
+	f, err := os.Create("/home/sidleal/usp/align7.txt")
 	if err != nil {
 		log.Println("ERRO", err)
 	}
@@ -57,13 +57,13 @@ func main() {
 	defer f.Close()
 
 	for _, align := range aligns {
-		// if align.From.Raw != align.To.Raw {
-		n, err := f.WriteString(fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v\n", align.Production, align.Level, align.From.Idx, align.From.Raw, align.To.Idx, align.To.Raw))
-		if err != nil {
-			log.Println("ERRO", err)
+		if align.From.Raw != align.To.Raw && (align.From.Raw+".") != align.To.Raw {
+			n, err := f.WriteString(fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v\n", align.Production, align.Level, align.From.Idx, align.From.Raw, align.To.Idx, align.To.Raw))
+			if err != nil {
+				log.Println("ERRO", err)
+			}
+			fmt.Printf("wrote %d bytes\n", n)
 		}
-		fmt.Printf("wrote %d bytes\n", n)
-		// }
 	}
 
 }
@@ -86,16 +86,19 @@ func processProdution(path string, production string) []Align {
 	}
 
 	original.Raw = readFile(original.Path)
+	original.Raw = original.Raw[strings.Index(original.Raw, "\n")+1 : len(original.Raw)]
 	log.Println(original.Raw)
 
 	log.Print("\n\n-------------------------------------------------\n\n")
 
 	natural.Raw = readFile(natural.Path)
+	natural.Raw = natural.Raw[strings.Index(natural.Raw, "\n")+1 : len(natural.Raw)]
 	log.Println(natural)
 
 	log.Print("\n\n-------------------------------------------------\n\n")
 
 	strong.Raw = readFile(strong.Path)
+	strong.Raw = strong.Raw[strings.Index(strong.Raw, "\n")+1 : len(strong.Raw)]
 	log.Println(strong)
 
 	original.Parsed = senter.ParseText(original.Raw)
