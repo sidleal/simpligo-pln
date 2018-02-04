@@ -9,14 +9,14 @@ import (
 
 // func main() {
 // 	a := `
-// 	Muito bla. A coisa funciona. O número 23.123, e o http://coisa.com. Isso mesmo.
+// 	Muito interessante. A coisa funciona. O número 23.123, e o http://coisa.com. Isso mesmo.
 // 	Também o sid.leal@gmail.com. Pois bem... Assim que aconteceu? Foi o Prof. João?
 // 	Acho que foi! E ainda assim funciona. Ele disse: "Aqui nao pode ter quebra. Mesmo tendo ponto."
 // 	E nem (aqui. Ignore isso.).
 // 	Nascido em 230 A.C. com louvor.
 // 	O Neil M. Ferguson apareceu naquela época.
 
-// 	`
+// 	Ferguson disse: "Você precisa de uma combinação de estratégias. Nenhuma sozinha conseguiria prevenir com sucesso uma epidemia."`
 
 // 	parsedText := ParseText(a)
 // 	log.Println(parsedText)
@@ -61,8 +61,7 @@ type ParsedToken struct {
 }
 
 var abbreviations []string = []string{
-	"Prof.",
-	"A.C.",
+	"Prof.", "A.C.", "Jr.",
 }
 
 func ParseText(rawText string) ParsedText {
@@ -99,7 +98,7 @@ reticências ou de fecha-aspas.
 */
 
 func preProcesText(rawText string) string {
-	out := rawText
+	out := rawText + "\n"
 
 	// rule 2 - " { [ ( ) ] } "
 	out = applyGroupRule(out, `"([^"]+?)"[^A-z]`)
