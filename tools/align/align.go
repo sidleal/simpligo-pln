@@ -12,16 +12,6 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
-func main() {
-
-	path := "/home/sidleal/usp/PROPOR2018/"
-
-	for i := 1; i <= 1; i++ { //165
-		production := fmt.Sprintf("production%v", i)
-		processProdution(path, production)
-	}
-}
-
 type Text struct {
 	Path      string
 	Raw       string
@@ -34,7 +24,52 @@ type Sentence struct {
 	Raw string
 }
 
-func processProdution(path string, production string) {
+type Align struct {
+	Production string
+	Level      string
+	From       AlignDetail
+	To         AlignDetail
+}
+type AlignDetail struct {
+	Idx string
+	Raw string
+}
+
+func main() {
+
+	aligns := []Align{}
+
+	path := "/home/sidleal/usp/PROPOR2018/"
+
+	for i := 1; i <= 165; i++ { //165
+		production := fmt.Sprintf("production%v", i)
+		prodAligns := processProdution(path, production)
+		for _, align := range prodAligns {
+			aligns = append(aligns, align)
+		}
+	}
+
+	f, err := os.Create("/home/sidleal/usp/align5.txt")
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+
+	defer f.Close()
+
+	for _, align := range aligns {
+		// if align.From.Raw != align.To.Raw {
+		n, err := f.WriteString(fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v\n", align.Production, align.Level, align.From.Idx, align.From.Raw, align.To.Idx, align.To.Raw))
+		if err != nil {
+			log.Println("ERRO", err)
+		}
+		fmt.Printf("wrote %d bytes\n", n)
+		// }
+	}
+
+}
+
+func processProdution(path string, production string) []Align {
+	aligns := []Align{}
 
 	original := Text{}
 	original.Path = path + production + "/" + production + ".txt"
@@ -47,7 +82,7 @@ func processProdution(path string, production string) {
 
 	if !fileExists(original.Path) {
 		log.Println("ERRO------------------, não existe: ", original.Path)
-		return
+		return []Align{}
 	}
 
 	original.Raw = readFile(original.Path)
@@ -105,10 +140,60 @@ func processProdution(path string, production string) {
 		log.Println("oooooooooooooooooooooooooo")
 		log.Println(rawSentFromMap[ret[0].Key])
 		log.Println(sn.Raw)
+
+		align := Align{}
+		align.Level = "ORI->NAT"
+		align.Production = production
+		align.From = AlignDetail{ret[0].Key, rawSentFromMap[ret[0].Key]}
+		align.To = AlignDetail{fmt.Sprintf("%d", sn.Idx), sn.Raw}
+		aligns = append(aligns, align)
 		log.Println("oooooooooooooooooooooooooo")
 		// log.Println("yyyyyyyyyyyy")
 
 	}
+
+	for _, sn := range strong.Sentences {
+		// log.Println("xxxxxxxxxx")
+		// log.Println(sn.Idx, sn.TF, sn.Raw)
+		// log.Println("xxxxxxxxxx")
+
+		sentMap := make(map[string]int64)
+		rawSentFromMap := make(map[string]string)
+
+		for _, s := range natural.Sentences {
+			var totWordsMatch int64 = 0
+			for snk, snv := range sn.TF {
+				totWordsMatch += s.TF[snk] * snv
+			}
+			sentMap[fmt.Sprintf("%d", s.Idx)] = totWordsMatch
+			rawSentFromMap[fmt.Sprintf("%d", s.Idx)] = s.Raw
+		}
+		// log.Println("yyyyyyyyyyyy")
+		// log.Println(sentMap)
+		ret := orderByDesc(sentMap)
+		// log.Println("-------------------->", ret[0].Key, ret[0].Value)
+		log.Println("oooooooooooooooooooooooooo")
+		log.Println(rawSentFromMap[ret[0].Key])
+		log.Println(sn.Raw)
+
+		align := Align{}
+		align.Level = "NAT->STR"
+		align.Production = production
+		align.From = AlignDetail{ret[0].Key, rawSentFromMap[ret[0].Key]}
+		align.To = AlignDetail{fmt.Sprintf("%d", sn.Idx), sn.Raw}
+		aligns = append(aligns, align)
+		log.Println("oooooooooooooooooooooooooo")
+		// log.Println("yyyyyyyyyyyy")
+
+	}
+
+	for _, align := range aligns {
+		log.Println("\n\n-----------------------", align.Production, " - ", align.Level, "------------------------")
+		log.Println(align.From.Idx, " -- ", align.From.Raw)
+		log.Println(align.To.Idx, " -- ", align.To.Raw)
+	}
+
+	return aligns
 
 }
 
