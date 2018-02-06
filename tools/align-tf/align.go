@@ -49,21 +49,34 @@ func main() {
 		}
 	}
 
-	f, err := os.Create("/home/sidleal/usp/align7.txt")
+	f, err := os.Create("/home/sidleal/usp/align9.txt")
 	if err != nil {
 		log.Println("ERRO", err)
 	}
 
 	defer f.Close()
 
-	for _, align := range aligns {
+	validations := []Align{}
+	for i, align := range aligns {
 		if align.From.Raw != align.To.Raw && (align.From.Raw+".") != align.To.Raw {
 			n, err := f.WriteString(fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v\n", align.Production, align.Level, align.From.Idx, align.From.Raw, align.To.Idx, align.To.Raw))
 			if err != nil {
 				log.Println("ERRO", err)
 			}
 			fmt.Printf("wrote %d bytes\n", n)
+
+			if i%54 == 0 {
+				validations = append(validations, align)
+			}
+
 		}
+	}
+
+	log.Println("--------- VALIDACAO ALINHAMENTOS -------")
+	for i, align := range validations {
+		log.Println("----------", i, "-----------")
+		log.Println(align.From.Raw)
+		log.Println(align.To.Raw)
 	}
 
 }
@@ -137,10 +150,10 @@ func processProdution(path string, production string) []Align {
 			rawSentFromMap[fmt.Sprintf("%d", s.Idx)] = s.Raw
 		}
 		// log.Println("yyyyyyyyyyyy")
-		// log.Println(sentMap)
+		log.Println(sentMap)
 		ret := orderByDesc(sentMap)
 		// log.Println("-------------------->", ret[0].Key, ret[0].Value)
-		log.Println("oooooooooooooooooooooooooo")
+		log.Println("yoooooooooooooooooooooooooo")
 		log.Println(rawSentFromMap[ret[0].Key])
 		log.Println(sn.Raw)
 
@@ -150,7 +163,7 @@ func processProdution(path string, production string) []Align {
 		align.From = AlignDetail{ret[0].Key, rawSentFromMap[ret[0].Key]}
 		align.To = AlignDetail{fmt.Sprintf("%d", sn.Idx), sn.Raw}
 		aligns = append(aligns, align)
-		log.Println("oooooooooooooooooooooooooo")
+		log.Println("yoooooooooooooooooooooooooo")
 		// log.Println("yyyyyyyyyyyy")
 
 	}
@@ -204,15 +217,17 @@ func fillSentencesTF(text *Text) {
 	var idx int64 = 0
 	for _, p := range text.Parsed.Paragraphs {
 		for _, s := range p.Sentences {
-			idx++
-			words := make(map[string]int64)
-			words = countSentenceWords(s, words)
+			if s.QtyWords > 2 {
+				idx++
+				words := make(map[string]int64)
+				words = countSentenceWords(s, words)
 
-			// log.Println("----------------")
-			// orderByDesc(words)
+				// log.Println("----------------")
+				// orderByDesc(words)
 
-			sentence := Sentence{idx, words, s.Text}
-			text.Sentences = append(text.Sentences, sentence)
+				sentence := Sentence{idx, words, s.Text}
+				text.Sentences = append(text.Sentences, sentence)
+			}
 		}
 	}
 
