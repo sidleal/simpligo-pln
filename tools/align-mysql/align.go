@@ -170,3 +170,46 @@ func getSentence(db *sql.DB, id int64) string {
 
 	return sent
 }
+
+/*
+ select t.tipo, f.description, count(*) qtde from textos t
+ inner join sentences s on s.texto_id = t.id
+ inner join words w on w.sentence_id = s.id
+ inner join features f on f.word_id = w.id
+ where t.production_id in (
+     select id from productions where project_id in (1,2) and status <> 'REMOVE' order by id
+ )
+ and f.tipo = 'SINTATICO'
+ group by t.tipo, f.description
+ order by t.tipo, qtde desc
+
+
+ create view sentences_size as (
+ select t.tipo, t.id, count(*) qtde from textos t
+ inner join sentences s on s.texto_id = t.id
+ where t.production_id in (
+     select id from productions where project_id in (1,2) and status <> 'REMOVE' order by id
+ )
+ group by t.tipo, t.id
+)
+ select tipo, sum(qtde), min(qtde), max(qtde), avg(qtde)
+ from sentences_size
+ group by tipo
+
+
+
+  create view tokens_size as
+( select t.tipo, s.id, count(*) qtde from textos t
+ inner join sentences s on s.texto_id = t.id
+ inner join words w on w.sentence_id = s.id
+ where t.production_id in (
+     select id from productions where project_id in (1,2) and status <> 'REMOVE' order by id
+ )
+ group by t.tipo, s.id
+ )
+ select tipo, sum(qtde), min(qtde), max(qtde), avg(qtde)
+ from tokens_size
+ group by tipo
+
+
+*/
