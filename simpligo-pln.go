@@ -29,7 +29,7 @@ type PageInfo struct {
 
 var pageInfo PageInfo
 
-var elAddress = "http://localhost:9200" // TODO: yml
+var elAddress = "http://elasticsearch:9200" // TODO: yml
 var jwtKey = "a2lskdjf4jaks2dhfks"
 var admEmail = "admin@sidle.al"
 var admKey = "simples"
