@@ -48,6 +48,7 @@ func Init() {
 
 	elClient, err = elastic.NewClient(
 		elastic.SetURL(elAddress),
+		elastic.SetSniff(false),
 		elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 		elastic.SetInfoLog(log.New(os.Stdout, "", log.LstdFlags)),
 	)
