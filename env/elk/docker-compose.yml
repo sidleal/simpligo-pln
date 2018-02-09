@@ -3,6 +3,7 @@ version: '2'
 services:
 
   elasticsearch:
+    container_name: elasticsearch
     build:
       context: elasticsearch/
     volumes:
@@ -16,6 +17,7 @@ services:
       - elk
 
   # logstash:
+  #   container_name: logstash
   #   build:
   #     context: logstash/
   #   volumes:
@@ -33,6 +35,7 @@ services:
   #     - "rmq:172.16.0.43"
 
   kibana:
+    container_name: kibana
     build:
       context: kibana/
     volumes:
