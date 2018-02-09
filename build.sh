@@ -1,0 +1,1 @@
+docker build -t simpligo-pln:$2 .

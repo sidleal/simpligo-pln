@@ -465,8 +465,8 @@ func PalavrasParseHandler(w http.ResponseWriter, r *http.Request) {
 	retType := r.FormValue("type")
 	options := r.FormValue("options")
 
-	palavrasIP := "127.0.0.1"
-	palavrasPort := "80"
+	palavrasIP := "143.107.183.175"
+	palavrasPort := "23380"
 
 	resp, err := http.PostForm("http://"+palavrasIP+":"+palavrasPort+"/"+retType,
 		url.Values{"sentence": {content}, "options": {options}})

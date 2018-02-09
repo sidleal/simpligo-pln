@@ -1,0 +1,1 @@
+docker stop simpligo-pln && docker rm simpligo-pln && docker run -d --name simpligo-pln --link elasticsearch:elasticsearch --restart always simpligo-pln:$1
