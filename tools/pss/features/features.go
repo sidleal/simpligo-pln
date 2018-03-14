@@ -11,13 +11,13 @@ func main() {
 
 	bigMap := map[string]int{}
 
-	f1, err := os.OpenFile("/home/sidleal/usp/coling2018/v1/unique_sentences.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f1, err := os.OpenFile("/home/sidleal/usp/coling2018/v2/unique_sentences.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
 	defer f1.Close()
 
-	concatSent := readFile("/home/sidleal/usp/coling2018/v1/1_align_concat_ori.tsv")
+	concatSent := readFile("/home/sidleal/usp/coling2018/v2/align_concat_ori.tsv")
 	lines := strings.Split(concatSent, "\n")
 
 	for _, line := range lines {
@@ -31,7 +31,21 @@ func main() {
 
 	}
 
-	sizeSent := readFile("/home/sidleal/usp/coling2018/v1/1_align_size_ori.tsv")
+	allSent := readFile("/home/sidleal/usp/coling2018/v2/align_all_ori.tsv")
+	lines = strings.Split(allSent, "\n")
+
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		tokens := strings.Split(line, "\t")
+
+		bigMap[tokens[4]] = 1
+		bigMap[tokens[5]] = 1
+
+	}
+
+	sizeSent := readFile("/home/sidleal/usp/coling2018/v2/align_size_ori.tsv")
 	lines = strings.Split(sizeSent, "\n")
 
 	for _, line := range lines {
@@ -44,7 +58,7 @@ func main() {
 
 	}
 
-	concatNatSent := readFile("/home/sidleal/usp/coling2018/v1/1_align_concat_nat.tsv")
+	concatNatSent := readFile("/home/sidleal/usp/coling2018/v2/align_concat_nat.tsv")
 	lines = strings.Split(concatNatSent, "\n")
 
 	for _, line := range lines {
@@ -58,7 +72,21 @@ func main() {
 
 	}
 
-	sizeNatSent := readFile("/home/sidleal/usp/coling2018/v1/1_align_size_nat.tsv")
+	allNatSent := readFile("/home/sidleal/usp/coling2018/v2/align_all_nat.tsv")
+	lines = strings.Split(allNatSent, "\n")
+
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		tokens := strings.Split(line, "\t")
+
+		bigMap[tokens[4]] = 1
+		bigMap[tokens[5]] = 1
+
+	}
+
+	sizeNatSent := readFile("/home/sidleal/usp/coling2018/v2/align_size_nat.tsv")
 	lines = strings.Split(sizeNatSent, "\n")
 
 	for _, line := range lines {
