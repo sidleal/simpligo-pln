@@ -1,87 +1,215 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
 type Sentence struct {
+	Producao   string
+	Level      string
+	Text       string
+	Splited    string
+	Changed    string
+	TextTarget string
+}
+
+type SentencePair struct {
 	Producao string
 	Level    string
-	Text     string
+	TextA    string
+	TextB    string
 	Splited  string
 	Changed  string
 }
 
-func main_val1() {
+func main_files() {
 
-	concatSent := readFile("/home/sidleal/usp/coling2018/1_align_concat_ori.tsv")
-	lines := strings.Split(concatSent, "\n")
+	f1, err := os.OpenFile("/home/sidleal/usp/coling2018/v3/validacao/validacao_ori.tsv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f1.Close()
 
-	concatSentences := []Sentence{}
-	for _, line := range lines {
-		if line == "" {
+	f2, err := os.OpenFile("/home/sidleal/usp/coling2018/v3/validacao/validacao_nat.tsv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f2.Close()
+
+	f3, err := os.OpenFile("/home/sidleal/usp/coling2018/v3/validacao/validacao_str.tsv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f3.Close()
+
+	sizeOriSent := readFile("/home/sidleal/usp/coling2018/v3/align_size_ori_nat.tsv")
+	lines := strings.Split(sizeOriSent, "\n")
+
+	oriNatPairs := []SentencePair{}
+	for i, line := range lines {
+		if i == 0 || line == "" {
 			continue
 		}
 		tokens := strings.Split(line, "\t")
-		sentence := Sentence{}
+		sentence := SentencePair{}
 		sentence.Producao = tokens[0]
 		sentence.Level = tokens[1]
 		sentence.Changed = tokens[2]
 		sentence.Splited = tokens[3]
-		sentence.Text = tokens[4]
-		concatSentences = append(concatSentences, sentence)
+		sentence.TextA = tokens[4]
+		sentence.TextB = tokens[5]
+		oriNatPairs = append(oriNatPairs, sentence)
 
 	}
 
-	sizeSent := readFile("/home/sidleal/usp/coling2018/1_align_size_ori.tsv")
-	lines = strings.Split(sizeSent, "\n")
+	sizeNatSent := readFile("/home/sidleal/usp/coling2018/v3/align_size_nat_str.tsv")
+	lines = strings.Split(sizeNatSent, "\n")
 
-	sizeSentences := []Sentence{}
-	for _, line := range lines {
-		if line == "" {
+	natStrPairs := []SentencePair{}
+	for i, line := range lines {
+		if i == 0 || line == "" {
 			continue
 		}
 		tokens := strings.Split(line, "\t")
-		sentence := Sentence{}
+		sentence := SentencePair{}
 		sentence.Producao = tokens[0]
 		sentence.Level = tokens[1]
 		sentence.Changed = tokens[2]
 		sentence.Splited = tokens[3]
-		sentence.Text = tokens[4]
-		sizeSentences = append(sizeSentences, sentence)
+		sentence.TextA = tokens[4]
+		sentence.TextB = tokens[5]
+		natStrPairs = append(natStrPairs, sentence)
 
 	}
 
-	log.Println(len(concatSentences), len(sizeSentences), len(sizeSentences)-len(concatSentences))
+	header := ""
 
-	for _, item := range sizeSentences {
-		achou := false
-		for _, itemC := range concatSentences {
-			if itemC.Text == item.Text {
-				achou = true
-				break
+	metrics := readFile("/home/sidleal/usp/coling2018/v3/pss_sentences_features.tsv")
+	lines = strings.Split(metrics, "\n")
+
+	metricList := map[string][]string{}
+	for i, line := range lines {
+		if i == 0 {
+			header = line + "\n"
+			continue
+		}
+		if line == "" {
+			continue
+		}
+		line = strings.TrimSuffix(line, "\t")
+		tokens := strings.Split(line, "\t")
+		metricList[tokens[0]] = tokens
+	}
+
+	_, err = f1.WriteString(header)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+
+	_, err = f2.WriteString(header)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+
+	_, err = f3.WriteString(header)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+
+	for _, item1 := range oriNatPairs {
+		log.Println("----------------")
+		log.Println(item1.TextA)
+		log.Println(item1.TextB)
+
+		if item1.TextA != item1.TextB {
+			line := ""
+			for i, token := range metricList[item1.TextA] {
+				if i > 0 {
+					token = round(token)
+				}
+				line += token + "\t"
 			}
+			line = strings.TrimSuffix(line, "\t")
+			line += "\n"
+
+			_, err := f1.WriteString(line)
+			if err != nil {
+				log.Println("ERRO", err)
+			}
+
 		}
-		if !achou {
-			log.Println("-----------------------", item.Text)
-		}
+
 	}
 
-	lastSent := ""
-	count := 0
-	for _, item := range sizeSentences {
-		if lastSent == item.Text {
-			count++
-			log.Println(item.Text)
+	for _, item1 := range natStrPairs {
+		log.Println("----------------")
+		log.Println(item1.TextA)
+		log.Println(item1.TextB)
+
+		if item1.TextA != item1.TextB {
+			line := ""
+			for i, token := range metricList[item1.TextA] {
+				if i > 0 {
+					token = round(token)
+				}
+				line += token + "\t"
+			}
+			line = strings.TrimSuffix(line, "\t")
+			line += "\n"
+
+			_, err := f2.WriteString(line)
+			if err != nil {
+				log.Println("ERRO", err)
+			}
+
+			line = ""
+			for i, token := range metricList[item1.TextB] {
+				if i > 0 {
+					token = round(token)
+				}
+				line += token + "\t"
+			}
+			line = strings.TrimSuffix(line, "\t")
+			line += "\n"
+
+			_, err = f3.WriteString(line)
+			if err != nil {
+				log.Println("ERRO", err)
+			}
+
 		}
-		lastSent = item.Text
+
 	}
 
-	log.Println("----> ", count)
+	log.Println("----> ")
 
+}
+
+func round(num string) string {
+	ret := floatToStr(tofloat(num))
+	ret = strings.Replace(ret, ".", ",", -1)
+	return ret
+}
+
+func tofloat(str string) float64 {
+	if str == "" {
+		str = "0"
+	}
+	ret, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		log.Println("ERROOOOOOOOOOOOO", err)
+	}
+	return ret
+}
+
+func floatToStr(n float64) string {
+	return fmt.Sprintf("%.3f", n)
 }
 
 func readFile(path string) string {
@@ -133,6 +261,7 @@ func main() {
 		sentence.Changed = tokens[2]
 		sentence.Splited = tokens[3]
 		sentence.Text = tokens[4]
+		sentence.TextTarget = tokens[5]
 
 		if _, ok := mapRepeat[sentence.Producao+"-"+sentence.Text]; !ok {
 			oriSentences = append(oriSentences, sentence)
@@ -157,6 +286,7 @@ func main() {
 		sentence.Changed = tokens[2]
 		sentence.Splited = tokens[3]
 		sentence.Text = tokens[4]
+		sentence.TextTarget = tokens[5]
 
 		if _, ok := mapRepeat[sentence.Producao+"-"+sentence.Text]; !ok {
 			natSentences = append(natSentences, sentence)
@@ -328,6 +458,108 @@ func main() {
 		}
 	}
 
+	mediaSimplificacoesSemDivisaoOri := 0
+	minSimplificacoesSemDivisaoOri := 0
+	maxSimplificacoesSemDivisaoOri := 0
+	for _, item := range oriSentences {
+		if item.Splited == "N" && item.Changed == "S" {
+			tokens := tokenizeText(item.TextTarget)
+			mediaSimplificacoesSemDivisaoOri = (mediaSimplificacoesSemDivisaoOri + len(tokens)) / 2
+			if len(tokens) > maxSimplificacoesSemDivisaoOri {
+				maxSimplificacoesSemDivisaoOri = len(tokens)
+			}
+			if minSimplificacoesSemDivisaoOri == 0 || len(tokens) < minSimplificacoesSemDivisaoOri {
+				minSimplificacoesSemDivisaoOri = len(tokens)
+			}
+		}
+	}
+
+	mediaSimplificacoesComDivisaoOri := 0
+	minSimplificacoesComDivisaoOri := 0
+	maxSimplificacoesComDivisaoOri := 0
+	for _, item := range oriSentences {
+		if item.Splited == "S" {
+			tokens := tokenizeText(item.TextTarget)
+			mediaSimplificacoesComDivisaoOri = (mediaSimplificacoesComDivisaoOri + len(tokens)) / 2
+			if len(tokens) > maxSimplificacoesComDivisaoOri {
+				maxSimplificacoesComDivisaoOri = len(tokens)
+			}
+			if minSimplificacoesComDivisaoOri == 0 || len(tokens) < minSimplificacoesComDivisaoOri {
+				minSimplificacoesComDivisaoOri = len(tokens)
+			}
+		}
+	}
+
+	mediaSimplificacoesSemDivisaoNat := 0
+	minSimplificacoesSemDivisaoNat := 0
+	maxSimplificacoesSemDivisaoNat := 0
+	for _, item := range natSentences {
+		if item.Splited == "N" && item.Changed == "S" {
+			tokens := tokenizeText(item.TextTarget)
+			mediaSimplificacoesSemDivisaoNat = (mediaSimplificacoesSemDivisaoNat + len(tokens)) / 2
+			if len(tokens) > maxSimplificacoesSemDivisaoNat {
+				maxSimplificacoesSemDivisaoNat = len(tokens)
+			}
+			if minSimplificacoesSemDivisaoNat == 0 || len(tokens) < minSimplificacoesSemDivisaoNat {
+				minSimplificacoesSemDivisaoNat = len(tokens)
+			}
+		}
+	}
+
+	mediaSimplificacoesComDivisaoNat := 0
+	minSimplificacoesComDivisaoNat := 0
+	maxSimplificacoesComDivisaoNat := 0
+	for _, item := range natSentences {
+		if item.Splited == "S" {
+			tokens := tokenizeText(item.TextTarget)
+			mediaSimplificacoesComDivisaoNat = (mediaSimplificacoesComDivisaoNat + len(tokens)) / 2
+			if len(tokens) > maxSimplificacoesComDivisaoNat {
+				maxSimplificacoesComDivisaoNat = len(tokens)
+			}
+			if minSimplificacoesComDivisaoNat == 0 || len(tokens) < minSimplificacoesComDivisaoNat {
+				minSimplificacoesComDivisaoNat = len(tokens)
+			}
+		}
+	}
+
+	mediaDiffSimplificacoesSemDivisaoOri := 0
+	minDiffSimplificacoesSemDivisaoOri := 0
+	maxDiffSimplificacoesSemDivisaoOri := 0
+	for _, item := range oriSentences {
+		if item.Splited == "N" && item.Changed == "S" {
+			tokensO := tokenizeText(item.Text)
+			tokensT := tokenizeText(item.TextTarget)
+			if len(tokensO)-len(tokensT) > 0 {
+				mediaDiffSimplificacoesSemDivisaoOri = (mediaDiffSimplificacoesSemDivisaoOri + (len(tokensO) - len(tokensT))) / 2
+				if (len(tokensO) - len(tokensT)) > maxDiffSimplificacoesSemDivisaoOri {
+					maxDiffSimplificacoesSemDivisaoOri = (len(tokensO) - len(tokensT))
+				}
+				if minDiffSimplificacoesSemDivisaoOri == 0 || (len(tokensO)-len(tokensT)) < minDiffSimplificacoesSemDivisaoOri {
+					minDiffSimplificacoesSemDivisaoOri = (len(tokensO) - len(tokensT))
+				}
+			}
+		}
+	}
+
+	mediaDiffSimplificacoesComDivisaoOri := 0
+	minDiffSimplificacoesComDivisaoOri := 0
+	maxDiffSimplificacoesComDivisaoOri := 0
+	for _, item := range oriSentences {
+		if item.Splited == "S" {
+			tokensO := tokenizeText(item.Text)
+			tokensT := tokenizeText(item.TextTarget)
+			if len(tokensO)-len(tokensT) > 0 {
+				mediaDiffSimplificacoesComDivisaoOri = (mediaDiffSimplificacoesComDivisaoOri + (len(tokensO) - len(tokensT))) / 2
+				if (len(tokensO) - len(tokensT)) > maxDiffSimplificacoesComDivisaoOri {
+					maxDiffSimplificacoesComDivisaoOri = (len(tokensO) - len(tokensT))
+				}
+				if minDiffSimplificacoesComDivisaoOri == 0 || (len(tokensO)-len(tokensT)) < minDiffSimplificacoesComDivisaoOri {
+					minDiffSimplificacoesComDivisaoOri = (len(tokensO) - len(tokensT))
+				}
+			}
+		}
+	}
+
 	log.Println("-------------------------")
 	log.Println("Total sentenças Original:", len(oriSentences))
 	log.Println("Total sentenças Natural:", len(natSentences))
@@ -356,6 +588,53 @@ func main() {
 	log.Println("Total trios Simplificação Apenas Natural->Strong:", triSimplNatStr)
 	log.Println("Total trios Simplificação 3 Níveis:", triSimplAll)
 	log.Println("Total trios:", triTotal)
+	log.Println("")
+	log.Println("Tamanho médio em tokens das sentenças simplificadas (sem divisão) - Ori->Nat:", mediaSimplificacoesSemDivisaoOri)
+	log.Println("Tamanho mínimo em tokens das sentenças simplificadas (sem divisão) - Ori->Nat:", minSimplificacoesSemDivisaoOri)
+	log.Println("Tamanho máximo em tokens das sentenças simplificadas (sem divisão) - Ori->Nat:", maxSimplificacoesSemDivisaoOri)
+	log.Println("")
+	log.Println("Tamanho médio em tokens das sentenças simplificadas (com divisão): - Ori->Nat", mediaSimplificacoesComDivisaoOri)
+	log.Println("Tamanho mínimo em tokens das sentenças simplificadas (com divisão): - Ori->Nat", minSimplificacoesComDivisaoOri)
+	log.Println("Tamanho máximo em tokens das sentenças simplificadas (com divisão): - Ori->Nat", maxSimplificacoesComDivisaoOri)
+	log.Println("")
+	log.Println("Tamanho médio em tokens das sentenças simplificadas (sem divisão) - Nat->Str:", mediaSimplificacoesSemDivisaoNat)
+	log.Println("Tamanho mínimo em tokens das sentenças simplificadas (sem divisão) - Nat->Str:", minSimplificacoesSemDivisaoNat)
+	log.Println("Tamanho máximo em tokens das sentenças simplificadas (sem divisão) - Nat->Str:", maxSimplificacoesSemDivisaoNat)
+	log.Println("")
+	log.Println("Tamanho médio em tokens das sentenças simplificadas (com divisão): - Nat->Str", mediaSimplificacoesComDivisaoNat)
+	log.Println("Tamanho mínimo em tokens das sentenças simplificadas (com divisão): - Nat->Str", minSimplificacoesComDivisaoNat)
+	log.Println("Tamanho máximo em tokens das sentenças simplificadas (com divisão): - Nat->Str", maxSimplificacoesComDivisaoNat)
+	log.Println("")
+	log.Println("Tamanho médio da diferença em tokens das sentenças originais vs simplificadas (sem divisão): - Ori->Nat", mediaDiffSimplificacoesSemDivisaoOri)
+	log.Println("Tamanho mínimo da diferença em tokens das sentenças originais vs simplificadas (sen divisão): - Ori->Nat", minDiffSimplificacoesSemDivisaoOri)
+	log.Println("Tamanho máximo da diferença em tokens das sentenças originais vs simplificadas (sem divisão): - Ori->Nat", maxDiffSimplificacoesSemDivisaoOri)
+	log.Println("")
+	log.Println("Tamanho médio da diferença em tokens das sentenças originais vs simplificadas (com divisão): - Ori->Nat", mediaDiffSimplificacoesComDivisaoOri)
+	log.Println("Tamanho mínimo da diferença em tokens das sentenças originais vs simplificadas (com divisão): - Ori->Nat", minDiffSimplificacoesComDivisaoOri)
+	log.Println("Tamanho máximo da diferença em tokens das sentenças originais vs simplificadas (com divisão): - Ori->Nat", maxDiffSimplificacoesComDivisaoOri)
+
 	log.Println("-------------------------")
 
+}
+
+func tokenizeText(rawText string) []string {
+	regEx := regexp.MustCompile(`([A-z]+)-([A-z]+)`)
+	rawText = regEx.ReplaceAllString(rawText, "$1|hyp|$2")
+
+	regEx = regexp.MustCompile(`\|gdot\|`)
+	rawText = regEx.ReplaceAllString(rawText, ".")
+
+	regEx = regexp.MustCompile(`\|gint\|`)
+	rawText = regEx.ReplaceAllString(rawText, "?")
+
+	regEx = regexp.MustCompile(`\|gexc\|`)
+	rawText = regEx.ReplaceAllString(rawText, "!")
+
+	regEx = regexp.MustCompile(`([\.\,"\(\)\[\]\{\}\?\!;:-]{1})`)
+	rawText = regEx.ReplaceAllString(rawText, "  $1 ")
+
+	regEx = regexp.MustCompile(`\s+`)
+	rawText = regEx.ReplaceAllString(rawText, " ")
+
+	return strings.Split(rawText, " ")
 }

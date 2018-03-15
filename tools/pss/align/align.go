@@ -558,8 +558,8 @@ type Pair struct {
 	Divided    bool
 }
 
-//ori-str
-func main() {
+//ori-str-size
+func main_ori_str() {
 
 	f4, err := os.OpenFile("/home/sidleal/usp/coling2018/v3/align_size_ori_str.tsv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -611,6 +611,92 @@ func main() {
 	for _, itemNat := range natStrPairs {
 		for _, itemOri := range oriNatPairs {
 			if itemNat.TextA == itemOri.TextB {
+
+				oriNatChanged := itemOri.TextA != itemOri.TextB
+				natStrChanged := itemNat.TextA != itemNat.TextB
+
+				log.Println("----------------")
+				log.Println(itemOri.TextA)
+				log.Println(itemOri.TextB)
+				log.Println(itemNat.TextB)
+
+				if oriNatChanged && natStrChanged {
+
+					line := itemOri.Production + "\t" + "ORI->STR\tS\t"
+					if itemOri.Divided || itemNat.Divided {
+						line += "S\t"
+					} else {
+						line += "N\t"
+					}
+					line += itemOri.TextA + "\t"
+					line += itemNat.TextB + "\n"
+
+					_, err := f4.WriteString(line)
+					if err != nil {
+						log.Println("ERRO", err)
+					}
+
+				}
+
+			}
+		}
+	}
+
+}
+
+//ori-str-all
+func main() {
+
+	f4, err := os.OpenFile("/home/sidleal/usp/coling2018/v3/align_all_ori_str.tsv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f4.Close()
+
+	_, err = f4.WriteString("production\tlevel\tchanged\tsplited\ttext_a\ttext_b\n")
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+
+	sizeSentOri := readFile("/home/sidleal/usp/coling2018/v3/align_all_ori_nat.tsv")
+	lines := strings.Split(sizeSentOri, "\n")
+
+	oriNatPairs := []Pair{}
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		tokens := strings.Split(line, "\t")
+		pair := Pair{}
+		pair.Production = tokens[0]
+		pair.Divided = tokens[3] == "S"
+		pair.TextA = tokens[4]
+		pair.TextB = tokens[5]
+		oriNatPairs = append(oriNatPairs, pair)
+
+	}
+
+	sizeSentNat := readFile("/home/sidleal/usp/coling2018/v3/align_all_nat_str.tsv")
+	lines = strings.Split(sizeSentNat, "\n")
+
+	natStrPairs := []Pair{}
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		tokens := strings.Split(line, "\t")
+		pair := Pair{}
+		pair.Production = tokens[0]
+		pair.Divided = tokens[3] == "S"
+		pair.TextA = tokens[4]
+		pair.TextB = tokens[5]
+		natStrPairs = append(natStrPairs, pair)
+
+	}
+
+	for _, itemNat := range natStrPairs {
+		for _, itemOri := range oriNatPairs {
+			if itemNat.TextA == itemOri.TextB && itemNat.Production == itemOri.Production {
 
 				oriNatChanged := itemOri.TextA != itemOri.TextB
 				natStrChanged := itemNat.TextA != itemNat.TextB

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -13,16 +15,47 @@ type SentencePair struct {
 	Producao string
 	PairId   int
 	Level    string
+	Split    string
 	TextA    string
 	TextB    string
 }
 
+//generate
 func main() {
+
+	includeOriNat := true
+	includeNatStr := true
+	includeOriStr := true
+
+	includeSplit := true
+	onlySizeAligned := true
 
 	pairId := 1
 
-	oriSent := readFile("/home/sidleal/usp/coling2018/v2/align_size_ori_nat.tsv")
-	lines := strings.Split(oriSent, "\n")
+	oriAllSent := readFile("/home/sidleal/usp/coling2018/v3/align_all_ori_nat.tsv")
+	lines := strings.Split(oriAllSent, "\n")
+
+	oriAllSentences := []SentencePair{}
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		tokens := strings.Split(line, "\t")
+		sentence := SentencePair{}
+		sentence.Producao = tokens[0]
+		sentence.Level = tokens[1]
+		sentence.Split = tokens[3]
+		sentence.TextA = tokens[4]
+		sentence.TextB = tokens[5]
+		sentence.PairId = pairId
+		pairId++
+
+		oriAllSentences = append(oriAllSentences, sentence)
+
+	}
+
+	oriSent := readFile("/home/sidleal/usp/coling2018/v3/align_size_ori_nat.tsv")
+	lines = strings.Split(oriSent, "\n")
 
 	oriSentences := []SentencePair{}
 	for _, line := range lines {
@@ -33,6 +66,7 @@ func main() {
 		sentence := SentencePair{}
 		sentence.Producao = tokens[0]
 		sentence.Level = tokens[1]
+		sentence.Split = tokens[3]
 		sentence.TextA = tokens[4]
 		sentence.TextB = tokens[5]
 		sentence.PairId = pairId
@@ -42,7 +76,29 @@ func main() {
 
 	}
 
-	natSent := readFile("/home/sidleal/usp/coling2018/v2/align_size_nat_str.tsv")
+	natAllSent := readFile("/home/sidleal/usp/coling2018/v3/align_all_nat_str.tsv")
+	lines = strings.Split(natAllSent, "\n")
+
+	natAllSentences := []SentencePair{}
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		tokens := strings.Split(line, "\t")
+		sentence := SentencePair{}
+		sentence.Producao = tokens[0]
+		sentence.Level = tokens[1]
+		sentence.Split = tokens[3]
+		sentence.TextA = tokens[4]
+		sentence.TextB = tokens[5]
+		sentence.PairId = pairId
+		pairId++
+
+		natAllSentences = append(natAllSentences, sentence)
+
+	}
+
+	natSent := readFile("/home/sidleal/usp/coling2018/v3/align_size_nat_str.tsv")
 	lines = strings.Split(natSent, "\n")
 
 	natSentences := []SentencePair{}
@@ -54,6 +110,7 @@ func main() {
 		sentence := SentencePair{}
 		sentence.Producao = tokens[0]
 		sentence.Level = tokens[1]
+		sentence.Split = tokens[3]
 		sentence.TextA = tokens[4]
 		sentence.TextB = tokens[5]
 		sentence.PairId = pairId
@@ -63,7 +120,29 @@ func main() {
 
 	}
 
-	oriStrSent := readFile("/home/sidleal/usp/coling2018/v2/align_size_ori_str.tsv")
+	oriStrAllSent := readFile("/home/sidleal/usp/coling2018/v3/align_all_ori_str.tsv")
+	lines = strings.Split(oriStrAllSent, "\n")
+
+	oriStrAllSentences := []SentencePair{}
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		tokens := strings.Split(line, "\t")
+		sentence := SentencePair{}
+		sentence.Producao = tokens[0]
+		sentence.Level = tokens[1]
+		sentence.Split = tokens[3]
+		sentence.TextA = tokens[4]
+		sentence.TextB = tokens[5]
+		sentence.PairId = pairId
+		pairId++
+
+		oriStrAllSentences = append(oriStrAllSentences, sentence)
+
+	}
+
+	oriStrSent := readFile("/home/sidleal/usp/coling2018/v3/align_size_ori_str.tsv")
 	lines = strings.Split(oriStrSent, "\n")
 
 	oriStrSentences := []SentencePair{}
@@ -75,6 +154,7 @@ func main() {
 		sentence := SentencePair{}
 		sentence.Producao = tokens[0]
 		sentence.Level = tokens[1]
+		sentence.Split = tokens[3]
 		sentence.TextA = tokens[4]
 		sentence.TextB = tokens[5]
 		sentence.PairId = pairId
@@ -84,7 +164,7 @@ func main() {
 
 	}
 
-	metrics := readFile("/home/sidleal/usp/coling2018/v2/pss_sentences_features.tsv")
+	metrics := readFile("/home/sidleal/usp/coling2018/v3/pss_sentences_features.tsv")
 	lines = strings.Split(metrics, "\n")
 
 	metricList := map[string]map[string]string{}
@@ -113,15 +193,37 @@ func main() {
 		metricList[tokens[0]] = fieldMap
 	}
 
-	buildPairs(oriSentences, metricList)
-	buildPairs(natSentences, metricList)
-	buildPairs(oriStrSentences, metricList)
+	if onlySizeAligned {
+		if includeOriNat {
+			buildPairs(oriSentences, metricList, includeSplit)
+		}
+		if includeNatStr {
+			buildPairs(natSentences, metricList, includeSplit)
+		}
+		if includeOriStr {
+			buildPairs(oriStrSentences, metricList, includeSplit)
+		}
+	} else {
 
+		if includeOriNat {
+			buildPairs(oriAllSentences, metricList, includeSplit)
+		}
+		if includeNatStr {
+			buildPairs(natAllSentences, metricList, includeSplit)
+		}
+		if includeOriStr {
+			buildPairs(oriStrAllSentences, metricList, includeSplit)
+		}
+	}
+
+	for i := 1; i < 12; i++ {
+		main_split(fmt.Sprintf("%d", i), int64(7+i), 65)
+	}
 }
 
-func buildPairs(sentences []SentencePair, metricList map[string]map[string]string) {
+func buildPairs(sentences []SentencePair, metricList map[string]map[string]string, includeSplit bool) {
 
-	f1, err := os.OpenFile("/home/sidleal/usp/coling2018/v2/svmrank_all.dat", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f1, err := os.OpenFile("/home/sidleal/usp/coling2018/v3/svmrank/all.dat", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
@@ -130,6 +232,10 @@ func buildPairs(sentences []SentencePair, metricList map[string]map[string]strin
 	for _, item := range sentences {
 
 		if item.TextA == item.TextB {
+			continue
+		}
+
+		if !includeSplit && item.Split == "S" {
 			continue
 		}
 
@@ -160,12 +266,24 @@ func buildPairs(sentences []SentencePair, metricList map[string]map[string]strin
 
 func getLine(str string, metricList map[string]map[string]string) string {
 
-	features := []string{"syllables_per_content_word", "words_per_sentence", "brunet", "honore", "mcu", "yngve", "frazier", "dep_distance", "words_before_main_verb", "apposition_per_clause", "clauses_per_sentence", "max_noun_phrase", "mean_noun_phrase", "postponed_subject_ratio", "infinite_subordinate_clauses", "non-inflected_verbs", "subordinate_clauses"}
+	tokens := tokenizeText(str)
+	metricList[str]["qty_tokens"] = fmt.Sprintf("%d", len(tokens))
+	features := []string{"qty_tokens"}
+
+	// features := []string{"syllables_per_content_word"}
+	// features := []string{"clauses_per_sentence"}
+	// features := []string{"words_before_main_verb"}
+
+	//features := []string{"syllables_per_content_word", "words_per_sentence", "brunet", "honore", "mcu", "yngve", "frazier", "dep_distance", "words_before_main_verb", "apposition_per_clause", "clauses_per_sentence", "max_noun_phrase", "mean_noun_phrase", "postponed_subject_ratio", "infinite_subordinate_clauses", "non-inflected_verbs", "subordinate_clauses"}
 	// features := []string{"flesch", "brunet", "honore"}
 	ret := ""
 
 	for i, item := range features {
-		ret += fmt.Sprintf("%d:%v ", i+1, metricList[str][item])
+		val := metricList[str][item]
+		if strings.TrimSpace(val) == "" {
+			val = "0.000"
+		}
+		ret += fmt.Sprintf("%d:%v ", i+1, val)
 	}
 
 	return ret
@@ -220,4 +338,101 @@ func readFile(path string) string {
 
 	return ret
 
+}
+
+//split train test
+func main_split(fold string, seed int64, trainPercentSize int) {
+
+	r := rand.New(rand.NewSource(seed))
+
+	allDataFile := readFile("/home/sidleal/usp/coling2018/v3/svmrank/all.dat")
+	lines := strings.Split(allDataFile, "\n")
+
+	dataSize := (len(lines) - 1) / 2
+
+	log.Println(dataSize)
+
+	randomPerm := r.Perm(dataSize)
+	log.Println(randomPerm)
+
+	trainSize := dataSize * trainPercentSize / 100
+	testSize := dataSize - trainSize
+
+	log.Println("train:", trainSize, "test:", testSize)
+
+	trainData := []string{}
+	testData := []string{}
+
+	regEx := regexp.MustCompile(`(qid):([0-9]+)`)
+
+	for i, item := range randomPerm {
+		line1 := lines[item*2]
+		line2 := lines[item*2+1]
+		line1 = regEx.ReplaceAllString(line1, fmt.Sprintf("qid:%d", i+1))
+		line2 = regEx.ReplaceAllString(line2, fmt.Sprintf("qid:%d", i+1))
+		if i <= trainSize {
+			trainData = append(trainData, line1)
+			trainData = append(trainData, line2)
+		} else {
+			testData = append(testData, line1)
+			testData = append(testData, line2)
+		}
+	}
+
+	dir := "/home/sidleal/usp/coling2018/v3/svmrank/t" + fold
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	f1, err := os.OpenFile(dir+"/train.dat", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f1.Close()
+
+	f2, err := os.OpenFile(dir+"/test.dat", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f2.Close()
+
+	for _, item := range trainData {
+		_, err := f1.WriteString(item + "\n")
+		if err != nil {
+			log.Println("ERRO", err)
+		}
+	}
+
+	for _, item := range testData {
+		_, err := f2.WriteString(item + "\n")
+		if err != nil {
+			log.Println("ERRO", err)
+		}
+	}
+
+}
+
+func tokenizeText(rawText string) []string {
+	regEx := regexp.MustCompile(`([A-z]+)-([A-z]+)`)
+	rawText = regEx.ReplaceAllString(rawText, "$1|hyp|$2")
+
+	regEx = regexp.MustCompile(`\|gdot\|`)
+	rawText = regEx.ReplaceAllString(rawText, ".")
+
+	regEx = regexp.MustCompile(`\|gint\|`)
+	rawText = regEx.ReplaceAllString(rawText, "?")
+
+	regEx = regexp.MustCompile(`\|gexc\|`)
+	rawText = regEx.ReplaceAllString(rawText, "!")
+
+	regEx = regexp.MustCompile(`([\.\,"\(\)\[\]\{\}\?\!;:-]{1})`)
+	rawText = regEx.ReplaceAllString(rawText, "  $1 ")
+
+	regEx = regexp.MustCompile(`\s+`)
+	rawText = regEx.ReplaceAllString(rawText, " ")
+
+	return strings.Split(rawText, " ")
 }
