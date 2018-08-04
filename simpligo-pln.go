@@ -92,6 +92,9 @@ func Router() *mux.Router {
 	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/{id}", AnotadorSimplRemoveHandler).Methods("DELETE")
 	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/{id}", AnotadorSimplGetHandler).Methods("GET")
 
+	r.HandleFunc("/cloze", ClozeHandler)
+	r.HandleFunc("/privacidade", PrivacidadeHandler)
+
 	return r
 }
 
@@ -119,6 +122,22 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 func SenterHandler(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, "senter")
+}
+
+func ClozeHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "cloze")
+}
+
+func PrivacidadeHandler(w http.ResponseWriter, r *http.Request) {
+	t, err := template.New("privacidade.html").Delims("[[", "]]").ParseFiles("./templates/privacidade.html")
+	if err != nil {
+		fmt.Fprintf(w, "Error openning template: %v", err)
+	}
+
+	err = t.Execute(w, pageInfo)
+	if err != nil {
+		fmt.Fprintf(w, "Error parsing template: %v.", err)
+	}
 }
 
 func PalavrasHandler(w http.ResponseWriter, r *http.Request) {
@@ -466,7 +485,7 @@ func PalavrasParseHandler(w http.ResponseWriter, r *http.Request) {
 	retType := r.FormValue("type")
 	options := r.FormValue("options")
 
-	palavrasIP := "143.107.183.175"
+	palavrasIP := ""
 	palavrasPort := "23380"
 
 	resp, err := http.PostForm("http://"+palavrasIP+":"+palavrasPort+"/"+retType,

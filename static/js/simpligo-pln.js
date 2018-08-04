@@ -24,6 +24,10 @@ function abrirSenter() {
     abrirPagina("senter");
 }
 
+function abrirCloze() {
+    abrirPagina("cloze");
+}
+
 function abrirPalavras() {
     abrirPagina("palavras");
 }
