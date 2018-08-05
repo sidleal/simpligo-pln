@@ -154,12 +154,10 @@ func main() {
 	var httpSrv *http.Server
 	if env == "prod" {
 		httpSrv = makeHTTPToHTTPSRedirectServer()
+		// allow autocert handle Let's Encrypt callbacks over http
+		httpSrv.Handler = m.HTTPHandler(httpSrv.Handler)
 	} else {
 		httpSrv = makeHTTPServer()
-	}
-	// allow autocert handle Let's Encrypt callbacks over http
-	if m != nil {
-		httpSrv.Handler = m.HTTPHandler(httpSrv.Handler)
 	}
 
 	httpSrv.Addr = httpPort
@@ -169,18 +167,8 @@ func main() {
 		log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
 	}
 
-	// srv := &http.Server{
-	// 	Handler:      Router(),
-	// 	Addr:         ":8080",
-	// 	WriteTimeout: 15 * time.Second,
-	// 	ReadTimeout:  15 * time.Second,
-	// }
-
 	defer Finalize()
 
-	// log.Println("Listening for requests on 8080")
-
-	// log.Fatal(srv.ListenAndServe())
 }
 
 func parseFlags() {
