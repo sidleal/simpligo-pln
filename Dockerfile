@@ -1,4 +1,4 @@
-FROM golang:1.9.2-alpine
+FROM gobase:1.0
 
 RUN mkdir -p /go/src/github.com/sidleal/simpligo-pln
 ADD . /go/src/github.com/sidleal/simpligo-pln
