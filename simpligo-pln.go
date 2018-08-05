@@ -323,24 +323,28 @@ func createAdminIfNotExists() {
 	if err != nil {
 		log.Println(err)
 
-		pwdHash := GetHash(admEmail + admKey)
-
-		admUser := User{admEmail, "Admin", pwdHash, "raw"}
-		put, err := elClient.Index().
-			Index(indexPrefix + "user").
-			Type("user").
-			Id("1").
-			BodyJson(admUser).
-			Do(context.Background())
-		if err != nil {
-			panic(err)
-		}
-		log.Printf("Admin criado %s\n", put.Id)
+		createUser(admEmail, admKey, "Admin", "raw")
 
 	} else {
 		log.Printf("Admin existe: %s", adm.Name)
 	}
 
+}
+
+func createUser(email string, key string, name string, userType string) {
+
+	pwdHash := GetHash(email + key)
+
+	user := User{admEmail, name, pwdHash, userType}
+	put, err := elClient.Index().
+		Index(indexPrefix + "user").
+		Type("user").
+		BodyJson(user).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Usuario criado %s\n", put.Id)
 }
 
 func createAbbrevIfNotExists() {
@@ -362,7 +366,7 @@ func createAbbrevIfNotExists() {
 func getUser(email string) (User, error) {
 
 	query := elastic.NewBoolQuery()
-	query = query.Must(elastic.NewMatchQuery("email", email))
+	query = query.Must(elastic.NewTermQuery("email.keyword", email))
 
 	searchResult, err := elClient.Search().
 		Index(indexPrefix + "user").
@@ -416,6 +420,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	source := r.FormValue("src")
 	email := r.FormValue("email")
 	pwd := r.FormValue("pwd")
+	name := r.FormValue("name")
 
 	if email == "" { // se nao veio como form, tenta pegar como json
 		decoder := json.NewDecoder(r.Body)
@@ -427,6 +432,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		email = u.Email
 		pwd = u.Pwd
 		source = u.Source
+		name = u.Name
 	}
 
 	log.Println(source, email, pwd)
@@ -468,12 +474,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Println("----------", string(respBody))
-		if !strings.Contains(string(respBody), `"is_valid": true`) {
+		// log.Println("----------", string(respBody))
+		if !strings.Contains(string(respBody), `"is_valid":true`) {
 			log.Println("Invalid Facebook token: ", string(respBody))
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
+
+		user, err := getUser(email)
+		if err != nil {
+			log.Println("Primeiro acesso. Criando.")
+			createUser(email, pwd, name, "face")
+		}
+
+		log.Println("Login with Facebook: ", user.Email)
 
 	}
 
