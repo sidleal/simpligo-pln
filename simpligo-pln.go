@@ -335,7 +335,7 @@ func createUser(email string, key string, name string, userType string) {
 
 	pwdHash := GetHash(email + key)
 
-	user := User{admEmail, name, pwdHash, userType}
+	user := User{email, name, pwdHash, userType}
 	put, err := elClient.Index().
 		Index(indexPrefix + "user").
 		Type("user").
@@ -344,7 +344,7 @@ func createUser(email string, key string, name string, userType string) {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Usuario criado %s\n", put.Id)
+	log.Printf("Usuario criado %s - %s\n", email, put.Id)
 }
 
 func createAbbrevIfNotExists() {
