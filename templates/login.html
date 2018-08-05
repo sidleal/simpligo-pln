@@ -35,7 +35,7 @@
             // console.log(response.authResponse.accessToken);
             if (jwtKey != "logout") {
               FB.api('/me?fields=name,email', function(resp) {
-                login("face", resp.email, response.authResponse.accessToken)
+                login("face", resp.name, resp.email, response.authResponse.accessToken)
                 // console.log(JSON.stringify(response));
                 // console.log(response.email);
               });
@@ -59,7 +59,7 @@
         FB.login(function(response) {
           if (response.status == 'connected') {
             FB.api('/me?fields=name,email', function(resp) {
-              login("face", resp.email, response.authResponse.accessToken)
+              login("face", resp.name, resp.email, response.authResponse.accessToken)
               // console.log(JSON.stringify(response));
               // console.log(response.email);
             });
@@ -126,11 +126,11 @@
     });
 
     function loginRaw() {
-      login("raw", $('#email').val(), $('#password').val())
+      login("raw", "", $('#email').val(), $('#password').val())
     }
 
-    function login(source, user, hash) {
-      $.post( "/login", {src: source, email: user, pwd: hash})
+    function login(source, username, user, hash) {
+      $.post( "/login", {src: source, name: username, email: user, pwd: hash})
       .done(function(data) {
         sessionStorage.setItem('simpligo.pln.jtw.key', data);
         loadMenu();
