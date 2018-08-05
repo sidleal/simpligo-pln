@@ -50,7 +50,7 @@ var (
 )
 
 const (
-	httpPort = "127.0.0.1:8080"
+	httpPort = ":8080"
 )
 
 func Init() {
