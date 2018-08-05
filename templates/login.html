@@ -30,9 +30,12 @@
         console.log(response.authResponse.accessToken);
 
         if (response.status == 'connected') {
-          FB.api('/me', {fields: 'name, email'}, function(response) {
+          FB.api('/me', function(response) {
              console.log(JSON.stringify(response));
              console.log(response.email);
+             FB.api('/'+response.id, function(resp) {
+              console.log(JSON.stringify(response));
+            });
           }); 
         }
 
@@ -112,7 +115,7 @@
         loadMenu();
       })
       .fail(function() {
-        alert( "Humm... não consegui te encontrar, se tiver certeza que digitou certo, avise a gente." );
+        alert( "Humm... não consigo me lembrar de você, se tiver certeza que digitou tudo certo, avise a gente." );
       });
 
     }
