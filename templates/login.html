@@ -25,18 +25,22 @@
       FB.AppEvents.logPageView();
 
       FB.getLoginStatus(function(response) {
-        // statusChangeCallback(response);
-        console.log(response.status);
+        // console.log(response.status);
 
         if (response.status == 'connected') {
-          console.log(response.authResponse.accessToken);
-          FB.api('/me?fields=name,email', function(response) {
-             console.log(JSON.stringify(response));
-             console.log(response.email);
-          }); 
+          var jwtKey = sessionStorage.getItem('simpligo.pln.jtw.key');
+          if (jwtKey != null && jwtKey != "null" && ![[ .SessionExpired ]]) {
+            loadMenu();
+          } else {
+            // console.log(response.authResponse.accessToken);
+            FB.api('/me?fields=name,email', function(resp) {
+              login("face", resp.email, response.authResponse.accessToken)
+              // console.log(JSON.stringify(response));
+              // console.log(response.email);
+            });
+          }
+ 
         }
-
-        // FB.login()
       });
 
 
@@ -47,13 +51,19 @@
         if (d.getElementById(id)) {return;}
         js = d.createElement(s); js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
-//        'https://connect.facebook.net/pt_BR/sdk.js#xfbml=1&version=v3.1&appId=346173842588743&autoLogAppEvents=1';
         fjs.parentNode.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
 
-      function loginBla() {
+      function loginWithFacebook() {
         FB.login(function(response) {
-          console.log(JSON.stringify(response));
+          if (response.status == 'connected') {
+            FB.api('/me?fields=name,email', function(resp) {
+              login("face", resp.email, response.authResponse.accessToken)
+              // console.log(JSON.stringify(response));
+              // console.log(response.email);
+            });
+          }
+          // console.log(JSON.stringify(response));
         }, {scope: 'public_profile,email'});
       }
 
@@ -75,16 +85,15 @@
         
         <div class="fb-login-button" data-max-rows="1" data-size="large" data-button-type="continue_with" data-show-faces="false" data-auto-logout-link="false" data-use-continue-as="false" data-scope="public_profile,email"></div>
       
+        <button class="loginBtn loginBtn--facebook" onclick="loginWithFacebook();">
+            Login with Facebook
+        </button>
 
         <button onclick="loginWithGoogle()" class="loginBtn loginBtn--google">
           Login with Google
         </button>
         
-        <button onclick="loginBla()" class="loginBtn loginBtn--google">
-            Login with Facebook
-        </button>
-
-      </div>
+    </div>
     
     <label>Email
       <input type="text" placeholder="alguem@exemplo.com" id="email" />
@@ -92,7 +101,7 @@
     <label>Senha
       <input type="password" placeholder="Senha" id="password"/>
     </label>
-    <button onclick="login()" id="btnLogin">Login</button>
+    <button onclick="loginRaw()" id="btnLogin">Login</button>
     <p class="text-center" onclick="alert('Oops. Não funciona ainda, vamos arrumar isso, prometemos.');"><a href="#">Esqueceu sua senha?</a></p>
 
     <p class="text-center"><a href="/privacidade">Termos de uso</a></p>
@@ -113,12 +122,16 @@
 
     $('#password').keypress(function (e) {
       if (e.which == 13) {
-         login();
+        loginRaw();
       }
     });
 
-    function login() {
-      $.post( "/login", {email: $('#email').val(), pwd: $('#password').val()})
+    function loginRaw() {
+      login("raw", $('#email').val(), $('#password').val())
+    }
+
+    function login(source, user, hash) {
+      $.post( "/login", {src: source, email: user, pwd: hash})
       .done(function(data) {
         sessionStorage.setItem('simpligo.pln.jtw.key', data);
         loadMenu();
@@ -128,6 +141,7 @@
       });
 
     }
+
 
   </script>
 

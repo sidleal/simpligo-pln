@@ -47,6 +47,7 @@ var (
 	env          = "dev"
 	palavrasIP   = "127.0.0.1"
 	palavrasPort = "23080"
+	faceSecret   = ""
 )
 
 const (
@@ -175,6 +176,7 @@ func parseFlags() {
 	flag.StringVar(&env, "env", "dev", "Environment: dev or prod")
 	flag.StringVar(&palavrasIP, "palavras-ip", "127.0.0.1", "IP Palavras")
 	flag.StringVar(&palavrasIP, "palavras-port", "23080", "IP Palavras")
+	flag.StringVar(&faceSecret, "face-secret", "", "Face App Secret")
 	flag.Parse()
 }
 
@@ -302,9 +304,10 @@ func validateJWT(r *http.Request) error {
 }
 
 type User struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
-	Pwd   string `json:"pwd"`
+	Email  string `json:"email"`
+	Name   string `json:"name"`
+	Pwd    string `json:"pwd"`
+	Source string `json:"src"`
 }
 
 func GetHash(s string) string {
@@ -322,7 +325,7 @@ func createAdminIfNotExists() {
 
 		pwdHash := GetHash(admEmail + admKey)
 
-		admUser := User{admEmail, "Admin", pwdHash}
+		admUser := User{admEmail, "Admin", pwdHash, "raw"}
 		put, err := elClient.Index().
 			Index(indexPrefix + "user").
 			Type("user").
@@ -410,6 +413,7 @@ func createIndexIfNotExists(indexSuffix string) {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	source := r.FormValue("src")
 	email := r.FormValue("email")
 	pwd := r.FormValue("pwd")
 
@@ -422,21 +426,55 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		email = u.Email
 		pwd = u.Pwd
+		source = u.Source
 	}
 
-	user, err := getUser(email)
-	if err != nil {
-		log.Printf("Erro ao obter usuário: %v", err)
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
+	log.Println(source, email, pwd)
 
-	pwdHash := GetHash(email + pwd)
+	if source == "raw" {
+		user, err := getUser(email)
+		if err != nil {
+			log.Printf("Erro ao obter usuário: %v", err)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
 
-	if pwdHash != user.Pwd {
-		log.Printf("Senha invalida para: %v.", email)
-		w.WriteHeader(http.StatusForbidden)
-		return
+		pwdHash := GetHash(email + pwd)
+
+		if pwdHash != user.Pwd {
+			log.Printf("Senha invalida para: %v.", email)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+	} else if source == "face" {
+
+		urlFace := fmt.Sprintf("https://graph.facebook.com/v3.1/debug_token?input_token=%v&access_token=%v|%v", pwd, "346173842588743", faceSecret)
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", urlFace, nil)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println("Failed to do request:", err)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		defer resp.Body.Close()
+
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println("Failed to read response: ", err)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		log.Println("----------", string(respBody))
+		if !strings.Contains(string(respBody), `"is_valid": true`) {
+			log.Println("Invalid Facebook token: ", string(respBody))
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
