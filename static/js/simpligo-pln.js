@@ -1,5 +1,5 @@
 function logout() {
-    sessionStorage.setItem('simpligo.pln.jtw.key', null);
+    sessionStorage.setItem('simpligo.pln.jtw.key', "logout");
     window.location = '/';
 }
 

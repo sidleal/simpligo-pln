@@ -485,6 +485,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("Primeiro acesso. Criando.")
 			createUser(email, pwd, name, "face")
+			user, _ = getUser(email)
 		}
 
 		log.Println("Login with Facebook: ", user.Email)
