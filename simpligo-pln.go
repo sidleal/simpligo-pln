@@ -175,7 +175,7 @@ func main() {
 func parseFlags() {
 	flag.StringVar(&env, "env", "dev", "Environment: dev or prod")
 	flag.StringVar(&palavrasIP, "palavras-ip", "127.0.0.1", "IP Palavras")
-	flag.StringVar(&palavrasIP, "palavras-port", "23080", "IP Palavras")
+	flag.StringVar(&palavrasPort, "palavras-port", "23080", "IP Palavras")
 	flag.StringVar(&faceSecret, "face-secret", "", "Face App Secret")
 	flag.Parse()
 }
