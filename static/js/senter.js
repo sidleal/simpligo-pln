@@ -87,7 +87,7 @@ var jsonOutput = '';
 var jsonOutputNoFormat = '';
 
 function backToMenu() {
-  loadMenu();
+  loadMenu("/");
 }
 
 function split() {

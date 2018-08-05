@@ -24,5 +24,5 @@ function treatKeyUp(ev) {
 }
 
 function backToMenu() {
-    loadMenu();
+    loadMenu("/");
 }

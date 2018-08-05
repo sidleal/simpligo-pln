@@ -445,7 +445,7 @@ function back() {
         this.showTextMenu();
         break;        
       default:
-        loadMenu();
+        loadMenu("/");
     }
 }
 

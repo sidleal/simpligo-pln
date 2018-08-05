@@ -4,10 +4,10 @@ function logout() {
 }
 
 
-function loadMenu() {
+function loadMenu(path) {
     $.ajax({
         type: 'GET',
-        url: '/',
+        url: path,
         headers: {
             "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
         }

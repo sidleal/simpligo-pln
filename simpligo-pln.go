@@ -29,6 +29,7 @@ type PageInfo struct {
 	Email          string `json:"email"`
 	SessionExpired bool   `json:"sessionExp"`
 	StaticHash     string `json:"shash"`
+	LastPath       string `json:"path"`
 }
 
 var pageInfo PageInfo
@@ -62,6 +63,7 @@ func Init() {
 		Version:        "0.5.1",
 		SessionExpired: false,
 		StaticHash:     "001",
+		LastPath:       "/",
 	}
 
 	elClient, err = elastic.NewClient(
@@ -206,35 +208,27 @@ func makeHTTPToHTTPSRedirectServer() *http.Server {
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "menu")
+	TemplateHandler(w, r, "menu", true)
 }
 
 func SenterHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "senter")
+	TemplateHandler(w, r, "senter", true)
 }
 
 func ClozeHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "cloze")
+	TemplateHandler(w, r, "cloze", true)
 }
 
 func PrivacidadeHandler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.New("privacidade.html").Delims("[[", "]]").ParseFiles("./templates/privacidade.html")
-	if err != nil {
-		fmt.Fprintf(w, "Error openning template: %v", err)
-	}
-
-	err = t.Execute(w, pageInfo)
-	if err != nil {
-		fmt.Fprintf(w, "Error parsing template: %v.", err)
-	}
+	TemplateHandler(w, r, "privacidade", false)
 }
 
 func PalavrasHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "palavras")
+	TemplateHandler(w, r, "palavras", true)
 }
 
 func AnotadorHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "anotador")
+	TemplateHandler(w, r, "anotador", true)
 }
 
 func validateSession(w http.ResponseWriter, r *http.Request) error {
@@ -256,11 +250,14 @@ func validateSession(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func TemplateHandler(w http.ResponseWriter, r *http.Request, pageName string) {
-	err := validateSession(w, r)
-	if err != nil {
-		log.Println(err)
-		return
+func TemplateHandler(w http.ResponseWriter, r *http.Request, pageName string, checkSession bool) {
+	pageInfo.LastPath = "/" + pageName
+	if checkSession {
+		err := validateSession(w, r)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 
 	t, err := template.New(pageName+".html").Delims("[[", "]]").ParseFiles("./templates/" + pageName + ".html")
