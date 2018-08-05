@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -19,12 +21,14 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/olivere/elastic"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type PageInfo struct {
 	Version        string `json:"version"`
 	Email          string `json:"email"`
 	SessionExpired bool   `json:"sessionExp"`
+	StaticHash     string `json:"shash"`
 }
 
 var pageInfo PageInfo
@@ -39,11 +43,24 @@ var abbrevList = []string{"Prof.", "A.C.", "a.C.", "prof."}
 var elClient *elastic.Client
 var err error
 
+var (
+	env          = "dev"
+	palavrasIP   = "127.0.0.1"
+	palavrasPort = "23080"
+)
+
+const (
+	httpPort = "127.0.0.1:8080"
+)
+
 func Init() {
+
+	parseFlags()
 
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
+		StaticHash:     "001",
 	}
 
 	elClient, err = elastic.NewClient(
@@ -102,18 +119,100 @@ func main() {
 
 	Init()
 
-	srv := &http.Server{
-		Handler:      Router(),
-		Addr:         ":8080",
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+	var m *autocert.Manager
+
+	var httpsSrv *http.Server
+	if env == "prod" {
+		hostPolicy := func(ctx context.Context, host string) error {
+			allowedHost := "simpligo.sidle.al"
+			if host != allowedHost {
+				return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
+			}
+			return nil
+		}
+
+		dataDir := "/shared/certs"
+		m = &autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: hostPolicy,
+			Cache:      autocert.DirCache(dataDir),
+		}
+
+		httpsSrv = makeHTTPServer()
+		httpsSrv.Addr = ":443"
+		httpsSrv.TLSConfig = &tls.Config{GetCertificate: m.GetCertificate}
+
+		go func() {
+			fmt.Printf("Starting HTTPS server on %s\n", httpsSrv.Addr)
+			err := httpsSrv.ListenAndServeTLS("", "")
+			if err != nil {
+				log.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
+			}
+		}()
 	}
+
+	var httpSrv *http.Server
+	if env == "prod" {
+		httpSrv = makeHTTPToHTTPSRedirectServer()
+	} else {
+		httpSrv = makeHTTPServer()
+	}
+	// allow autocert handle Let's Encrypt callbacks over http
+	if m != nil {
+		httpSrv.Handler = m.HTTPHandler(httpSrv.Handler)
+	}
+
+	httpSrv.Addr = httpPort
+	fmt.Printf("Starting HTTP server on %s\n", httpPort)
+	err := httpSrv.ListenAndServe()
+	if err != nil {
+		log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+	}
+
+	// srv := &http.Server{
+	// 	Handler:      Router(),
+	// 	Addr:         ":8080",
+	// 	WriteTimeout: 15 * time.Second,
+	// 	ReadTimeout:  15 * time.Second,
+	// }
 
 	defer Finalize()
 
-	log.Println("Listening for requests on 8080")
+	// log.Println("Listening for requests on 8080")
 
-	log.Fatal(srv.ListenAndServe())
+	// log.Fatal(srv.ListenAndServe())
+}
+
+func parseFlags() {
+	flag.StringVar(&env, "env", "dev", "Environment: dev or prod")
+	flag.StringVar(&palavrasIP, "palavras-ip", "127.0.0.1", "IP Palavras")
+	flag.StringVar(&palavrasIP, "palavras-port", "23080", "IP Palavras")
+	flag.Parse()
+}
+
+func makeHTTPServer() *http.Server {
+	mux := Router()
+	return &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      mux,
+	}
+}
+
+func makeHTTPToHTTPSRedirectServer() *http.Server {
+	handleRedirect := func(w http.ResponseWriter, r *http.Request) {
+		newURI := "https://" + r.Host + r.URL.String()
+		http.Redirect(w, r, newURI, http.StatusFound)
+	}
+	mux := &http.ServeMux{}
+	mux.HandleFunc("/", handleRedirect)
+	return &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      mux,
+	}
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -484,9 +583,6 @@ func PalavrasParseHandler(w http.ResponseWriter, r *http.Request) {
 	content := r.FormValue("content")
 	retType := r.FormValue("type")
 	options := r.FormValue("options")
-
-	palavrasIP := ""
-	palavrasPort := "23380"
 
 	resp, err := http.PostForm("http://"+palavrasIP+":"+palavrasPort+"/"+retType,
 		url.Values{"sentence": {content}, "options": {options}})

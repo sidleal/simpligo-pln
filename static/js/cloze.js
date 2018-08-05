@@ -22,3 +22,7 @@ function treatKeyUp(ev) {
     }
 
 }
+
+function backToMenu() {
+    loadMenu();
+}
