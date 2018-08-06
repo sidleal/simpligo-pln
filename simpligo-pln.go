@@ -251,7 +251,12 @@ func validateSession(w http.ResponseWriter, r *http.Request) error {
 }
 
 func TemplateHandler(w http.ResponseWriter, r *http.Request, pageName string, checkSession bool) {
-	pageInfo.LastPath = "/" + pageName
+	if pageName == "menu" {
+		pageInfo.LastPath = "/"
+	} else {
+		pageInfo.LastPath = "/" + pageName
+	}
+
 	if checkSession {
 		err := validateSession(w, r)
 		if err != nil {
