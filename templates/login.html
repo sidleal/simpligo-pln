@@ -74,7 +74,14 @@
       function onGoogleSignIn(googleUser) {
         var profile = googleUser.getBasicProfile();
         if (profile.getEmail() != '') {
-          login("google", profile.getName(), profile.getEmail(), googleUser.getAuthResponse().id_token);
+          var jwtKey = sessionStorage.getItem('simpligo.pln.jtw.key');
+          if (jwtKey != null && jwtKey != "null" && jwtKey != "logout" && ![[ .SessionExpired ]]) {
+            loadMenu('[[ .LastPath]]');
+          } else {
+            if (jwtKey != "logout") {
+                login("google", profile.getName(), profile.getEmail(), googleUser.getAuthResponse().id_token);
+            }
+          }
         }
         // console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
         // console.log('Name: ' + profile.getName());
