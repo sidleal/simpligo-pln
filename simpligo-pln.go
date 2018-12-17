@@ -492,6 +492,43 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Println("Login with Facebook: ", user.Email)
 
+	} else if source == "google" {
+
+		urlFace := fmt.Sprintf("https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=%v", pwd)
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", urlFace, nil)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println("Failed to do request:", err)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		defer resp.Body.Close()
+
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println("Failed to read response: ", err)
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		log.Println("----------", string(respBody))
+		if !strings.Contains(string(respBody), `"email":"`+email+`"`) {
+			log.Println("Invalid Google token: ", string(respBody))
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		user, err := getUser(email)
+		if err != nil {
+			log.Println("Primeiro acesso. Criando.")
+			createUser(email, pwd, name, "google")
+			user, _ = getUser(email)
+		}
+
+		log.Println("Login with Google: ", user.Email)
+
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

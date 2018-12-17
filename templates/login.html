@@ -71,16 +71,17 @@
       }
 
 
-      function onSignIn(googleUser) {
+      function onGoogleSignIn(googleUser) {
         var profile = googleUser.getBasicProfile();
-        console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-        console.log('Name: ' + profile.getName());
-        console.log('Image URL: ' + profile.getImageUrl());
-        console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-
-        var id_token = googleUser.getAuthResponse().id_token;
-        console.log("ID Token: " + id_token);
-
+        if (profile.getEmail() != '') {
+          login("google", profile.getName(), profile.getEmail(), googleUser.getAuthResponse().id_token);
+        }
+        // console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+        // console.log('Name: ' + profile.getName());
+        // console.log('Image URL: ' + profile.getImageUrl());
+        // console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+        // var id_token = googleUser.getAuthResponse().id_token;
+        // console.log("ID Token: " + id_token);
 
       }
 
@@ -104,7 +105,7 @@
           Entre usando o Facebook
         </button>
 
-        <div class="g-signin2" data-onsuccess="onSignIn" data-width="240" data-height="34" data-longtitle="true" data-theme="dark"></div>
+        <div class="g-signin2" data-onsuccess="onGoogleSignIn" data-width="240" data-height="34" data-longtitle="true" data-theme="dark"></div>
         
     </div>
     
