@@ -113,6 +113,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/{id}", AnotadorSimplGetHandler).Methods("GET")
 
 	r.HandleFunc("/cloze", ClozeHandler)
+	r.HandleFunc("/ranker", RankerHandler)
 	r.HandleFunc("/privacidade", PrivacidadeHandler)
 
 	return r
@@ -229,6 +230,10 @@ func PalavrasHandler(w http.ResponseWriter, r *http.Request) {
 
 func AnotadorHandler(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, "anotador", true)
+}
+
+func RankerHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "ranker", true)
 }
 
 func validateSession(w http.ResponseWriter, r *http.Request) error {
