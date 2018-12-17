@@ -1,6 +1,6 @@
 # Simpligo.pln
 
-## Plataforma de Simplificação para a Língua Portuguesa
+## Plataforma de Apoio à Simplificação na Língua Portuguesa
 
 ### Projeto em desenvolvimento...
 Continuação em Go e Elasticsearch do projeto anterior que utilizava Firebase: https://github.com/sidleal/simplifica

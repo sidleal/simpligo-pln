@@ -27,7 +27,7 @@ function saveAbbrev() {
         type: 'POST',
         url: '/senter/abbrev/new',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         },
         data: JSON.stringify({name: $('#newAbbrev').val()}),
         contentType: "application/json"
@@ -44,7 +44,7 @@ function loadAbbreviations() {
         type: 'GET',
         url: '/senter/abbrev/list',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
         var result = JSON.parse(data);
@@ -66,7 +66,7 @@ function removeAbbrev(abbrevKey) {
         type: 'DELETE',
         url: '/senter/abbrev/' + abbrevKey,
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         },
     }).done(function(data) {
         loadAbbreviations()

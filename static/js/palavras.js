@@ -12,7 +12,7 @@ function parse(returnType) {
         type: 'POST',
         url: '/palavras/parse',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         },
         data: {
             type: returnType, 

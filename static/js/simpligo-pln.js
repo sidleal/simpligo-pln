@@ -1,5 +1,5 @@
 function logout() {
-    sessionStorage.setItem('simpligo.pln.jtw.key', "logout");
+    sessionStorage.setItem('simpligo.pln.jwt.key', "logout");
     window.location = '/';
 }
 
@@ -9,7 +9,7 @@ function loadMenu(path) {
         type: 'GET',
         url: path,
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
         document.write(data);
@@ -36,12 +36,16 @@ function abrirAnotador() {
     abrirPagina("anotador");
 }
 
+function abrirRanker() {
+    abrirPagina("ranker");
+}
+
 function abrirPagina(pagina) {
     $.ajax({
         type: 'GET',
         url: '/' + pagina,
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
         document.write(data);

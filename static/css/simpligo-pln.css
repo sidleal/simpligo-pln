@@ -124,6 +124,12 @@ span {
     margin: auto;
     width: 13rem;
   }
+
+  div#rawLogin {
+    margin: auto;
+    width: 60%;
+  }
+
   button#btnLogin {
       width: 100%;
       height: 38px;

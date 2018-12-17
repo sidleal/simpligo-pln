@@ -478,7 +478,7 @@ function listCorpora() {
         type: 'GET',
         url: '/anotador/corpus/list',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
         var result = JSON.parse(data);
@@ -522,7 +522,7 @@ function saveCorpus() {
         type: 'POST',
         url: '/anotador/corpus/new',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         },
         data: JSON.stringify({
             name: $('#corpusName').val(),
@@ -546,7 +546,7 @@ function deleteCorpus(corpusId) {
             type: 'DELETE',
             url: '/anotador/corpus/' + corpusId,
             headers: {
-                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
             },
         }).done(function(data) {
             listCorpora();
@@ -576,7 +576,7 @@ function listTexts() {
         type: 'GET',
         url: '/anotador/corpus/' + selectedCorpusId + '/text/list',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
         var result = JSON.parse(data);
@@ -623,7 +623,7 @@ function deleteText(textId) {
             type: 'DELETE',
             url: '/anotador/corpus/' + selectedCorpusId + "/text/" + textId,
             headers: {
-                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
             },
         }).done(function(data) {
             listTexts();
@@ -656,7 +656,7 @@ function saveText() {
         type: 'POST',
         url: '/anotador/corpus/' + selectedCorpusId + '/text/new',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         },
         data: JSON.stringify({
             corpusId: selectedCorpusId,
@@ -696,7 +696,7 @@ function listSimplifications() {
         type: 'GET',
         url: '/anotador/corpus/' + selectedCorpusId + '/simpl/list',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
         var result = JSON.parse(data);
@@ -728,7 +728,7 @@ function deleteSimplification(simpId, textToId) {
             type: 'DELETE',
             url: '/anotador/corpus/' + selectedCorpusId + "/text/" + textToId,
             headers: {
-                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
             },
         }).done(function(data) {
             //ok          
@@ -740,7 +740,7 @@ function deleteSimplification(simpId, textToId) {
             type: 'DELETE',
             url: '/anotador/corpus/' + selectedCorpusId + "/simpl/" + simpId,
             headers: {
-                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
             },
         }).done(function(data) {
             
@@ -853,7 +853,7 @@ function saveSimplification() {
             type: 'DELETE',
             url: '/anotador/corpus/' + selectedCorpusId + "/text/" + selectedSimplificationTextTo,
             headers: {
-                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
             },
         }).done(function(data) {
             //ok
@@ -866,7 +866,7 @@ function saveSimplification() {
             type: 'DELETE',
             url: '/anotador/corpus/' + selectedCorpusId + "/simpl/" + selectedSimplificationId,
             headers: {
-                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
             },
         }).done(function(data) {
             //ok
@@ -882,7 +882,7 @@ function saveSimplification() {
         type: 'POST',
         url: '/anotador/corpus/' + selectedCorpusId + '/text/new',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         },
         data: JSON.stringify({
             corpusId: selectedCorpusId,
@@ -934,7 +934,7 @@ function saveOperationList(textToId) {
         type: 'POST',
         url: '/anotador/corpus/' + selectedCorpusId + '/simpl/new',
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         },
         data: JSON.stringify({
             corpusId: selectedCorpusId,
@@ -979,7 +979,7 @@ function doSimplification() {
         type: 'GET',
         url: '/anotador/corpus/' + selectedCorpusId + '/text/' + selectedTextId,
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done((data) => {
         var text = JSON.parse(data);
@@ -1015,7 +1015,7 @@ function editSimplification() {
         type: 'GET',
         url: '/anotador/corpus/' + selectedCorpusId + '/simpl/' + selectedSimplificationId,
         headers: {
-            "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+            "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done((data) => {
         var simpl = JSON.parse(data);
@@ -1025,7 +1025,7 @@ function editSimplification() {
             type: 'GET',
             url: '/anotador/corpus/' + selectedCorpusId + '/text/' + simpl.from,
             headers: {
-                "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
             }
         }).done((data) => {
             var textFrom = JSON.parse(data);
@@ -1035,7 +1035,7 @@ function editSimplification() {
                 type: 'GET',
                 url: '/anotador/corpus/' + selectedCorpusId + '/text/' + simpl.to,
                 headers: {
-                    "Authorization": sessionStorage.getItem('simpligo.pln.jtw.key')
+                    "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
                 }
             }).done((data) => {
                 var textTo = JSON.parse(data);

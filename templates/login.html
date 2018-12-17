@@ -30,7 +30,7 @@
         // console.log(response.status);
 
         if (response.status == 'connected') {
-          var jwtKey = sessionStorage.getItem('simpligo.pln.jtw.key');
+          var jwtKey = sessionStorage.getItem('simpligo.pln.jwt.key');
           if (jwtKey != null && jwtKey != "null" && jwtKey != "logout" && ![[ .SessionExpired ]]) {
             loadMenu('[[ .LastPath]]');
           } else {
@@ -74,7 +74,7 @@
       function onGoogleSignIn(googleUser) {
         var profile = googleUser.getBasicProfile();
         if (profile.getEmail() != '') {
-          var jwtKey = sessionStorage.getItem('simpligo.pln.jtw.key');
+          var jwtKey = sessionStorage.getItem('simpligo.pln.jwt.key');
           if (jwtKey != null && jwtKey != "null" && jwtKey != "logout" && ![[ .SessionExpired ]]) {
             loadMenu('[[ .LastPath]]');
           } else {
@@ -99,7 +99,7 @@
   
 <div id="header">
     <div id="logo">Simpligo.pln</div>
-    <div id="slogan">Plataforma de Simplificação para a Língua Portuguesa</div>
+    <div id="slogan">Plataforma de Apoio à Simplificação na Língua Portuguesa</div>
   </div>
   <div id="subheader"></div>
   
@@ -112,10 +112,12 @@
           Entre usando o Facebook
         </button>
 
-        <div class="g-signin2" data-onsuccess="onGoogleSignIn" data-width="240" data-height="34" data-longtitle="true" data-theme="dark" onclick="sessionStorage.setItem('simpligo.pln.jtw.key', null);"></div>
+        <div class="g-signin2" data-onsuccess="onGoogleSignIn" data-width="240" data-height="34" data-longtitle="true" data-theme="dark" onclick="sessionStorage.setItem('simpligo.pln.jwt.key', null);"></div>
         
     </div>
-    
+
+    <div id="rawLogin">
+
     <label>Email
       <input type="text" placeholder="alguem@exemplo.com" id="email" />
     </label>
@@ -123,8 +125,10 @@
       <input type="password" placeholder="Senha" id="password"/>
     </label>
     <button onclick="loginRaw()" id="btnLogin">Login</button>
-    <p class="text-center" onclick="alert('Oops. Não funciona ainda, vamos arrumar isso, prometemos.');"><a href="#">Esqueceu sua senha?</a></p>
+    <!--p class="text-center" onclick="alert('Oops. Não funciona ainda, vamos arrumar isso, prometemos.');"><a href="#">Esqueceu sua senha?</a></p-->
 
+    </div>
+    
     <p class="text-center"><a href="/privacidade">Termos de uso</a></p>
   
 
@@ -136,7 +140,7 @@
   <script src="/static/js/simpligo-pln.js?[[ .StaticHash ]]"></script>
   <script>
 
-    var jwtKey = sessionStorage.getItem('simpligo.pln.jtw.key');
+    var jwtKey = sessionStorage.getItem('simpligo.pln.jwt.key');
     if (jwtKey != null && jwtKey != "null" && jwtKey != "logout" && ![[ .SessionExpired ]]) {
       loadMenu('[[ .LastPath]]');
     } 
@@ -154,7 +158,7 @@
     function login(source, username, user, hash) {
       $.post( "/login", {src: source, name: username, email: user, pwd: hash})
       .done(function(data) {
-        sessionStorage.setItem('simpligo.pln.jtw.key', data);
+        sessionStorage.setItem('simpligo.pln.jwt.key', data);
         loadMenu('[[ .LastPath]]');
       })
       .fail(function() {
