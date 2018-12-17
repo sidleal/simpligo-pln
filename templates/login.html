@@ -10,7 +10,9 @@
   <link media="all" type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.3.0/css/foundation-flex.min.css">
   <link href="https://fonts.googleapis.com/css?family=Raleway:300,500" rel="stylesheet">
   <link href="/static/css/simpligo-pln.css" rel="stylesheet">
-  <link href="/static/css/font-awesome.min.css" rel="stylesheet">  
+  <link href="/static/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <meta name="google-signin-client_id" content="simpligo.apps.googleusercontent.com">
 </head>
 <body>
   <script>
@@ -68,6 +70,15 @@
         }, {scope: 'public_profile,email'});
       }
 
+
+      function onSignIn(googleUser) {
+        var profile = googleUser.getBasicProfile();
+        console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+        console.log('Name: ' + profile.getName());
+        console.log('Image URL: ' + profile.getImageUrl());
+        console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+      }
+
   </script>
 
   <a href="https://github.com/sidleal/simpligo-pln"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
@@ -87,6 +98,8 @@
         <button class="loginBtn loginBtn--facebook" onclick="loginWithFacebook();">
           Entre usando o Facebook
         </button>
+
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
 
         <button onclick="loginWithGoogle()" class="loginBtn loginBtn--google">
           Entre usando o Google
