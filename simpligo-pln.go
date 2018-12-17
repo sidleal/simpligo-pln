@@ -514,7 +514,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Println("----------", string(respBody))
-		if !strings.Contains(string(respBody), `"email":"`+email+`"`) {
+		if !strings.Contains(string(respBody), email) {
 			log.Println("Invalid Google token: ", string(respBody))
 			w.WriteHeader(http.StatusForbidden)
 			return
