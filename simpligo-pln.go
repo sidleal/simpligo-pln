@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
@@ -49,6 +50,7 @@ var (
 	palavrasIP   = "127.0.0.1"
 	palavrasPort = "23080"
 	faceSecret   = ""
+	mainServerIP = "127.0.0.1"
 )
 
 const (
@@ -62,7 +64,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
-		StaticHash:     "001",
+		StaticHash:     "002",
 		LastPath:       "/",
 	}
 
@@ -115,6 +117,8 @@ func Router() *mux.Router {
 	r.HandleFunc("/cloze", ClozeHandler)
 	r.HandleFunc("/ranker", RankerHandler)
 	r.HandleFunc("/privacidade", PrivacidadeHandler)
+
+	r.HandleFunc("/ranker/eval", RankerEvalHandler).Methods("POST")
 
 	return r
 }
@@ -180,6 +184,7 @@ func parseFlags() {
 	flag.StringVar(&palavrasIP, "palavras-ip", "127.0.0.1", "IP Palavras")
 	flag.StringVar(&palavrasPort, "palavras-port", "23080", "IP Palavras")
 	flag.StringVar(&faceSecret, "face-secret", "", "Face App Secret")
+	flag.StringVar(&mainServerIP, "main-server-ip", "127.0.0.1", "IP Main Server")
 	flag.Parse()
 }
 
@@ -1180,5 +1185,34 @@ func AnotadorSimplGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, ret)
+
+}
+
+func RankerEvalHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	content := r.FormValue("content")
+
+	resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(content)))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error: %v\n", err)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(fmt.Errorf("Error reading response: %v.", err))
+	}
+
+	bodyString := string(body)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text")
+	fmt.Fprint(w, bodyString)
 
 }
