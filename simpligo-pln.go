@@ -1201,13 +1201,17 @@ func RankerEvalHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Error: %v\n", err)
+		fmt.Fprintf(w, err.Error())
 		return
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(fmt.Errorf("Error reading response: %v.", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error reading response: %v\n", err)
+		fmt.Fprintf(w, err.Error())
+		return
 	}
 
 	bodyString := string(body)

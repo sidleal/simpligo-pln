@@ -52,7 +52,6 @@ func makeHTTPServer() *http.Server {
 
 func RankerHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.WriteHeader(http.StatusInternalServerError)
 	w.Header().Set("Content-Type", "text")
 
 	ret := ""
@@ -62,6 +61,7 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ret += "Error reading req: %v." + err.Error()
 		log.Println(ret)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, ret)
 		return
 	}
@@ -77,6 +77,7 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ret += "cmd.Run() failed with " + err.Error()
 		log.Println(ret)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, ret)
 		return
 	}
@@ -88,6 +89,7 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	match := regEx.FindStringSubmatch(string(out))
 	if len(match) < 1 {
 		ret += "Erro resposta cohmetrix: \n" + string(out)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, ret)
 		return
 	}
@@ -105,6 +107,7 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ret += "cmd.Run() failed with " + err.Error()
 		log.Println(ret)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, ret)
 		return
 	}
@@ -123,6 +126,6 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	ret += "-------------------------------" + "\n"
 
 	w.WriteHeader(http.StatusOK)
-	// w.Write([]byte(ret))
-	fmt.Fprint(w, ret)
+	w.Write([]byte(ret))
+	// fmt.Fprint(w, ret)
 }
