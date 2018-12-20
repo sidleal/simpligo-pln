@@ -1248,6 +1248,8 @@ func wsEcho(conn *websocket.Conn) {
 		}
 		fmt.Printf("Got message: %#v\n", m)
 
+		m.Authorization = ""
+
 		content := m.Content
 
 		resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(content)))
@@ -1259,6 +1261,9 @@ func wsEcho(conn *websocket.Conn) {
 			if err != nil {
 				m.RawResult = "Error reading response: " + err.Error()
 			} else {
+
+				log.Println(string(body))
+
 				m.RawResult = string(body)
 			}
 		}

@@ -43,8 +43,8 @@ func main() {
 func makeHTTPServer() *http.Server {
 	mux := Router()
 	return &http.Server{
-		ReadTimeout:  60 * time.Second,
-		WriteTimeout: 60 * time.Second,
+		ReadTimeout:  120 * time.Second,
+		WriteTimeout: 120 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
 	}
@@ -117,12 +117,14 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	match2 := regEx2.FindStringSubmatch(string(out2))
 	if len(match2) > 0 {
 		log.Println(match2[1])
-		ret = match2[1]
+		ret += match2[1] + "\n"
+		ret += "----------------------------" + "\n"
+
+		floatVal, _ := strconv.ParseFloat(match2[1], 32)
+		ret += fmt.Sprintf("%.2f", floatVal*100)
+
 	}
 
-	floatVal, _ := strconv.ParseFloat(ret, 32)
-
-	ret += fmt.Sprintf("%.2f", floatVal*100)
 	ret += "-------------------------------" + "\n"
 
 	w.WriteHeader(http.StatusOK)

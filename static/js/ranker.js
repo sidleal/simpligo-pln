@@ -45,7 +45,7 @@ function initWS() {
         console.log("Got:" + e.data);
 
         $('#results').show();
-        $('#output').val(data.raw_result);   
+        $('#output').val(e.data.raw_result);   
 
     }
     socket.onclose = function () {
