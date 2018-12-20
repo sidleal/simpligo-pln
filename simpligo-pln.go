@@ -119,7 +119,6 @@ func Router() *mux.Router {
 	r.HandleFunc("/ranker", RankerHandler)
 	r.HandleFunc("/privacidade", PrivacidadeHandler)
 
-	r.HandleFunc("/ranker/eval", RankerEvalHandler).Methods("POST")
 	r.HandleFunc("/ranker/ws", RankerWebSocketHandler)
 
 	return r
@@ -1187,39 +1186,6 @@ func AnotadorSimplGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, ret)
-
-}
-
-func RankerEvalHandler(w http.ResponseWriter, r *http.Request) {
-	err := validateSession(w, r)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	content := r.FormValue("content")
-
-	resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(content)))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("Error: %v\n", err)
-		fmt.Fprintf(w, err.Error())
-		return
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("Error reading response: %v\n", err)
-		fmt.Fprintf(w, err.Error())
-		return
-	}
-
-	bodyString := string(body)
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text")
-	fmt.Fprint(w, bodyString)
 
 }
 

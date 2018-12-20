@@ -132,7 +132,7 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := ""
 	result += "====================================\n"
-	result = "Complexidade --> " + complexity + "\n"
+	result += "Complexidade --> " + complexity + "\n"
 	result += "====================================\n"
 	result += "\n\n" + ret
 
