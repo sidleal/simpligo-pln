@@ -43,8 +43,8 @@ func main() {
 func makeHTTPServer() *http.Server {
 	mux := Router()
 	return &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  60 * time.Second,
+		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
 	}

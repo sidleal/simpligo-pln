@@ -21,6 +21,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/olivere/elastic"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -64,7 +65,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
-		StaticHash:     "002",
+		StaticHash:     "003",
 		LastPath:       "/",
 	}
 
@@ -119,6 +120,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/privacidade", PrivacidadeHandler)
 
 	r.HandleFunc("/ranker/eval", RankerEvalHandler).Methods("POST")
+	r.HandleFunc("/ranker/ws", RankerWebSocketHandler)
 
 	return r
 }
@@ -1219,4 +1221,35 @@ func RankerEvalHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text")
 	fmt.Fprint(w, bodyString)
 
+}
+
+type MsgWSRanker struct {
+	Content   string `json:"content"`
+	RawResult string `json:"raw_result"`
+}
+
+func RankerWebSocketHandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := websocket.Upgrade(w, r, w.Header(), 1024, 1024)
+	if err != nil {
+		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
+	}
+	go wsEcho(conn)
+
+}
+
+func wsEcho(conn *websocket.Conn) {
+	for {
+		m := MsgWSRanker{}
+
+		err := conn.ReadJSON(&m)
+		if err != nil {
+			fmt.Println("Error reading json.", err)
+		}
+
+		fmt.Printf("Got message: %#v\n", m)
+
+		if err = conn.WriteJSON(m); err != nil {
+			fmt.Println(err)
+		}
+	}
 }
