@@ -113,21 +113,29 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Printf("combined out:\n%s\n", string(out2))
 
+	complexity := ""
+
 	regEx2 := regexp.MustCompile(`result: ([0-9\.]+)`)
 	match2 := regEx2.FindStringSubmatch(string(out2))
 	if len(match2) > 0 {
 		log.Println(match2[1])
 		ret += match2[1] + "\n"
-		ret += "----------------------------" + "\n"
 
 		floatVal, _ := strconv.ParseFloat(match2[1], 32)
-		ret += fmt.Sprintf("%.2f", floatVal*100)
+		complexity = fmt.Sprintf("%.2f", floatVal*100)
 
 	}
 
 	ret += "-------------------------------" + "\n"
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(ret))
+
+	result := ""
+	result += "====================================\n"
+	result = "Complexidade --> " + complexity + "\n"
+	result += "====================================\n"
+	result += "\n\n" + ret
+
+	w.Write([]byte(result))
 	// fmt.Fprint(w, ret)
 }

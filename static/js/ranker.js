@@ -43,9 +43,10 @@ function initWS() {
     };
     socket.onmessage = function (e) {
         console.log("Got:" + e.data);
+        var result = JSON.parse(e.data);
 
         $('#results').show();
-        $('#output').val(e.data.raw_result);   
+        $('#output').val(result.raw_result);   
 
     }
     socket.onclose = function () {
