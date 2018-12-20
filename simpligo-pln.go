@@ -191,8 +191,8 @@ func parseFlags() {
 func makeHTTPServer() *http.Server {
 	mux := Router()
 	return &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
 	}
@@ -206,8 +206,8 @@ func makeHTTPToHTTPSRedirectServer() *http.Server {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/", handleRedirect)
 	return &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
 	}
