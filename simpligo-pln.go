@@ -1211,6 +1211,8 @@ func wsEcho(conn *websocket.Conn) {
 		err := conn.ReadJSON(&m)
 		if err != nil {
 			fmt.Println("Error reading json.", err)
+			conn.Close()
+			return
 		}
 		fmt.Printf("Got message: %#v\n", m)
 
