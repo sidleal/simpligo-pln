@@ -1,6 +1,9 @@
 function eval() {
-
-    ws.send(JSON.stringify({ content: $('#content').val() }));
+    $('#output').val(""); 
+    ws.send(JSON.stringify({ 
+        content: $('#content').val(),
+        auth: sessionStorage.getItem('simpligo.pln.jwt.key') 
+    }));
 
 /*    $.ajax({
         type: 'POST',
@@ -28,22 +31,25 @@ var ws;
 
 if (window.WebSocket === undefined) {
     $("#container").append("Your browser does not support WebSockets");
-    return;
 } else {
     ws = initWS();
 }
 
 function initWS() {
-    var socket = new WebSocket("ws://simpligo.sidle.al:443/ranker/ws");
+    var socket = new WebSocket("wss://simpligo.sidle.al:443/ranker/ws");
 
     socket.onopen = function() {
-        console.log("<p>Socket is open</p>");
+        console.log("Socket is open.");
     };
     socket.onmessage = function (e) {
-        console.log("<p> Got some shit:" + e.data + "</p>");
+        console.log("Got:" + e.data);
+
+        $('#results').show();
+        $('#output').val(data.raw_result);   
+
     }
     socket.onclose = function () {
-        console.log("<p>Socket closed</p>");
+        console.log("Socket closed.");
     }
     return socket;
 }

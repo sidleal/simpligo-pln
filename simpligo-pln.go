@@ -1224,8 +1224,9 @@ func RankerEvalHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type MsgWSRanker struct {
-	Content   string `json:"content"`
-	RawResult string `json:"raw_result"`
+	Authorization string `json:"auth"`
+	Content       string `json:"content"`
+	RawResult     string `json:"raw_result"`
 }
 
 func RankerWebSocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -1245,8 +1246,22 @@ func wsEcho(conn *websocket.Conn) {
 		if err != nil {
 			fmt.Println("Error reading json.", err)
 		}
-
 		fmt.Printf("Got message: %#v\n", m)
+
+		content := m.Content
+
+		resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(content)))
+		if err != nil {
+			m.RawResult = "Error: " + err.Error()
+		} else {
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				m.RawResult = "Error reading response: " + err.Error()
+			} else {
+				m.RawResult = string(body)
+			}
+		}
 
 		if err = conn.WriteJSON(m); err != nil {
 			fmt.Println(err)
