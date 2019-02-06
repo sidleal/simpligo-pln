@@ -37,14 +37,53 @@
   
   <div class="row">
     <div class="small-12 centered columns">
-      <h3>Cloze - Previsibilidade das palavras.</h3>
-      <div contenteditable="true" class="editor" id="editor" onkeyup="treatKeyUp(event);">Você,&nbsp;</div>
-      <button id="btnStart" onclick="alert('começo');" class="default"><i class="fa fa-play fa-2x"></i><br/>Começar</button>
-      <button id="btnPause" onclick="alert('pause');" class="default"><i class="fa fa-pause fa-2x"></i><br/>Pausar</button>
-      <button id="btnBackMenu" onclick="backToMenu();" class="natural"><i class="fa fa-arrow-left fa-2x"></i><br/>Voltar</button>
+      <div>  
+        <div id="breadcrumb">: : cloze</div>
+        <a class="btn btn-danger" onclick="back()" data-toggle="tooltip" title="Voltar">
+          <i class="fa fa-arrow-left fa-2x"></i>
+        </a>
+      </div>
       
- 
+      <div id="menu">
+        <div class="row">
+          <div class="small-8 large-3 centered columns">
+            <button onclick="newCloze()" id="btnNewCloze" class="natural"><i class="fa fa-file-o fa-2x"></i><br/>Novo Teste</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-8 large-3 centered columns">
+            <button onclick="listCloze()" id="btnListCloze" class="natural"><i class="fa fa-th fa-2x"></i><br/>Meus Testes</button>
+          </div>
+        </div>
+      </div>
+  
+      <div id="newCloze" style="display:none">
+        <div class="row">
+          <div class="small-12 large-8 columns centered">
+            <label for="clozeName">Nome:</label>
+            <input type="text" id="clozeName" placeholder="Nome"/>
+            <label for="clozeCode">Código de acesso:</label>
+            <input type="text" id="clozeCode" placeholder="Código de acesso (apenas letras e números)"/>
+            <label for="textContent">Parágrafos:</label>    
+            <textarea placeholder="Parágrafos, separados por enter" id="textContent" rows="20"></textarea>
+            <button onclick="this.style = 'cursor: wait;';saveCloze()" id="btnSaveCloze" class="default"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="clozeList" style="display:none">
+        <p>(clique sobre o nome do teste para selecioná-lo)</p>
+        <div id="details-container-cloze" class="details-container"> 
+        </div>
+      </div>
+
+      <div id="paragraphs" style="display:none">
+        <div id="details-container-paragraphs" class="details-container-lines"> 
+        </div>
+      </div>
+
     </div>
+
   </div>
 
   <script src="/static/js/jquery.min.js"></script>

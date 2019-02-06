@@ -35,7 +35,7 @@ import (
 type ParsedText struct {
 	Paragraphs      []ParsedParagraph `json:"paragraphs"`
 	TotalParagraphs int64             `json:"totp"`
-	TotalSentences  int64             `json:"tops"`
+	TotalSentences  int64             `json:"tots"`
 	TotalTokens     int64             `json:"tott"`
 	TotalWords      int64             `json:"totw"`
 }

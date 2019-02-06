@@ -23,6 +23,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/olivere/elastic"
+	"github.com/sidleal/simpligo-pln/tools/senter"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -120,6 +121,10 @@ func Router() *mux.Router {
 	r.HandleFunc("/privacidade", PrivacidadeHandler)
 
 	r.HandleFunc("/ranker/ws", RankerWebSocketHandler)
+
+	r.HandleFunc("/cloze/new", ClozeNewHandler).Methods("POST")
+	r.HandleFunc("/cloze/list", ClozeListHandler)
+	r.HandleFunc("/cloze/{id}", ClozeGetHandler).Methods("GET")
 
 	return r
 }
@@ -776,6 +781,15 @@ type SimplificationFull struct {
 	} `json:"sentences"`
 }
 
+type ClozeTest struct {
+	Id      string            `json:"id"`
+	Name    string            `json:"name"`
+	Code    string            `json:"code"`
+	Content string            `json:"content"`
+	Parsed  senter.ParsedText `json:"parsed"`
+	Owners  []string          `json:"owners"`
+}
+
 func normalizeEmail(email string) string {
 	return strings.Replace(email, "@", "_at_", -1)
 }
@@ -1240,4 +1254,127 @@ func wsEcho(conn *websocket.Conn) {
 			fmt.Println(err)
 		}
 	}
+}
+
+// Cloze
+func ClozeNewHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var cloze ClozeTest
+	err = decoder.Decode(&cloze)
+	if err != nil {
+		log.Printf("Erro ao tratar payload: %v", err)
+	}
+
+	cloze.Content = strings.Replace(cloze.Content, "\n\n", "\n", -1)
+
+	cloze.Parsed = senter.ParseText(cloze.Content)
+
+	cloze.Owners = []string{normalizeEmail(pageInfo.Email), normalizeEmail(admEmail)}
+
+	createIndexIfNotExists("cloze")
+
+	put, err := elClient.Index().
+		Refresh("true").
+		Type("cloze").
+		Index(indexPrefix + "cloze").
+		BodyJson(cloze).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Cloze criado %s\n", put.Id)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "ok")
+}
+
+func ClozeListHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	query := elastic.NewTermQuery("owners", normalizeEmail(pageInfo.Email))
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "cloze").
+		Type("cloze").
+		Query(query).
+		From(0).Size(100).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Erro ao listar: %v", err)
+	}
+
+	ret := "{\"list\":[ "
+	if err == nil && searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var c ClozeTest
+			err := json.Unmarshal(*hit.Source, &c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			c.Id = hit.Id
+			c.Parsed = senter.ParsedText{}
+			cJSON, err := json.Marshal(c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret += string(cJSON) + ","
+		}
+	}
+	ret = ret[0 : len(ret)-1]
+	ret += "]}"
+
+	fmt.Fprintf(w, ret)
+
+}
+
+func ClozeGetHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	query := elastic.NewTermQuery("_id", id)
+
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "cloze").
+		Type("cloze").
+		Query(query).
+		From(0).Size(1).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Não encontrado: %v", err)
+	}
+
+	ret := ""
+	if err == nil && searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var c ClozeTest
+			err := json.Unmarshal(*hit.Source, &c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			c.Id = hit.Id
+			cJSON, err := json.Marshal(c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			ret = string(cJSON)
+		}
+	}
+
+	fmt.Fprintf(w, ret)
+
 }
