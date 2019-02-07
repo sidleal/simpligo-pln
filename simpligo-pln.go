@@ -125,6 +125,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/cloze/new", ClozeNewHandler).Methods("POST")
 	r.HandleFunc("/cloze/list", ClozeListHandler)
 	r.HandleFunc("/cloze/{id}", ClozeGetHandler).Methods("GET")
+	r.HandleFunc("/cloze/a/{code}", ClozeApplyHandler).Methods("GET")
 
 	return r
 }
@@ -1376,5 +1377,60 @@ func ClozeGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, ret)
+
+}
+
+type ClozeData struct {
+	ID         string `json:"id"`
+	Code       string `json:"code"`
+	Parsed     string `json:"parsed"`
+	StaticHash string `json:"shash"`
+}
+
+func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	code := vars["code"]
+
+	query := elastic.NewTermQuery("code.keyword", code)
+
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "cloze").
+		Type("cloze").
+		Query(query).
+		From(0).Size(1).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Não encontrado: %v", err)
+	}
+
+	clozeData := ClozeData{}
+	clozeData.StaticHash = pageInfo.StaticHash
+	if err == nil && searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var c ClozeTest
+			err := json.Unmarshal(*hit.Source, &c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			clozeData.ID = hit.Id
+			cJSON, err := json.Marshal(c.Parsed)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			clozeData.Code = c.Code
+			clozeData.Parsed = string(cJSON)
+		}
+	}
+
+	t, err := template.New("cloze_apply.html").Delims("[[", "]]").ParseFiles("./templates/cloze_apply.html")
+	if err != nil {
+		fmt.Fprintf(w, "Error openning template: %v", err)
+	}
+
+	err = t.Execute(w, clozeData)
+	if err != nil {
+		fmt.Fprintf(w, "Error parsing template: %v.", err)
+	}
 
 }
