@@ -1273,8 +1273,10 @@ func wsEcho(conn *websocket.Conn) {
 						} else {
 
 							log.Println(string(body))
+							resLines := strings.Split(string(body), "\n")
+							result := fmt.Sprintf("%v --> %v\n\n", resLines[1], resLines[5])
 
-							m.RawResult += string(body)
+							m.RawResult += result
 						}
 					}
 
