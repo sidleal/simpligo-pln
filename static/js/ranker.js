@@ -28,7 +28,7 @@ function initWS() {
 
         $('#results').show();
         $('#output').val(result.raw_result);   
-        $('#btneval').css("cursor,", "pointer")
+        document.getElementById("btneval").style = "cursor:pointer;";
 
     }
     socket.onclose = function () {
