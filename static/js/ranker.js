@@ -2,6 +2,7 @@ function eval() {
     $('#output').val(""); 
     ws.send(JSON.stringify({ 
         content: $('#content').val(),
+        options:$('input[name=options]:checked').val(), 
         auth: sessionStorage.getItem('simpligo.pln.jwt.key') 
     }));
 }
@@ -27,6 +28,7 @@ function initWS() {
 
         $('#results').show();
         $('#output').val(result.raw_result);   
+        $('#btneval').css("cursor,", "pointer")
 
     }
     socket.onclose = function () {

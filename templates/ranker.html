@@ -29,7 +29,15 @@
       <h3>Avaliador de Complexidade de Sentenças (beta)</h3>
       <textarea id="content" placeholder="Conteúdo" rows="10"></textarea>
       
-      <button onclick="eval()" class="default"><i class="fa fa-list-ul fa-2x"></i><br/>Avaliar</button>
+      <label>Opções:</label>
+      <label class="form-check-inline">
+        <input class="form-check-input" type="radio" name="options" value="" id="options"> Texto
+      </label>
+      <label class="form-check-inline">
+        <input class="form-check-input" type="radio" name="options" value="unique" id="options" checked> Única + Métricas 
+      </label>
+
+      <button onclick="this.style = 'cursor: wait;';eval()" name="btneval" class="default"><i class="fa fa-list-ul fa-2x"></i><br/>Avaliar</button>
       <button onclick="loadMenu()" class="natural"><i class="fa fa-arrow-left fa-2x"></i><br/>Voltar</button>
       
       <div id="results" style="display:none">

@@ -41,9 +41,12 @@ type ParsedText struct {
 }
 
 type ParsedParagraph struct {
-	Idx       int64            `json:"idx"`
-	Sentences []ParsedSentence `json:"sentences"`
-	Text      string           `json:"txt"`
+	Idx          int64            `json:"idx"`
+	Sentences    []ParsedSentence `json:"sentences"`
+	Text         string           `json:"txt"`
+	QtyTokens    int64            `json:"qtt"`
+	QtyWords     int64            `json:"qtw"`
+	QtySentences int64            `json:"qts"`
 }
 
 type ParsedSentence struct {
@@ -61,7 +64,7 @@ type ParsedToken struct {
 }
 
 var abbreviations []string = []string{
-	"Prof.", "A.C.", "Jr.",
+	"Prof.", "A.C.", "Jr.", "a.C.",
 }
 
 func ParseText(rawText string) ParsedText {
@@ -209,7 +212,12 @@ func processText(rawText string) ParsedText {
 		p = strings.TrimSpace(p)
 		if p != "" {
 			idxParagraphs++
-			parsedParagraph := ParsedParagraph{idxParagraphs, []ParsedSentence{}, p}
+			parsedParagraph := ParsedParagraph{}
+			parsedParagraph.Idx = idxParagraphs
+			parsedParagraph.Sentences = []ParsedSentence{}
+			parsedParagraph.Text = p
+			var qtwP int64 = 0
+			var qttP int64 = 0
 			sentences := strings.Split(p, "|||")
 			for _, s := range sentences {
 				s = strings.TrimSpace(s)
@@ -224,9 +232,11 @@ func processText(rawText string) ParsedText {
 						if len(t) > 0 {
 							idxTokens++
 							qtt++
+							qttP++
 							token := ParsedToken{idxTokens, t, 0}
-							if len(t) > 1 || strings.Index(`{[()]}.,"?!;:-'#`, t) < 0 {
+							if len(t) > 1 || strings.Index(`{[()]}.,"?!;:-'#&`, t) < 0 {
 								qtw++
+								qtwP++
 								idxWords++
 								token.IsWord = 1
 							}
@@ -238,6 +248,9 @@ func processText(rawText string) ParsedText {
 					parsedParagraph.Sentences = append(parsedParagraph.Sentences, parsedSentence)
 				}
 			}
+			parsedParagraph.QtyTokens = qttP
+			parsedParagraph.QtyWords = qtwP
+			parsedParagraph.QtySentences = int64(len(parsedParagraph.Sentences))
 			parsedText.Paragraphs = append(parsedText.Paragraphs, parsedParagraph)
 		}
 

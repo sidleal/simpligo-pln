@@ -1207,6 +1207,7 @@ func AnotadorSimplGetHandler(w http.ResponseWriter, r *http.Request) {
 type MsgWSRanker struct {
 	Authorization string `json:"auth"`
 	Content       string `json:"content"`
+	Options       string `json:"options"`
 	RawResult     string `json:"raw_result"`
 }
 
@@ -1234,21 +1235,52 @@ func wsEcho(conn *websocket.Conn) {
 		m.Authorization = ""
 
 		content := m.Content
+		options := m.Options
 
-		resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(content)))
-		if err != nil {
-			m.RawResult = "Error: " + err.Error()
-		} else {
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
+		if options == "unique" {
+
+			resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(content)))
 			if err != nil {
-				m.RawResult = "Error reading response: " + err.Error()
+				m.RawResult = "Error: " + err.Error()
 			} else {
+				defer resp.Body.Close()
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					m.RawResult = "Error reading response: " + err.Error()
+				} else {
 
-				log.Println(string(body))
+					log.Println(string(body))
 
-				m.RawResult = string(body)
+					m.RawResult = string(body)
+				}
 			}
+
+		} else {
+			parsed := senter.ParseText(content)
+			m.RawResult = ""
+
+			for _, p := range parsed.Paragraphs {
+				for _, s := range p.Sentences {
+
+					resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(s.Text)))
+					if err != nil {
+						m.RawResult = "Error: " + err.Error()
+					} else {
+						defer resp.Body.Close()
+						body, err := ioutil.ReadAll(resp.Body)
+						if err != nil {
+							m.RawResult = "Error reading response: " + err.Error()
+						} else {
+
+							log.Println(string(body))
+
+							m.RawResult += string(body)
+						}
+					}
+
+				}
+			}
+
 		}
 
 		if err = conn.WriteJSON(m); err != nil {
