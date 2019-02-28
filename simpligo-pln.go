@@ -127,6 +127,8 @@ func Router() *mux.Router {
 	r.HandleFunc("/cloze/{id}", ClozeGetHandler).Methods("GET")
 	r.HandleFunc("/cloze/a/{code}", ClozeApplyHandler).Methods("GET")
 
+	r.HandleFunc("/api/v1/metrix/{subset}/{key}", MetrixAPIPostHandler).Methods("POST")
+
 	return r
 }
 
@@ -1466,5 +1468,47 @@ func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "Error parsing template: %v.", err)
 	}
+
+}
+
+// Metrics
+
+func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	subset := vars["subset"]
+	key := vars["key"]
+
+	if key != "m3tr1x" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	defer r.Body.Close()
+	text, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Fprintf(w, "Error parsing text. %v", err)
+		return
+	}
+
+	resp, err := http.Post("http://"+mainServerIP+":8008/metrics_all", "text", bytes.NewReader([]byte(text)))
+	if err != nil {
+		fmt.Fprintf(w, "Error extracting metrics: %v", err)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Fprintf(w, "Error parsing response. %v", err)
+		return
+	}
+
+	if subset == "all" {
+		log.Println(string(body))
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, string(body))
 
 }

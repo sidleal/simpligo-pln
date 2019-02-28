@@ -22,6 +22,7 @@ func Router() *mux.Router {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
 	r.HandleFunc("/ranker", RankerHandler).Methods("POST")
+	r.HandleFunc("/metrics_all", MetricsAllHandler).Methods("POST")
 
 	return r
 }
@@ -70,9 +71,9 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	ret += "-------------------------------" + "\n"
 
 	log.Println(string(body))
-	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+string(body)+"\"")
+	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run_sentence.sh \""+string(body)+"\"")
 
-	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+string(body)+"\"")
+	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run_sentence.sh \""+string(body)+"\"")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		ret += "cmd.Run() failed with " + err.Error()
@@ -138,4 +139,41 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte(result))
 	// fmt.Fprint(w, ret)
+}
+
+func MetricsAllHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "text")
+
+	ret := ""
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		ret += "Error reading req: %v." + err.Error()
+		log.Println(ret)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, ret)
+		return
+	}
+
+	ret += string(body) + "\n"
+	ret += "-------------------------------" + "\n"
+
+	log.Println(string(body))
+	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+string(body)+"\"")
+
+	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+string(body)+"\"")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		ret += "cmd.Run() failed with " + err.Error()
+		log.Println(ret)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, ret)
+		return
+	}
+	fmt.Printf("combined out:\n%s\n", string(out))
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
