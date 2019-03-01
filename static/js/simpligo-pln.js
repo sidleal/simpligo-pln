@@ -40,6 +40,10 @@ function abrirRanker() {
     abrirPagina("ranker");
 }
 
+function abrirMetrix() {
+    abrirPagina("metrix");
+}
+
 function abrirPagina(pagina) {
     $.ajax({
         type: 'GET',

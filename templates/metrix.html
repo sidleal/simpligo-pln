@@ -23,58 +23,34 @@
   </div>
   <div id="subheader"></div>
   
+  
   <div class="row">
     <div class="small-12 centered columns">
-      <div>  
-        <div id="breadcrumb">: : menu principal</div>
+      <h3>NILC Metrix</h3>
+      <textarea id="content" placeholder="Conteúdo" rows="10"></textarea>
+      
+      <div>
+        <label>Opções:</label>
+        <label class="form-check-inline">
+          <input class="form-check-input" type="radio" name="options" 
+          value="" id="options" checked> Todas 
+        </label>
       </div>
-    </div>
-  </div>
   
-  <div class="row">
-    <div class="small-8 large-3 centered columns">
-      <button onclick="abrirAnotador()" id="btnAnotador"><i class="fa fa-file-text fa-2x"></i><br/>Editor de Anotação</button>
-    </div>
-  </div>
+      <button onclick="parse()" class="default"><i class="fa fa-list-ul fa-2x"></i><br/>Estrutura Flat</button>
+      <button onclick="loadMenu()" class="natural"><i class="fa fa-arrow-left fa-2x"></i><br/>Voltar</button>
+      
+      <div id="results" style="display:none">
+        <h4>Resultados:</h4>
+        <textarea id="output" rows="20"></textarea>
+      </div>
   
-  <div class="row">
-    <div class="small-8 large-3 centered columns">
-      <button onclick="abrirSenter()" id="btnSenter"><i class="fa fa-list-ol fa-2x"></i><br/>SENTER Web</button>
-    </div>
-  </div>
-  
-  <div class="row">
-    <div class="small-8 large-3 centered columns">
-      <button onclick="abrirPalavras()" id="btnPalavras"><i class="fa fa-tags fa-2x"></i><br/>Palavras (parser)</button>
-    </div>
-  </div>
-  
-  <div class="row">
-    <div class="small-8 large-3 centered columns">
-      <button onclick="abrirRanker()" id="btnRanker"><i class="fa fa-align-left fa-2x"></i><br/>Avaliador de Sentenças</button>
-    </div>
-  </div>
-
-  <!--div class="row">
-    <div class="small-8 large-3 centered columns">
-      <button onclick="alert('Oops. Em breve! Muito em breve!');" id="btnCorpora"><i class="fa fa-th-large fa-2x"></i><br/>Portal de Corpora Paralelos</button>
-    </div>
-  </div-->
-
-  <div class="row">
-    <div class="small-8 large-3 centered columns">
-      <button onclick="abrirMetrix()" id="btnMetrix"><i class="fa fa-ruler-combined fa-2x"></i><br/>NILC Metrix</button>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="small-8 large-3 centered columns">
-      <button onclick="abrirCloze()" id="btnCloze"><i class="fa fa-underline fa-2x"></i><br/>Cloze</button>
     </div>
   </div>
 
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/js/jquery-ui.min.js"></script>
   <script src="/static/js/simpligo-pln.js?[[ .StaticHash ]]"></script>
+  <script src="/static/js/metrix.js?[[ .StaticHash ]]"></script>
 </body>
 </html>
