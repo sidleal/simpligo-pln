@@ -1,5 +1,5 @@
 function parse() {
-
+    $('#output').val(""); 
     $.ajax({
         type: 'POST',
         url: '/metrix/parse',
