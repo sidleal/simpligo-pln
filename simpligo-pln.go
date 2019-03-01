@@ -1524,10 +1524,11 @@ func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 		for _, feat := range feats {
 			kv := strings.Split(feat, ":")
 			for _, selfeat := range sel79 {
-				if kv[0] == selfeat {
+				if len(kv) > 1 && kv[0] == selfeat {
 					ret += kv[0] + ":" + kv[1] + ","
 				}
 			}
+
 		}
 	}
 
@@ -1552,7 +1553,9 @@ func MetrixParseHandler(w http.ResponseWriter, r *http.Request) {
 	ret = ""
 	for _, feat := range feats {
 		kv := strings.Split(feat, ":")
-		ret += kv[0] + " : " + kv[1] + "\n"
+		if len(kv) > 1 {
+			ret += kv[0] + " : " + kv[1] + "\n"
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
