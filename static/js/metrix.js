@@ -12,9 +12,11 @@ function parse() {
         }
     }).done(function(data) {
         $('#results').show();
-        $('#output').val(data);        
+        $('#output').val(data); 
+        document.getElementById("btnparse").style = "cursor:pointer;";      
     }).fail(function(error) {
         console.log(error);
+        document.getElementById("btnparse").style = "cursor:pointer;";      
         alert( "Erro" );
     });
 
