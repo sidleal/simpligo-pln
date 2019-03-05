@@ -1481,6 +1481,11 @@ func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
 // Metrics
 
 func callMetrix(text string) string {
+
+	text = strings.Replace(text, "\"", "{{quotes}}", -1)
+	text = strings.Replace(text, "\n", "{{enter}}", -1)
+	text = strings.Replace(text, "!", "{{exclamation}}", -1)
+
 	resp, err := http.Post("http://"+mainServerIP+":8008/metrics_all", "text", bytes.NewReader([]byte(text)))
 	if err != nil {
 		return fmt.Sprintf("Error extracting metrics: %v", err)

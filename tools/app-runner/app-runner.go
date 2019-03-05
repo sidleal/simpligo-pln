@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -67,13 +68,16 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret += string(body) + "\n"
+	text := string(body)
+	text = strings.Replace(text, "\"", "'", -1)
+	text = strings.Replace(text, "!", "! ", -1)
+	ret += text + "\n"
 	ret += "-------------------------------" + "\n"
 
-	log.Println(string(body))
-	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run_sentence.sh \""+string(body)+"\"")
+	// log.Println(text)
+	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run_sentence.sh \""+text+"\"")
 
-	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run_sentence.sh \""+string(body)+"\"")
+	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run_sentence.sh \""+text+"\"")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		ret += "cmd.Run() failed with " + err.Error()
@@ -157,13 +161,14 @@ func MetricsAllHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret += string(body) + "\n"
+	text := string(body)
+	ret += text + "\n"
 	ret += "-------------------------------" + "\n"
 
-	log.Println(string(body))
-	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+string(body)+"\"")
+	// log.Println(text)
+	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+text+"\"")
 
-	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+string(body)+"\"")
+	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+text+"\"")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		ret += "cmd.Run() failed with " + err.Error()
