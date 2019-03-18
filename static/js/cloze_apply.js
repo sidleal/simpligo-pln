@@ -6,13 +6,10 @@ var sentenceIdx = 0;
 var tokenIdx = 0;
 var wordIdx = 1;
 var totWords = 0;
+var totParagraphs = 0;
 
-totParagraphs = clozeTest.paragraphs.length;
-clozeTest.paragraphs[paragraphIdx].sentences.forEach(s => {
-    totWords += s.qtw;
-})
-
-nextWord();
+var clozeData;
+var stage;
 
 $("#clozeWord").keypress(function(e) {
     if(e.which == 13) {
@@ -25,10 +22,10 @@ function nextWord() {
     console.log(wordIdx, sentenceIdx, tokenIdx);
     console.log($('#clozeWord').val());
 
-    totSentences = clozeTest.paragraphs[paragraphIdx].sentences.length;
-    totTokens = clozeTest.paragraphs[paragraphIdx].sentences[sentenceIdx].tokens.length;
+    totSentences = clozeData.prgphs[paragraphIdx].sentences.length;
+    totTokens = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens.length;
 
-    lastToken = clozeTest.paragraphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
+    lastToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
     if (lastToken.w == 1) {
         wordIdx++;
         if ('.,)]}!?:'.indexOf(lastToken.token) < 0 && '([{'.indexOf(sentence.substr(-1)) < 0) {
@@ -40,7 +37,7 @@ function nextWord() {
 
     tokenIdx++;
 
-    lastToken = clozeTest.paragraphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
+    lastToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
     while (lastToken.w == 0) {
         if ('.,)]}!?:'.indexOf(lastToken.token) < 0 && '([{'.indexOf(sentence.substr(-1)) < 0) {
             sentence += ' ' + lastToken.token;
@@ -51,14 +48,14 @@ function nextWord() {
         if (tokenIdx >= totTokens) {
             break;
         }
-        lastToken = clozeTest.paragraphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
+        lastToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
     }
 
     if (tokenIdx >= totTokens) {
         tokenIdx = 0;
         sentenceIdx++;
         //primeira palavra da nova sentença
-        lastToken = clozeTest.paragraphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
+        lastToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
         sentence += ' ' + lastToken.token;
         tokenIdx++;
         wordIdx++;
@@ -70,7 +67,7 @@ function nextWord() {
 
     $('#clozeSentence').html(sentence);
 
-    $('#statusTest').html("Teste 1 de 5 - Palavra " + wordIdx + " de " + totWords + ".");
+    $('#statusTest').html("Parágrafo 1 de " + totParagraphs + " - Palavra " + wordIdx + " de " + totWords + ".");
 
     $('#clozeWord').val('');
     $('#clozeWord').focus();
@@ -78,3 +75,43 @@ function nextWord() {
 
 }
 
+function refresh() {
+    $("#newTest").hide();
+    $("#apply").hide();
+    $("#" + this.stage).show();
+}
+
+
+function continueTest(clozeCode) {
+
+    $.ajax({
+        type: 'POST',
+        url: '/cloze/apply/new',
+        data: JSON.stringify({
+            code: clozeCode,
+            name: $('#participantName').val(),
+            org: $('#participantOrg').val(),
+            ra: $('#participantRA').val(),
+            sem: $('#participantSem').val(),
+        }),
+        contentType: "application/json"
+    }).done(function(data) {
+        clozeData = JSON.parse(data);
+        console.log(clozeData);
+
+        stage = "apply";
+        refresh();
+
+        totParagraphs = clozeData.prgphs.length;
+        clozeData.prgphs[paragraphIdx].sentences.forEach(s => {
+            totWords += s.qtw;
+        })
+
+        nextWord();
+
+    }).fail(function(error) {
+        alert( "Erro" );
+    });
+
+
+}

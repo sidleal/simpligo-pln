@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css?family=Raleway:300,500" rel="stylesheet">
   <link href="/static/css/simpligo-pln.css" rel="stylesheet">  
   <link href="/static/css/font-awesome.min.css" rel="stylesheet">  
+  <link href="/static/css/jquery-ui.css" rel="stylesheet">  
+
 
   <style type="text/css">
     .editor {
@@ -64,6 +66,10 @@
             <input type="text" id="clozeName" placeholder="Nome"/>
             <label for="clozeCode">Código de acesso:</label>
             <input type="text" id="clozeCode" placeholder="Código de acesso (apenas letras e números)"/>
+            <label for="clozeClasses">Quantidade de classes (por ex: 2 classes e 30 parágrafos implica em 1-15 na classe 1 e 16-30 na classe 2):</label>
+            <input type="text" id="clozeClasses" placeholder="Quantidade de classes dos parágrafos"/>
+            <label for="clozeQtyPar">Quantidade de parágrafos por participante:</label>
+            <input type="text" id="clozeQtyPar" placeholder="Quantos parágrafos cada particpante vai ler"/>
             <label for="textContent">Parágrafos:</label>    
             <textarea placeholder="Parágrafos, separados por enter" id="textContent" rows="20"></textarea>
             <button onclick="saveCloze()" id="btnSaveCloze" class="default"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
@@ -89,6 +95,7 @@
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/js/jquery-ui.min.js"></script>
   <script src="/static/js/simpligo-pln.js?[[ .StaticHash ]]"></script>
+  <script src="/static/js/moment.min.js"></script>  
   <script src="/static/js/cloze.js?[[ .StaticHash ]]"></script>
 </body>
 </html>

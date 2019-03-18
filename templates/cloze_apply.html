@@ -21,6 +21,7 @@
     #clozeWord {
       font-size: 25px;
       height: 50px;
+      width: 300px;
     }
   
   </style>
@@ -39,7 +40,56 @@
   <div class="row">
     <div class="small-12 centered columns">
       
-      <div id="apply">
+      <div id="newTest">
+        <div class="row">
+          <div class="small-12 large-8 columns centered">
+            <h2>Teste Cloze - Previsibilidade</h2>
+            <p>Bem vindo(a), agradecemos imensamente sua participação. Por favor preencha os campos abaixo e pressione o botão após o termo de compromisso para continuar com o teste.</p>
+            <p>Ao continuar o teste, serão apresentados três parágrafos curtos, uma palavra por vez, onde sua tarefa consiste em tentar adivinhar a próxima palavra a partir da(s) anteriore(s), conforme exemplificado no vídeo abaixo:</p>
+            <p style="color:red;">TO DO: Revisar o texto e trocar o vídeo!!!</p>
+            <div style="text-align: center;margin-bottom: 30px;">
+              <iframe width="100%" height="400px" src="https://www.youtube.com/embed/SPZ1J1iXon4?autoplay=0"></iframe>
+            </div>
+                        
+            <h4>Termo de compromisso:</h4>
+            <div>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque accumsan lorem posuere, tincidunt libero eget, volutpat est. Nullam eleifend erat risus, ac facilisis erat sollicitudin ac. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Mauris tincidunt, augue eu aliquet interdum, est eros tempus velit, non pellentesque turpis lacus vitae nisi. Nulla ac fringilla felis. Pellentesque id placerat ipsum. Mauris odio ex, tincidunt ut finibus nec, gravida at lectus. Maecenas lorem sem, egestas ut libero sit amet, faucibus iaculis sapien.</p>
+              <p>Morbi aliquet lorem at arcu elementum maximus. Sed vestibulum nec risus sit amet lobortis. Nullam accumsan eleifend odio, maximus vehicula arcu pharetra placerat. Aenean nec mollis nisi, at volutpat leo. Cras sed risus tristique felis porttitor blandit eu eu turpis. Quisque nec sapien nec nisi fringilla maximus. Etiam eu arcu vel lorem venenatis molestie. Proin mattis ligula vitae felis tempus efficitur. Phasellus porta nibh arcu, ac hendrerit augue faucibus quis. Nam non molestie elit.</p>
+            </div>
+
+            <label for="participantName">Nome:</label>
+            <input type="text" id="participantName" placeholder="seu nome"/>
+            <label for="participantOrg">Universidade:</label>
+            <select id="participantOrg">
+              <option value="">Selecione...</option>
+              <option value="uspsc">USP - São Carlos</option>
+              <option value="ufc">UFC</option>
+              <option value="pucrj">PUC - Rio de Janeiro</option>
+              <option value="outra">Outra</option>
+            </select>
+            <label for="participantRA">Número de Registro:</label>
+            <input type="text" id="participantRA" placeholder="Registro Acadêmico"/>
+            <label for="participantSem">Semestre em curso:</label>
+            <select id="participantSem">
+                <option value="">Selecione...</option>
+                <option value="1">1.o Semestre</option>
+                <option value="2">2.o Semestre</option>
+                <option value="3">3.o Semestre</option>
+                <option value="4">4.o Semestre</option>
+                <option value="5">5.o Semestre</option>
+                <option value="6">6.o Semestre</option>
+                <option value="7">7.o Semestre</option>
+                <option value="8">8.o Semestre</option>
+              </select>
+  
+            <div style="text-align: center;">
+              <button onclick="continueTest('[[ .Code ]]')" style="margin:30px;" id="btnContinue" class="default"><i class="fa fa-play fa-2x"></i><br/>Concordo com o termo e quero continuar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="apply" style="display:none">
         <div class="row">
           <div class="small-12 large-8 columns centered">
             <p id="statusTest">Teste x de x - Palavra x de xx</p>
@@ -58,12 +108,6 @@
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/js/jquery-ui.min.js"></script>
   <script src="/static/js/simpligo-pln.js?[[ .StaticHash ]]"></script>
-
-  <script>
-    var clozeTest;
-    this.clozeTest = JSON.parse([[ .Parsed ]]);
-  </script>
-
   <script src="/static/js/cloze_apply.js?[[ .StaticHash ]]"></script>
 
 </body>

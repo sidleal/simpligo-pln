@@ -3,6 +3,8 @@ function newCloze() {
     this.breadcrumb = "Cloze > novo teste";
     $('#clozeName').val("");
     $('#clozeCode').val("");
+    $('#clozeQtyPar').val("3");
+    $('#clozeClasses').val("2");
     $('#textContent').val("")
     this.refresh();
 }
@@ -49,6 +51,8 @@ function saveCloze() {
             name: $('#clozeName').val(),
             code: $('#clozeCode').val(),
             content: $('#textContent').val(),
+            qtyPerPart: $('#clozeQtyPar').val(),
+            totClass: $('#clozeClasses').val(),
         }),
         contentType: "application/json"
     }).done(function(data) {
@@ -64,6 +68,54 @@ function showMenu() {
     this.breadcrumb = "cloze > menu";
     this.refresh();
 }
+
+
+function deleteCloze(clozeID) {
+    this.confirmDialog('Confirma a exclusão?', ret => {
+      if (ret) {
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/cloze/' + clozeID,
+            headers: {
+                "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
+            },
+        }).done(function(data) {
+            listCloze();
+        }).fail(function(error) {
+            alert( "Erro" );
+        });
+         
+      }
+    });
+
+}
+
+function confirmDialog(message, callback) {
+    $('<div></div>').appendTo('body')
+    .html('<div><h6>'+message+'?</h6></div>')
+    .dialog({
+        modal: true, title: 'Atenção', zIndex: 10000, autoOpen: true,
+        width: 'auto', resizable: false,
+        buttons: {
+            Yes: function () {
+                $(this).dialog("close");
+                callback(true);
+            },
+            No: function () {
+                $(this).dialog("close");
+                callback(false);
+            }
+        },
+        close: function (event, ui) {
+            $(this).remove();
+        },
+        open: function() {
+            $('.ui-dialog :button').blur();
+        }
+    });
+}
+
 
 function listCloze() {
 
