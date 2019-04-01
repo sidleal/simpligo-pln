@@ -3,7 +3,7 @@ function newCloze() {
     this.breadcrumb = "Cloze > novo teste";
     $('#clozeName').val("");
     $('#clozeCode').val("");
-    $('#clozeQtyPar').val("3");
+    $('#clozeQtyPar').val("5");
     $('#clozeClasses').val("2");
     $('#textContent').val("")
     this.refresh();
@@ -193,14 +193,6 @@ function exportCloze(clozeId) {
             "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
-        // var w = window.open('about:blank');
-        // w.document.open();
-        // w.document.write(data);
-        // w.document.close();
-
-        // var w = window.open('data:text/csv;charset=utf-8,' + encodeURIComponent(data));
-        // w.focus();
-
         var link = document.createElement("a");
         link.href = 'data:text/csv,' + encodeURIComponent(data);
         link.download = "cloze_" + clozeId + "_data.csv";

@@ -1506,7 +1506,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 
 		searchResult, err = elClient.Search().
 			Index(indexPrefix+"cloze-participant-data").
-			Type("_doc").
+			Type("data").
 			Query(query).
 			Sort("wseq", true).
 			From(0).Size(1000).
@@ -1628,7 +1628,7 @@ func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
 
 	put, err := elClient.Index().
 		Refresh("true").
-		Type("_doc").
+		Type("data").
 		Index(indexPrefix + "cloze-participant-data").
 		BodyJson(participantData).
 		Do(context.Background())
