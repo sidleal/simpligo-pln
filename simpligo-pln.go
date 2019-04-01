@@ -68,7 +68,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
-		StaticHash:     "002",
+		StaticHash:     "003",
 		LastPath:       "/",
 	}
 
@@ -127,6 +127,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/cloze/new", ClozeNewHandler).Methods("POST")
 	r.HandleFunc("/cloze/list", ClozeListHandler)
 	r.HandleFunc("/cloze/{id}", ClozeGetHandler).Methods("GET")
+	r.HandleFunc("/cloze/export/{id}", ClozeExportHandler).Methods("GET")
 	r.HandleFunc("/cloze/a/{code}", ClozeApplyHandler).Methods("GET")
 	r.HandleFunc("/cloze/apply/new", ClozeApplyNewHandler).Methods("POST")
 	r.HandleFunc("/cloze/apply/save", ClozeApplySaveHandler).Methods("POST")
@@ -1426,6 +1427,112 @@ func ClozeGetHandler(w http.ResponseWriter, r *http.Request) {
 			ret = string(cJSON)
 
 		}
+	}
+
+	fmt.Fprintf(w, htmlSafeString(ret))
+
+}
+
+func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
+	err := validateSession(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	query := elastic.NewTermQuery("_id", id)
+
+	searchResult, err := elClient.Search().
+		Index(indexPrefix + "cloze").
+		Type("cloze").
+		Query(query).
+		From(0).Size(1).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Não encontrado: %v", err)
+	}
+
+	ret := ""
+	var c ClozeTest
+	if err == nil && searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			err := json.Unmarshal(*hit.Source, &c)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			c.Id = hit.Id
+		}
+	}
+
+	//participantes
+	query = elastic.NewTermQuery("code", c.Code)
+
+	searchResult, err = elClient.Search().
+		Index(indexPrefix + "cloze-participants").
+		Type("participant").
+		Query(query).
+		From(0).Size(1000).
+		Do(context.Background())
+	if err != nil {
+		log.Printf("Não encontrado: %v", err)
+	}
+
+	participantList := []ClozeParticipant{}
+	if err == nil && searchResult.Hits.TotalHits > 0 {
+		for _, hit := range searchResult.Hits.Hits {
+			var part ClozeParticipant
+			err := json.Unmarshal(*hit.Source, &part)
+			if err != nil {
+				log.Printf("Erro: %v", err)
+			}
+			part.ID = hit.Id
+			participantList = append(participantList, part)
+		}
+	}
+
+	ret += "Código, Nome Teste, Quantidade Gêneros, Parágrafos por Participante, Nome Participante, Organização, Registro, Semestre, Parágrafos Lidos, Data Início, Parágrafo, Sentença, Índice Palavra, Palavra, Resposta, Tempo(ms)\n"
+
+	for _, part := range participantList {
+		paragraphs := ""
+		for _, par := range part.Paragraphs {
+			paragraphs += fmt.Sprintf("%v ", par)
+		}
+
+		//dados resposta participantes
+		query = elastic.NewTermQuery("part.keyword", part.ID)
+
+		searchResult, err = elClient.Search().
+			Index(indexPrefix+"cloze-participant-data").
+			Type("_doc").
+			Query(query).
+			Sort("wseq", true).
+			From(0).Size(1000).
+			Do(context.Background())
+		if err != nil {
+			log.Printf("Não encontrado: %v", err)
+		}
+
+		participantDataList := []ClozeParticipantData{}
+		if err == nil && searchResult.Hits.TotalHits > 0 {
+			for _, hit := range searchResult.Hits.Hits {
+				var partData ClozeParticipantData
+				err := json.Unmarshal(*hit.Source, &partData)
+				if err != nil {
+					log.Printf("Erro: %v", err)
+				}
+				participantDataList = append(participantDataList, partData)
+			}
+		}
+
+		for _, item := range participantDataList {
+			ret += fmt.Sprintf("%v,%v,%v,%v,", c.Code, c.Name, c.TotalClasses, c.QtyPerParticipant)
+			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,", part.Name, part.Organization, part.RegNumber, part.Semester, paragraphs, part.Created)
+			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v\n", item.ParagraphID, item.SentenceSeq, item.WordSeq, item.TargetWord, item.GuessWord, item.ElapsedTime)
+		}
+
 	}
 
 	fmt.Fprintf(w, htmlSafeString(ret))
