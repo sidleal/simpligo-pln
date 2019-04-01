@@ -7,6 +7,7 @@ package elastic
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -192,6 +193,51 @@ func TestSearchResultEach(t *testing.T) {
 	}
 	if count != 0 {
 		t.Errorf("expected to not find any hits; got: %d", count)
+	}
+}
+
+func TestSearchResultEachNoSource(t *testing.T) {
+	client := setupTestClientAndCreateIndexAndAddDocsNoSource(t)
+
+	all := NewMatchAllQuery()
+	searchResult, err := client.Search().Index(testNoSourceIndexName).Query(all).Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Iterate over non-ptr type
+	var aTweet tweet
+	count := 0
+	for _, item := range searchResult.Each(reflect.TypeOf(aTweet)) {
+		count++
+		tw, ok := item.(tweet)
+		if !ok {
+			t.Fatalf("expected hit to be serialized as tweet; got: %v", reflect.ValueOf(item))
+		}
+
+		if tw.User != "" {
+			t.Fatalf("expected no _source hit to be empty tweet; got: %v", reflect.ValueOf(item))
+		}
+	}
+	if count != 2 {
+		t.Errorf("expected to find 2 hits; got: %d", count)
+	}
+
+	// Iterate over ptr-type
+	count = 0
+	var aTweetPtr *tweet
+	for _, item := range searchResult.Each(reflect.TypeOf(aTweetPtr)) {
+		count++
+		tw, ok := item.(*tweet)
+		if !ok {
+			t.Fatalf("expected hit to be serialized as tweet; got: %v", reflect.ValueOf(item))
+		}
+		if tw != nil {
+			t.Fatal("expected hit to be nil")
+		}
+	}
+	if count != 2 {
+		t.Errorf("expected to find 2 hits; got: %d", count)
 	}
 }
 
@@ -395,7 +441,7 @@ func TestSearchSpecificFields(t *testing.T) {
 			t.Errorf("expected SearchResult.Hits.Hit.Index = %q; got %q", testIndexName, hit.Index)
 		}
 		if hit.Source != nil {
-			t.Fatalf("expected SearchResult.Hits.Hit.Source to be nil; got: %q", hit.Source)
+			t.Fatalf("expected SearchResult.Hits.Hit.Source to be nil; got: %v", hit.Source)
 		}
 		if hit.Fields == nil {
 			t.Fatal("expected SearchResult.Hits.Hit.Fields to be != nil")
@@ -562,6 +608,61 @@ func TestSearchSource(t *testing.T) {
 	}
 }
 
+func TestSearchSourceWithString(t *testing.T) {
+	client := setupTestClientAndCreateIndex(t)
+
+	tweet1 := tweet{
+		User: "olivere", Retweets: 108,
+		Message: "Welcome to Golang and Elasticsearch.",
+		Created: time.Date(2012, 12, 12, 17, 38, 34, 0, time.UTC),
+	}
+	tweet2 := tweet{
+		User: "olivere", Retweets: 0,
+		Message: "Another unrelated topic.",
+		Created: time.Date(2012, 10, 10, 8, 12, 03, 0, time.UTC),
+	}
+	tweet3 := tweet{
+		User: "sandrae", Retweets: 12,
+		Message: "Cycling is fun.",
+		Created: time.Date(2011, 11, 11, 10, 58, 12, 0, time.UTC),
+	}
+
+	// Add all documents
+	_, err := client.Index().Index(testIndexName).Type("doc").Id("1").BodyJson(&tweet1).Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Index().Index(testIndexName).Type("doc").Id("2").BodyJson(&tweet2).Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Index().Index(testIndexName).Type("doc").Id("3").BodyJson(&tweet3).Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Flush().Index(testIndexName).Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	searchResult, err := client.Search().
+		Index(testIndexName).
+		Source(`{"query":{"match_all":{}}}`). // sets the JSON request
+		Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if searchResult.Hits == nil {
+		t.Errorf("expected SearchResult.Hits != nil; got nil")
+	}
+	if searchResult.Hits.TotalHits != 3 {
+		t.Errorf("expected SearchResult.Hits.TotalHits = %d; got %d", 3, searchResult.Hits.TotalHits)
+	}
+}
+
 func TestSearchRawString(t *testing.T) {
 	// client := setupTestClientAndCreateIndexAndLog(t, SetTraceLog(log.New(os.Stdout, "", 0)))
 	client := setupTestClientAndCreateIndex(t)
@@ -699,7 +800,7 @@ func TestSearchInnerHitsOnHasChild(t *testing.T) {
 	}
 
 	// Add documents
-	// See https://www.elastic.co/guide/en/elasticsearch/reference/6.0/parent-join.html for example code.
+	// See https://www.elastic.co/guide/en/elasticsearch/reference/6.7/parent-join.html for example code.
 	doc1 := joinDoc{
 		Message:   "This is a question",
 		JoinField: &joinField{Name: "question"},
@@ -812,7 +913,7 @@ func TestSearchInnerHitsOnHasParent(t *testing.T) {
 	}
 
 	// Add documents
-	// See https://www.elastic.co/guide/en/elasticsearch/reference/6.0/parent-join.html for example code.
+	// See https://www.elastic.co/guide/en/elasticsearch/reference/6.7/parent-join.html for example code.
 	doc1 := joinDoc{
 		Message:   "This is a question",
 		JoinField: &joinField{Name: "question"},
@@ -1216,5 +1317,144 @@ func TestSearchResultWithFieldCollapsingAndInnerHits(t *testing.T) {
 		if lastTweets == nil {
 			t.Fatal("expected inner_hits in SearchResult")
 		}
+	}
+}
+
+func TestSearchScriptQuery(t *testing.T) {
+	client := setupTestClientAndCreateIndexAndAddDocs(t) //, SetTraceLog(log.New(os.Stdout, "", 0)))
+
+	// ES uses Painless as default scripting engine in 6.x
+	// Another example of using painless would be:
+	//
+	//	script := NewScript(`
+	//	String username = doc['user'].value;
+	//	return username == 'olivere'
+	//`)
+	// See https://www.elastic.co/guide/en/elasticsearch/painless/6.7/painless-examples.html
+	script := NewScript("doc['user'].value == 'olivere'")
+	query := NewScriptQuery(script)
+
+	searchResult, err := client.Search().
+		Index(testIndexName).
+		Query(query).
+		Pretty(true).
+		Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if searchResult.Hits == nil {
+		t.Errorf("expected SearchResult.Hits != nil; got nil")
+	}
+	if want, have := int64(2), searchResult.Hits.TotalHits; want != have {
+		t.Errorf("expected SearchResult.Hits.TotalHits = %d; got %d", want, have)
+	}
+	if want, have := 2, len(searchResult.Hits.Hits); want != have {
+		t.Errorf("expected len(SearchResult.Hits.Hits) = %d; got %d", want, have)
+	}
+}
+
+func TestSearchWithDocvalueFields(t *testing.T) {
+	// client := setupTestClientAndCreateIndexAndAddDocs(t, SetTraceLog(log.New(os.Stdout, "", log.LstdFlags)))
+	client := setupTestClientAndCreateIndexAndAddDocs(t)
+
+	// Match all should return all documents
+	searchResult, err := client.Search().
+		Index(testIndexName).
+		Query(NewMatchAllQuery()).
+		DocvalueFields("user", "retweets").
+		DocvalueFieldsWithFormat(
+			// DocvalueField{Field: "user"},
+			// DocvalueField{Field: "retweets", Format: "long"},
+			DocvalueField{Field: "created", Format: "epoch_millis"},
+		).
+		Pretty(true).
+		Do(context.TODO())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if searchResult.Hits == nil {
+		t.Errorf("expected SearchResult.Hits != nil; got nil")
+	}
+	if got, want := searchResult.Hits.TotalHits, int64(3); got != want {
+		t.Errorf("expected SearchResult.Hits.TotalHits = %d; got %d", want, got)
+	}
+	if got, want := len(searchResult.Hits.Hits), 3; got != want {
+		t.Errorf("expected len(SearchResult.Hits.Hits) = %d; got %d", want, got)
+	}
+
+	for _, hit := range searchResult.Hits.Hits {
+		if hit.Index != testIndexName {
+			t.Errorf("expected SearchResult.Hits.Hit.Index = %q; got %q", testIndexName, hit.Index)
+		}
+		item := make(map[string]interface{})
+		err := json.Unmarshal(*hit.Source, &item)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestSearchWithDateMathIndices(t *testing.T) {
+	client := setupTestClient(t) //, SetTraceLog(log.New(os.Stdout, "", log.LstdFlags)))
+
+	ctx := context.Background()
+	now := time.Now().UTC()
+	indexNameToday := fmt.Sprintf("elastic-trail-%s", now.Format("2006.01.02"))
+	indexNameYesterday := fmt.Sprintf("elastic-trail-%s", now.AddDate(0, 0, -1).Format("2006.01.02"))
+	indexNameTomorrow := fmt.Sprintf("elastic-trail-%s", now.AddDate(0, 0, +1).Format("2006.01.02"))
+
+	const mapping = `{
+	"settings":{
+		"number_of_shards":1,
+		"number_of_replicas":0
+	}
+}`
+
+	// Create indices
+	for i, indexName := range []string{indexNameToday, indexNameTomorrow, indexNameYesterday} {
+		_, err := client.CreateIndex(indexName).Body(mapping).Do(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer client.DeleteIndex(indexName).Do(ctx)
+
+		// Add a document
+		id := fmt.Sprintf("%d", i+1)
+		_, err = client.Index().Index(indexName).Type("doc").Id(id).BodyJson(map[string]interface{}{
+			"index": indexName,
+		}).Refresh("wait_for").Do(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Count total
+	cnt, err := client.
+		Count(indexNameYesterday, indexNameToday, indexNameTomorrow).
+		Do(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cnt != 3 {
+		t.Fatalf("expected Count=%d; got %d", 3, cnt)
+	}
+
+	// Match all should return all documents
+	res, err := client.Search().
+		Index("<elastic-trail-{now/d}>", "<elastic-trail-{now-1d/d}>").
+		Query(NewMatchAllQuery()).
+		Pretty(true).
+		Do(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Hits == nil {
+		t.Errorf("expected SearchResult.Hits != nil; got nil")
+	}
+	if got, want := res.Hits.TotalHits, int64(2); got != want {
+		t.Errorf("expected SearchResult.Hits.TotalHits = %d; got %d", want, got)
+	}
+	if got, want := len(res.Hits.Hits), 2; got != want {
+		t.Errorf("expected len(SearchResult.Hits.Hits) = %d; got %d", want, got)
 	}
 }

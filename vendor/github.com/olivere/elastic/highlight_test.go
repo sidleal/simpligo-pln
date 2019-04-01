@@ -117,8 +117,10 @@ func TestHighlighterWithExplicitFieldOrder(t *testing.T) {
 	}
 }
 
-func TestHighlightWithBoundaryChars(t *testing.T) {
-	builder := NewHighlight().BoundaryChars(" \t\r")
+func TestHighlightWithBoundarySettings(t *testing.T) {
+	builder := NewHighlight().
+		BoundaryChars(" \t\r").
+		BoundaryScannerType("word")
 	src, err := builder.Source()
 	if err != nil {
 		t.Fatal(err)
@@ -128,14 +130,14 @@ func TestHighlightWithBoundaryChars(t *testing.T) {
 		t.Fatalf("marshaling to JSON failed: %v", err)
 	}
 	got := string(data)
-	expected := `{"boundary_chars":" \t\r"}`
+	expected := `{"boundary_chars":" \t\r","boundary_scanner":"word"}`
 	if got != expected {
 		t.Errorf("expected\n%s\n,got:\n%s", expected, got)
 	}
 }
 
 func TestHighlightWithTermQuery(t *testing.T) {
-	client := setupTestClientAndCreateIndex(t)
+	client := setupTestClientAndCreateIndex(t) //, SetTraceLog(log.New(os.Stdout, "", 0)))
 
 	tweet1 := tweet{User: "olivere", Message: "Welcome to Golang and Elasticsearch."}
 	tweet2 := tweet{User: "olivere", Message: "Another unrelated topic."}
@@ -173,6 +175,7 @@ func TestHighlightWithTermQuery(t *testing.T) {
 		Index(testIndexName).
 		Highlight(hl).
 		Query(query).
+		Pretty(true).
 		Do(context.TODO())
 	if err != nil {
 		t.Fatal(err)

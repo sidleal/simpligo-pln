@@ -18,7 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	elastic "github.com/olivere/elastic"
+	"github.com/olivere/elastic"
 )
 
 type Tweet struct {
@@ -183,44 +183,44 @@ func (t *TestCase) monitor() {
 }
 
 func (t *TestCase) setup() error {
-	var errorlogger *log.Logger
+	var options []elastic.ClientOptionFunc
+
 	if t.errorlogfile != "" {
 		f, err := os.OpenFile(t.errorlogfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 		if err != nil {
 			return err
 		}
-		errorlogger = log.New(f, "", log.Ltime|log.Lmicroseconds|log.Lshortfile)
+		logger := log.New(f, "", log.Ltime|log.Lmicroseconds|log.Lshortfile)
+		options = append(options, elastic.SetErrorLog(logger))
 	}
 
-	var infologger *log.Logger
 	if t.infologfile != "" {
 		f, err := os.OpenFile(t.infologfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 		if err != nil {
 			return err
 		}
-		infologger = log.New(f, "", log.LstdFlags)
+		logger := log.New(f, "", log.LstdFlags)
+		options = append(options, elastic.SetInfoLog(logger))
 	}
 
 	// Trace request and response details like this
-	var tracelogger *log.Logger
 	if t.tracelogfile != "" {
 		f, err := os.OpenFile(t.tracelogfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 		if err != nil {
 			return err
 		}
-		tracelogger = log.New(f, "", log.LstdFlags)
+		logger := log.New(f, "", log.LstdFlags)
+		options = append(options, elastic.SetTraceLog(logger))
 	}
 
-	client, err := elastic.NewClient(
-		elastic.SetURL(t.nodes...),
-		elastic.SetErrorLog(errorlogger),
-		elastic.SetInfoLog(infologger),
-		elastic.SetTraceLog(tracelogger),
-		elastic.SetMaxRetries(t.maxRetries),
-		elastic.SetSniff(t.sniff),
-		elastic.SetSnifferInterval(t.snifferInterval),
-		elastic.SetHealthcheck(t.healthcheck),
-		elastic.SetHealthcheckInterval(t.healthcheckInterval))
+	options = append(options, elastic.SetURL(t.nodes...))
+	options = append(options, elastic.SetMaxRetries(t.maxRetries))
+	options = append(options, elastic.SetSniff(t.sniff))
+	options = append(options, elastic.SetSnifferInterval(t.snifferInterval))
+	options = append(options, elastic.SetHealthcheck(t.healthcheck))
+	options = append(options, elastic.SetHealthcheckInterval(t.healthcheckInterval))
+
+	client, err := elastic.NewClient(options...)
 	if err != nil {
 		// Handle error
 		return err
@@ -292,7 +292,7 @@ func (t *TestCase) search() {
 	// Loop forever to check for connection issues
 	for {
 		// Get tweet with specified ID
-		get1, err := t.client.Get().
+		_, err := t.client.Get().
 			Index(t.index).
 			Type("tweet").
 			Id("1").
@@ -302,7 +302,7 @@ func (t *TestCase) search() {
 			t.runCh <- RunInfo{Success: false}
 			continue
 		}
-		if !get1.Found {
+		if elastic.IsNotFound(err) {
 			//log.Printf("Document %s not found\n", "1")
 			//fmt.Printf("Got document %s in version %d from index %s, type %s\n", get1.Id, get1.Version, get1.Index, get1.Type)
 			t.runCh <- RunInfo{Success: false}

@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -161,7 +162,7 @@ func TestBulkWithIndexSetOnClient(t *testing.T) {
 	tweet1 := tweet{User: "olivere", Message: "Welcome to Golang and Elasticsearch."}
 	tweet2 := tweet{User: "sandrae", Message: "Dancing all night long. Yeah."}
 
-	index1Req := NewBulkIndexRequest().Index(testIndexName).Type("doc").Id("1").Doc(tweet1)
+	index1Req := NewBulkIndexRequest().Index(testIndexName).Type("doc").Id("1").Doc(tweet1).Routing("1")
 	index2Req := NewBulkIndexRequest().Index(testIndexName).Type("doc").Id("2").Doc(tweet2)
 	delete1Req := NewBulkDeleteRequest().Index(testIndexName).Type("doc").Id("1")
 
@@ -201,8 +202,9 @@ func TestBulkWithIndexSetOnClient(t *testing.T) {
 	}
 }
 
-func TestBulkRequestsSerialization(t *testing.T) {
+func TestBulkIndexDeleteUpdate(t *testing.T) {
 	client := setupTestClientAndCreateIndex(t)
+	//client := setupTestClientAndCreateIndexAndLog(t)
 
 	tweet1 := tweet{User: "olivere", Message: "Welcome to Golang and Elasticsearch."}
 	tweet2 := tweet{User: "sandrae", Message: "Dancing all night long. Yeah."}
@@ -211,6 +213,7 @@ func TestBulkRequestsSerialization(t *testing.T) {
 	index2Req := NewBulkIndexRequest().OpType("create").Index(testIndexName).Type("doc").Id("2").Doc(tweet2)
 	delete1Req := NewBulkDeleteRequest().Index(testIndexName).Type("doc").Id("1")
 	update2Req := NewBulkUpdateRequest().Index(testIndexName).Type("doc").Id("2").
+		ReturnSource(true).
 		Doc(struct {
 			Retweets int `json:"retweets"`
 		}{
@@ -227,13 +230,13 @@ func TestBulkRequestsSerialization(t *testing.T) {
 		t.Errorf("expected bulkRequest.NumberOfActions %d; got %d", 4, bulkRequest.NumberOfActions())
 	}
 
-	expected := `{"index":{"_id":"1","_index":"` + testIndexName + `","_type":"doc"}}
+	expected := `{"index":{"_index":"` + testIndexName + `","_id":"1","_type":"doc"}}
 {"user":"olivere","message":"Welcome to Golang and Elasticsearch.","retweets":0,"created":"0001-01-01T00:00:00Z"}
-{"create":{"_id":"2","_index":"` + testIndexName + `","_type":"doc"}}
+{"create":{"_index":"` + testIndexName + `","_id":"2","_type":"doc"}}
 {"user":"sandrae","message":"Dancing all night long. Yeah.","retweets":0,"created":"0001-01-01T00:00:00Z"}
-{"delete":{"_id":"1","_index":"` + testIndexName + `","_type":"doc"}}
-{"update":{"_id":"2","_index":"` + testIndexName + `","_type":"doc"}}
-{"doc":{"retweets":42}}
+{"delete":{"_index":"` + testIndexName + `","_type":"doc","_id":"1"}}
+{"update":{"_index":"` + testIndexName + `","_type":"doc","_id":"2"}}
+{"doc":{"retweets":42},"_source":true}
 `
 	got, err := bulkRequest.bodyAsString()
 	if err != nil {
@@ -331,6 +334,22 @@ func TestBulkRequestsSerialization(t *testing.T) {
 	}
 	if want, have := "updated", updated[0].Result; want != have {
 		t.Errorf("expected updated[0].Result == %q; got %q", want, have)
+	}
+	if updated[0].GetResult == nil {
+		t.Fatalf("expected updated[0].GetResult to be != nil; got nil")
+	}
+	if updated[0].GetResult.Source == nil {
+		t.Fatalf("expected updated[0].GetResult.Source to be != nil; got nil")
+	}
+	if want, have := true, updated[0].GetResult.Found; want != have {
+		t.Fatalf("expected updated[0].GetResult.Found to be != %v; got %v", want, have)
+	}
+	var doc tweet
+	if err := json.Unmarshal(*updated[0].GetResult.Source, &doc); err != nil {
+		t.Fatalf("expected to unmarshal updated[0].GetResult.Source; got %v", err)
+	}
+	if want, have := 42, doc.Retweets; want != have {
+		t.Fatalf("expected updated tweet to have Retweets = %v; got %v", want, have)
 	}
 
 	// Succeeded actions
@@ -464,7 +483,7 @@ func TestBulkEstimatedSizeInBytes(t *testing.T) {
 	}
 
 	// Reset should also reset the calculated estimated byte size
-	bulkRequest.reset()
+	bulkRequest.Reset()
 
 	if got, want := bulkRequest.EstimatedSizeInBytes(), int64(0); got != want {
 		t.Errorf("expected an EstimatedSizeInBytes = %d; got: %v", want, got)
@@ -479,40 +498,6 @@ func TestBulkEstimateSizeInBytesLength(t *testing.T) {
 	if got, want := s.estimateSizeInBytes(r), int64(1+len(r.String())); got != want {
 		t.Fatalf("expected %d; got: %d", want, got)
 	}
-}
-
-var benchmarkBulkEstimatedSizeInBytes int64
-
-func BenchmarkBulkEstimatedSizeInBytesWith1Request(b *testing.B) {
-	client := setupTestClientAndCreateIndex(b)
-	s := client.Bulk()
-	var result int64
-	for n := 0; n < b.N; n++ {
-		s = s.Add(NewBulkIndexRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"1"}))
-		s = s.Add(NewBulkUpdateRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"2"}))
-		s = s.Add(NewBulkDeleteRequest().Index(testIndexName).Type("doc").Id("1"))
-		result = s.EstimatedSizeInBytes()
-		s.reset()
-	}
-	b.ReportAllocs()
-	benchmarkBulkEstimatedSizeInBytes = result // ensure the compiler doesn't optimize
-}
-
-func BenchmarkBulkEstimatedSizeInBytesWith100Requests(b *testing.B) {
-	client := setupTestClientAndCreateIndex(b)
-	s := client.Bulk()
-	var result int64
-	for n := 0; n < b.N; n++ {
-		for i := 0; i < 100; i++ {
-			s = s.Add(NewBulkIndexRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"1"}))
-			s = s.Add(NewBulkUpdateRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"2"}))
-			s = s.Add(NewBulkDeleteRequest().Index(testIndexName).Type("doc").Id("1"))
-		}
-		result = s.EstimatedSizeInBytes()
-		s.reset()
-	}
-	b.ReportAllocs()
-	benchmarkBulkEstimatedSizeInBytes = result // ensure the compiler doesn't optimize
 }
 
 func TestBulkContentType(t *testing.T) {
@@ -537,4 +522,79 @@ func TestBulkContentType(t *testing.T) {
 	if want, have := "application/x-ndjson", header.Get("Content-Type"); want != have {
 		t.Fatalf("Content-Type: want %q, have %q", want, have)
 	}
+}
+
+// -- Benchmarks --
+
+var benchmarkBulkEstimatedSizeInBytes int64
+
+func BenchmarkBulkEstimatedSizeInBytesWith1Request(b *testing.B) {
+	client := setupTestClientAndCreateIndex(b)
+	s := client.Bulk()
+	var result int64
+	for n := 0; n < b.N; n++ {
+		s = s.Add(NewBulkIndexRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"1"}))
+		s = s.Add(NewBulkUpdateRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"2"}))
+		s = s.Add(NewBulkDeleteRequest().Index(testIndexName).Type("doc").Id("1"))
+		result = s.EstimatedSizeInBytes()
+		s.Reset()
+	}
+	b.ReportAllocs()
+	benchmarkBulkEstimatedSizeInBytes = result // ensure the compiler doesn't optimize
+}
+
+func BenchmarkBulkEstimatedSizeInBytesWith100Requests(b *testing.B) {
+	client := setupTestClientAndCreateIndex(b)
+	s := client.Bulk()
+	var result int64
+	for n := 0; n < b.N; n++ {
+		for i := 0; i < 100; i++ {
+			s = s.Add(NewBulkIndexRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"1"}))
+			s = s.Add(NewBulkUpdateRequest().Index(testIndexName).Type("doc").Id("1").Doc(struct{ A string }{"2"}))
+			s = s.Add(NewBulkDeleteRequest().Index(testIndexName).Type("doc").Id("1"))
+		}
+		result = s.EstimatedSizeInBytes()
+		s.Reset()
+	}
+	b.ReportAllocs()
+	benchmarkBulkEstimatedSizeInBytes = result // ensure the compiler doesn't optimize
+}
+
+func BenchmarkBulkAllocs(b *testing.B) {
+	b.Run("1000 docs with 64 byte", func(b *testing.B) { benchmarkBulkAllocs(b, 64, 1000) })
+	b.Run("1000 docs with 1 KiB", func(b *testing.B) { benchmarkBulkAllocs(b, 1024, 1000) })
+	b.Run("1000 docs with 4 KiB", func(b *testing.B) { benchmarkBulkAllocs(b, 4096, 1000) })
+	b.Run("1000 docs with 16 KiB", func(b *testing.B) { benchmarkBulkAllocs(b, 16*1024, 1000) })
+	b.Run("1000 docs with 64 KiB", func(b *testing.B) { benchmarkBulkAllocs(b, 64*1024, 1000) })
+	b.Run("1000 docs with 256 KiB", func(b *testing.B) { benchmarkBulkAllocs(b, 256*1024, 1000) })
+	b.Run("1000 docs with 1 MiB", func(b *testing.B) { benchmarkBulkAllocs(b, 1024*1024, 1000) })
+}
+
+const (
+	charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+)
+
+func benchmarkBulkAllocs(b *testing.B, size, num int) {
+	buf := make([]byte, size)
+	for i := range buf {
+		buf[i] = charset[rand.Intn(len(charset))]
+	}
+
+	s := &BulkService{}
+	n := 0
+	for {
+		n++
+		s = s.Add(NewBulkIndexRequest().Index("test").Type("doc").Id("1").Doc(struct {
+			S string `json:"s"`
+		}{
+			S: string(buf),
+		}))
+		if n >= num {
+			break
+		}
+	}
+	for i := 0; i < b.N; i++ {
+		s.bodyAsString()
+	}
+	b.ReportAllocs()
 }

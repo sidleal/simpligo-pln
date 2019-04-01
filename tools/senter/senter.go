@@ -135,6 +135,12 @@ func preProcesText(rawText string) string {
 	}
 
 	//rule 4 - decimals
+	regEx = regexp.MustCompile(`([0-9]+)\.([0-9]+),([0-9]+)`)
+	out = regEx.ReplaceAllString(out, `$1|dot|$2|virg|$3`)
+
+	regEx = regexp.MustCompile(`([0-9]+),([0-9]+)`)
+	out = regEx.ReplaceAllString(out, `$1|virg|$2`)
+
 	regEx = regexp.MustCompile(`([0-9]+)\.([0-9]+)`)
 	out = regEx.ReplaceAllString(out, `$1|dot|$2`)
 
@@ -288,5 +294,6 @@ func punctuateBack(text string) string {
 	text = strings.Replace(text, "|hyp|", "-", -1)
 	text = strings.Replace(text, "|col|", ":", -1)
 	text = strings.Replace(text, "|||", "", -1)
+	text = strings.Replace(text, "|virg|", ",", -1)
 	return text
 }

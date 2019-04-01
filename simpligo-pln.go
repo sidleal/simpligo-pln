@@ -68,7 +68,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
-		StaticHash:     "001",
+		StaticHash:     "002",
 		LastPath:       "/",
 	}
 
@@ -129,6 +129,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/cloze/{id}", ClozeGetHandler).Methods("GET")
 	r.HandleFunc("/cloze/a/{code}", ClozeApplyHandler).Methods("GET")
 	r.HandleFunc("/cloze/apply/new", ClozeApplyNewHandler).Methods("POST")
+	r.HandleFunc("/cloze/apply/save", ClozeApplySaveHandler).Methods("POST")
 	r.HandleFunc("/cloze/{id}", ClozeRemoveHandler).Methods("DELETE")
 
 	r.HandleFunc("/api/v1/metrix/{subset}/{key}", MetrixAPIPostHandler).Methods("POST")
@@ -1412,6 +1413,7 @@ func ClozeGetHandler(w http.ResponseWriter, r *http.Request) {
 	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
 			var c ClozeTest
+
 			err := json.Unmarshal(*hit.Source, &c)
 			if err != nil {
 				log.Printf("Erro: %v", err)
@@ -1422,11 +1424,17 @@ func ClozeGetHandler(w http.ResponseWriter, r *http.Request) {
 				log.Printf("Erro: %v", err)
 			}
 			ret = string(cJSON)
+
 		}
 	}
 
-	fmt.Fprintf(w, ret)
+	fmt.Fprintf(w, htmlSafeString(ret))
 
+}
+
+func htmlSafeString(str string) string {
+	str = strings.ReplaceAll(str, "%", "%%")
+	return str
 }
 
 type ClozeData struct {
@@ -1438,14 +1446,28 @@ type ClozeData struct {
 }
 
 type ClozeParticipant struct {
-	ID           string  `json:"id"`
-	ClozeCode    string  `json:"code"`
-	Name         string  `json:"name"`
-	Organization string  `json:"org"`
-	RegNumber    string  `json:"ra"`
-	Semester     string  `json:"sem"`
-	Created      string  `json:"created"`
-	Paragraphs   []int64 `json:"prgphs"`
+	ID           string `json:"id"`
+	ClozeCode    string `json:"code"`
+	Name         string `json:"name"`
+	Organization string `json:"org"`
+	RegNumber    string `json:"ra"`
+	Semester     string `json:"sem"`
+	Created      string `json:"created"`
+	Paragraphs   []int  `json:"prgphs"`
+}
+
+type ClozeParticipantData struct {
+	ParticipantID string `json:"part"`
+	ParagraphSeq  int64  `json:"para"`
+	SentenceSeq   int64  `json:"sent"`
+	WordSeq       int64  `json:"wseq"`
+	TargetWord    string `json:"tword"`
+	GuessWord     string `json:"word"`
+	ElapsedTime   int64  `json:"time"`
+	Saved         string `json:"saved"`
+	ParagraphID   int64  `json:"par_id"`
+	SentenceID    int64  `json:"sen_id"`
+	TokenID       int64  `json:"tok_id"`
 }
 
 func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
@@ -1481,6 +1503,32 @@ func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "Error parsing template: %v.", err)
 	}
+
+}
+
+func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
+
+	decoder := json.NewDecoder(r.Body)
+	var participantData ClozeParticipantData
+	err = decoder.Decode(&participantData)
+	if err != nil {
+		log.Printf("Erro ao tratar payload: %v", err)
+	}
+
+	participantData.Saved = time.Now().Format("2006-01-02T15:04:05.000Z07:00")
+
+	createIndexIfNotExists("cloze-participant-data")
+
+	put, err := elClient.Index().
+		Refresh("true").
+		Type("_doc").
+		Index(indexPrefix + "cloze-participant-data").
+		BodyJson(participantData).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Dados savos %s\n", put.Id)
 
 }
 
@@ -1567,14 +1615,16 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 		i++
 	}
 
+	participant.Paragraphs = selectedParagraphs
 	participant = createClozeParticipantIfNotExists(participant)
 
 	clozeData.Participant = participant
 
-	log.Println("------", selectedParagraphs)
+	log.Println("------", participant.Paragraphs)
+
 	clozeData.Paragraphs = []senter.ParsedParagraph{}
 	for _, p := range clozeTest.Parsed.Paragraphs {
-		for _, pn := range selectedParagraphs {
+		for _, pn := range participant.Paragraphs {
 			if int(p.Idx) == pn {
 				clozeData.Paragraphs = append(clozeData.Paragraphs, p)
 			}
@@ -1628,7 +1678,6 @@ func createClozeParticipantIfNotExists(participant ClozeParticipant) ClozePartic
 	} else {
 
 		participant.Created = time.Now().Format("2006-01-02T15:04:05.000Z07:00")
-		participant.Paragraphs = []int64{1, 3, 4}
 
 		createIndexIfNotExists("cloze-participants")
 
@@ -1641,6 +1690,7 @@ func createClozeParticipantIfNotExists(participant ClozeParticipant) ClozePartic
 		if err != nil {
 			panic(err)
 		}
+		participant.ID = put.Id
 		log.Printf("Participante criado %s\n", put.Id)
 	}
 

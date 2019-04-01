@@ -9,12 +9,9 @@ import (
 	"testing"
 )
 
-func TestFuzzyCompletionSuggesterSource(t *testing.T) {
-	s := NewFuzzyCompletionSuggester("song-suggest").
-		Text("n").
-		Field("suggest").
-		Fuzziness(2)
-	src, err := s.Source(true)
+func TestGeoCentroidAggregation(t *testing.T) {
+	agg := NewGeoCentroidAggregation().Field("location")
+	src, err := agg.Source()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,18 +20,15 @@ func TestFuzzyCompletionSuggesterSource(t *testing.T) {
 		t.Fatalf("marshaling to JSON failed: %v", err)
 	}
 	got := string(data)
-	expected := `{"song-suggest":{"text":"n","completion":{"field":"suggest","fuzzy":{"fuzziness":2}}}}`
+	expected := `{"geo_centroid":{"field":"location"}}`
 	if got != expected {
 		t.Errorf("expected\n%s\n,got:\n%s", expected, got)
 	}
 }
 
-func TestFuzzyCompletionSuggesterWithStringFuzzinessSource(t *testing.T) {
-	s := NewFuzzyCompletionSuggester("song-suggest").
-		Text("n").
-		Field("suggest").
-		Fuzziness("1..4")
-	src, err := s.Source(true)
+func TestGeoCentroidAggregationWithMetaData(t *testing.T) {
+	agg := NewGeoCentroidAggregation().Field("location").Meta(map[string]interface{}{"name": "Oliver"})
+	src, err := agg.Source()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +37,7 @@ func TestFuzzyCompletionSuggesterWithStringFuzzinessSource(t *testing.T) {
 		t.Fatalf("marshaling to JSON failed: %v", err)
 	}
 	got := string(data)
-	expected := `{"song-suggest":{"text":"n","completion":{"field":"suggest","fuzzy":{"fuzziness":"1..4"}}}}`
+	expected := `{"geo_centroid":{"field":"location"},"meta":{"name":"Oliver"}}`
 	if got != expected {
 		t.Errorf("expected\n%s\n,got:\n%s", expected, got)
 	}

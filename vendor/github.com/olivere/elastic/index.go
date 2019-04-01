@@ -15,7 +15,7 @@ import (
 // IndexService adds or updates a typed JSON document in a specified index,
 // making it searchable.
 //
-// See https://www.elastic.co/guide/en/elasticsearch/reference/6.0/docs-index_.html
+// See https://www.elastic.co/guide/en/elasticsearch/reference/6.7/docs-index_.html
 // for details.
 type IndexService struct {
 	client              *Client
@@ -80,6 +80,9 @@ func (s *IndexService) Pipeline(pipeline string) *IndexService {
 }
 
 // Refresh the index after performing the operation.
+//
+// See https://www.elastic.co/guide/en/elasticsearch/reference/6.7/docs-refresh.html
+// for details.
 func (s *IndexService) Refresh(refresh string) *IndexService {
 	s.refresh = refresh
 	return s
@@ -172,7 +175,7 @@ func (s *IndexService) buildURL() (string, string, url.Values, error) {
 		})
 	} else {
 		// Automatic ID generation
-		// See https://www.elastic.co/guide/en/elasticsearch/reference/6.0/docs-index_.html#index-creation
+		// See https://www.elastic.co/guide/en/elasticsearch/reference/6.7/docs-index_.html#index-creation
 		method = "POST"
 		path, err = uritemplates.Expand("/{index}/{type}/", map[string]string{
 			"index": s.index,
@@ -289,7 +292,7 @@ type IndexResponse struct {
 	Id            string      `json:"_id,omitempty"`
 	Version       int64       `json:"_version,omitempty"`
 	Result        string      `json:"result,omitempty"`
-	Shards        *shardsInfo `json:"_shards,omitempty"`
+	Shards        *ShardsInfo `json:"_shards,omitempty"`
 	SeqNo         int64       `json:"_seq_no,omitempty"`
 	PrimaryTerm   int64       `json:"_primary_term,omitempty"`
 	Status        int         `json:"status,omitempty"`

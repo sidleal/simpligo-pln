@@ -155,7 +155,7 @@ function clozeDetails(clozeId, clozeName) {
             "Authorization": sessionStorage.getItem('simpligo.pln.jwt.key')
         }
     }).done(function(data) {
-        console.log(result);
+        // console.log(data);
         var result = JSON.parse(data);
         var lista = "";
         details = "<a>Total: " + result.parsed.totp + " Parágrafos, "  + result.parsed.tots + " Sentenças, " + result.parsed.totw + " Palavras" + "</a>";
