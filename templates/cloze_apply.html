@@ -13,17 +13,17 @@
   <link href="/static/css/font-awesome.min.css" rel="stylesheet">  
 
   <style type="text/css">
-    #clozeSentence {
+    .clozeSentence {
       font-size: 25px;
       margin-top:50px;
     }
     
-    #clozeWord {
+    .clozeWord {
       font-size: 25px;
       height: 50px;
       width: 300px;
     }
-  
+
   </style>
 
 </head>
@@ -40,32 +40,68 @@
   <div class="row">
     <div class="small-12 centered columns">
       
-      <div id="newTest">
+      <div id="inicio">
         <div class="row">
           <div class="small-12 large-8 columns centered">
             <h2>Teste Cloze - Previsibilidade</h2>
-            <p>Bem-vindo(a), agradecemos imensamente sua participação. Por favor preencha os campos abaixo e pressione o botão após o termo de compromisso para continuar com o teste.</p>
-            <p>Ao continuar o teste, serão apresentados três parágrafos curtos, uma palavra por vez, onde sua tarefa consiste em tentar adivinhar a próxima palavra a partir da(s) anteriore(s), conforme exemplificado no vídeo abaixo:</p>
-            <p style="color:red;">TO DO: Revisar o texto e trocar o vídeo!!!</p>
+            <p>Olá! Você está na tela inicial de uma tarefa que necessita de sua colaboração! Obrigado por participar!</p>
+            <p>Essa tarefa consiste em fazer você tentar adivinhar o que vem escrito em um parágrafo. Você verá um exemplo, e irá passar por uma fase de treinamento.</p>
+            <p>Se concordar participar desta pesquisa, por favor, leia o texto (TCLE simplificado) abaixo e clique em concordar. Caso contrário, agradecemos sua boa vontade de ter lido até aqui.</p>
+
+            <!--
+            <p style="color:red;">TO DO: Trocar o vídeo!!!</p>
             <div style="text-align: center;margin-bottom: 30px;">
               <iframe width="100%" height="400px" src="https://www.youtube.com/embed/SPZ1J1iXon4?autoplay=0"></iframe>
             </div>
-                        
+            -->
+
             <h4>Termo de compromisso:</h4>
             <div>
               <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque accumsan lorem posuere, tincidunt libero eget, volutpat est. Nullam eleifend erat risus, ac facilisis erat sollicitudin ac. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Mauris tincidunt, augue eu aliquet interdum, est eros tempus velit, non pellentesque turpis lacus vitae nisi. Nulla ac fringilla felis. Pellentesque id placerat ipsum. Mauris odio ex, tincidunt ut finibus nec, gravida at lectus. Maecenas lorem sem, egestas ut libero sit amet, faucibus iaculis sapien.</p>
               <p>Morbi aliquet lorem at arcu elementum maximus. Sed vestibulum nec risus sit amet lobortis. Nullam accumsan eleifend odio, maximus vehicula arcu pharetra placerat. Aenean nec mollis nisi, at volutpat leo. Cras sed risus tristique felis porttitor blandit eu eu turpis. Quisque nec sapien nec nisi fringilla maximus. Etiam eu arcu vel lorem venenatis molestie. Proin mattis ligula vitae felis tempus efficitur. Phasellus porta nibh arcu, ac hendrerit augue faucibus quis. Nam non molestie elit.</p>
             </div>
+  
+            <div style="text-align: center;">
+              <button onclick="showForm();" style="margin:30px;" id="btnContinue" class="default"><i class="fa fa-play fa-2x"></i><br/>Concordo com o termo e quero continuar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="form" style="display:none">
+        <div class="row">
+          <div class="small-12 large-8 columns centered">
+            <h2>Dados do Participante</h2>
+            <p>Por favor, preencha os dados abaixo antes de continuar.</p>
 
             <label for="participantName">Nome:</label>
             <input type="text" id="participantName" placeholder="seu nome"/>
+            <label for="participantBirthdate">Data de nascimento:</label>
+            <input type="text" id="participantBirthdate" placeholder="dd/mm/aaaa"/>
+            <label for="participantEmail">Email:</label>
+            <input type="text" id="participantEmail" placeholder="nome@exemplo.com"/>
+            <label for="participantPhone">Telefone de contato:</label>
+            <input type="text" id="participantPhone" placeholder="(00)00000-0000"/>
+            <label for="participantRG">RG:</label>
+            <input type="text" id="participantRG" placeholder="0000000-0"/>
+            <label for="participantCPF">CPF:</label>
+            <input type="text" id="participantCPF" placeholder="000.000.000-00"/>
+<!--
+            <label for="participantDegree">Grau de instrução:</label>
+            <select id="participantDegree">
+              <option value="">Selecione...</option>
+              <option value="fund">Ensino Fundamental</option>
+              <option value="med">Ensino Médio</option>
+              <option value="sup">Ensino Superior</option>
+              <option value="pos">Pós-Graduação</option>
+            </select>
+-->
             <label for="participantOrg">Universidade:</label>
             <select id="participantOrg">
               <option value="">Selecione...</option>
               <option value="uspsc">USP - São Carlos</option>
               <option value="ufc">UFC</option>
               <option value="pucrj">PUC - Rio de Janeiro</option>
-              <option value="outra">Outra</option>
             </select>
             <label for="participantRA">Número de Registro:</label>
             <input type="text" id="participantRA" placeholder="Registro Acadêmico"/>
@@ -82,9 +118,31 @@
                 <option value="8">8.o Semestre</option>
               </select>
   
+              <p>Bem, agora você vai passar pela fase de treinamento para entender como se faz a tarefa. Preparado(a)? Clique no botão abaixo:</p>
+
             <div style="text-align: center;">
-              <button onclick="continueTest('[[ .Code ]]')" style="margin:30px;" id="btnContinue" class="default"><i class="fa fa-play fa-2x"></i><br/>Concordo com o termo e quero continuar</button>
+              <button onclick="continueTest('[[ .Code ]]')" style="margin:30px;" id="btnContinue" class="default"><i class="fa fa-play fa-2x"></i><br/>Continuar</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="train" style="display:none">
+        <div class="row">
+          <div class="small-12 large-8 columns centered">
+            <h2>Treinamento</h2>
+            <p>TO DO: Texto explicando a tarefa aqui!!!!!!!! E também trocar o parágrafo.</p>
+
+            <p id="statusTestTrain">Treinamento - Palavra x de xx</p>
+            <p>(Digite a próxima palavra e depois tecle enter, ou clique no botão.)</p>
+
+            <label id="clozeSentenceTrain" for="clozeWordTrain" class="clozeSentence">...</label>
+            <input type="text" id="clozeWordTrain" placeholder="" class="clozeWord"/>
+            <button onclick="nextWordTrainAction()" id="btnNextWordTrain" class="default" style="margin-top: 50px;">Próxima</button>
+
+            <p style="display:none" class="clozeSentence" id="msgEndTrain">A fase de treinamento terminou. Agora, pedimos que fique atento e que complete com a palavra que vem à sua cabeça à medida que vai lendo o parágrafo. Lembramos que você lê apenas a primeira palavra de cada parágrafo. A partir da segunda, já é sua tarefa propor uma palavra para complementar o texto.</p>
+            <button onclick="showApply()" style="display:none" id="btnShowApply" class="default" style="margin-top: 50px;">Começar o teste</button>
+ 
           </div>
         </div>
       </div>
@@ -94,9 +152,15 @@
           <div class="small-12 large-8 columns centered">
             <p id="statusTest">Teste x de x - Palavra x de xx</p>
             <p>(Digite a próxima palavra e depois tecle enter, ou clique no botão.)</p>
-            <label id="clozeSentence" for="clozeWord">...</label>
-            <input type="text" id="clozeWord" placeholder=""/>
+            <label id="clozeSentence" for="clozeWord" class="clozeSentence">...</label>
+            <input type="text" id="clozeWord" placeholder="" class="clozeWord"/>
             <button onclick="nextWordAction()" id="btnNextWord" class="default" style="margin-top: 50px;">Próxima</button>
+
+            <p style="display:none" class="clozeSentence" id="msgEndParagraph">Parabéns! Você chegou ao final do parágrafo, agora vamos ao próximo!</p>
+            <button onclick="nextParagraph()" style="display:none" id="btnNextPar" class="default" style="margin-top: 50px;">Próximo Parágrafo</button>
+            
+            <p style="display:none" class="clozeSentence" id="msgEndTest">O teste foi finalizado. Parabéns! Agradecemos imensamente sua participação. Pode fechar essa página. Tudo foi gravado corretamente.</p>
+
           </div>
         </div>
       </div>

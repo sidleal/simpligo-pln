@@ -68,7 +68,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
-		StaticHash:     "003",
+		StaticHash:     "004",
 		LastPath:       "/",
 	}
 
@@ -1493,7 +1493,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ret += "Código, Nome Teste, Quantidade Gêneros, Parágrafos por Participante, Nome Participante, Organização, Registro, Semestre, Parágrafos Lidos, Data Início, Parágrafo, Sentença, Índice Palavra, Palavra, Resposta, Tempo(ms)\n"
+	ret += "Código, Nome Teste, Quantidade Gêneros, Parágrafos por Participante, Nome Participante, Organização, Registro, Semestre, Parágrafos Lidos, Data Início, Hora Início, Parágrafo, Sentença, Índice Palavra, Palavra, Resposta, Tempo(ms)\n"
 
 	for _, part := range participantList {
 		paragraphs := ""
@@ -1528,8 +1528,11 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, item := range participantDataList {
+			created, _ := isoToDate(part.Created)
+			createdDate := created.Format("2006-01-02")
+			createdTime := created.Format("15:04:05")
 			ret += fmt.Sprintf("%v,%v,%v,%v,", c.Code, c.Name, c.TotalClasses, c.QtyPerParticipant)
-			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,", part.Name, part.Organization, part.RegNumber, part.Semester, paragraphs, part.Created)
+			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,", part.Name, part.Organization, part.RegNumber, part.Semester, paragraphs, createdDate, createdTime)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v\n", item.ParagraphID, item.SentenceSeq, item.WordSeq, item.TargetWord, item.GuessWord, item.ElapsedTime)
 		}
 
@@ -1537,6 +1540,18 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, htmlSafeString(ret))
 
+}
+
+func dateToISO(date time.Time) string {
+	return date.Format("2006-01-02T15:04:05.000Z07:00")
+}
+
+func isoToDate(date string) (time.Time, error) {
+	ret, err := time.Parse("2006-01-02T15:04:05.000Z07:00", date)
+	if err != nil {
+		return ret, fmt.Errorf("erro convertendo data: %v", err)
+	}
+	return ret, nil
 }
 
 func htmlSafeString(str string) string {
@@ -1560,6 +1575,11 @@ type ClozeParticipant struct {
 	RegNumber    string `json:"ra"`
 	Semester     string `json:"sem"`
 	Created      string `json:"created"`
+	Birthdate    string `json:"birth"`
+	Email        string `json:"email"`
+	Phone        string `json:"phone"`
+	RG           string `json:"rg"`
+	CPF          string `json:"cpf"`
 	Paragraphs   []int  `json:"prgphs"`
 }
 
@@ -1622,7 +1642,7 @@ func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Erro ao tratar payload: %v", err)
 	}
 
-	participantData.Saved = time.Now().Format("2006-01-02T15:04:05.000Z07:00")
+	participantData.Saved = dateToISO(time.Now())
 
 	createIndexIfNotExists("cloze-participant-data")
 
@@ -1729,7 +1749,12 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("------", participant.Paragraphs)
 
+	//train
+	trainPar := "O rato roeu a roupa do rei de Roma. A rainha ruim resolveu remendar."
+	trainSenter := senter.ParseText(trainPar)
+
 	clozeData.Paragraphs = []senter.ParsedParagraph{}
+	clozeData.Paragraphs = append(clozeData.Paragraphs, trainSenter.Paragraphs[0])
 	for _, p := range clozeTest.Parsed.Paragraphs {
 		for _, pn := range participant.Paragraphs {
 			if int(p.Idx) == pn {
@@ -1784,7 +1809,7 @@ func createClozeParticipantIfNotExists(participant ClozeParticipant) ClozePartic
 
 	} else {
 
-		participant.Created = time.Now().Format("2006-01-02T15:04:05.000Z07:00")
+		participant.Created = dateToISO(time.Now())
 
 		createIndexIfNotExists("cloze-participants")
 

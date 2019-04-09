@@ -14,14 +14,31 @@ var stage;
 
 var startDateTime;
 
+var isTraining = true;
+
 $("#clozeWord").keypress(function(e) {
     if(e.which == 13) {
         nextWordAction();
     }
 });
 
+$("#clozeWordTrain").keypress(function(e) {
+    if(e.which == 13) {
+        nextWordTrainAction();
+    }
+});
+
 function nextWordAction() {
     word = $('#clozeWord').val();
+    if (word == "") {
+        alert("Preencha com a palavra que ache mais provável que venha a seguir.")
+        return
+    }
+    nextWord();
+}
+
+function nextWordTrainAction() {
+    word = $('#clozeWordTrain').val();
     if (word == "") {
         alert("Preencha com a palavra que ache mais provável que venha a seguir.")
         return
@@ -61,10 +78,15 @@ function nextWord() {
         lastToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
     }
 
-    saveWord();
+    if (!isTraining) {
+        saveWord();
+    }
 
     if (wordIdx > totWords) {
         console.log('Fim paragrafo');
+
+        $('#clozeSentenceTrain').html(sentence);
+        $('#clozeSentence').html(sentence);
 
         paragraphIdx++;
         tokenIdx = 0;
@@ -79,11 +101,25 @@ function nextWord() {
 
         $('#clozeWord').val('');
 
-        if (paragraphIdx+1 > totParagraphs) {
-            console.log("Fim teste.");
-            alert("Agradecemos imensamente sua participação. Pode fechar essa página. Tudo foi gravado corretamente.")
+        if (isTraining) {            
+            showTrainEnd();
+
         } else {
-            nextWord();
+
+            console.log(paragraphIdx, totParagraphs);
+            if (paragraphIdx+1 > totParagraphs) {
+                console.log("Fim teste.");
+                // alert("Agradecemos imensamente sua participação. Pode fechar essa página. Tudo foi gravado corretamente.")
+                $("#btnNextWord").hide();
+                $("#clozeWord").hide();                
+                $("#msgEndTest").show();
+            } else {
+                // nextWord();
+                $("#btnNextWord").hide();
+                $("#clozeWord").hide();                
+                $("#msgEndParagraph").show();
+                $("#btnNextPar").show();
+            }
         }
 
         return
@@ -101,14 +137,30 @@ function nextWord() {
 
 
     startDateTime = new Date().getTime()
-    $('#clozeSentence').html(sentence);
+    if (isTraining) {
+        $('#clozeSentenceTrain').html(sentence);
 
-    $('#statusTest').html("Parágrafo " + (paragraphIdx+1) + " de " + totParagraphs + " - Palavra " + wordIdx + " de " + totWords + ".");
+        $('#statusTestTrain').html("Treinamento - Palavra " + wordIdx + " de " + totWords + ".");
 
-    $('#clozeWord').val('');
-    $('#clozeWord').focus();
+        $('#clozeWordTrain').val('');
+        $('#clozeWordTrain').focus();
 
+    } else {
+        $('#clozeSentence').html(sentence);
 
+        $('#statusTest').html("Parágrafo " + (paragraphIdx+1) + " de " + totParagraphs + " - Palavra " + wordIdx + " de " + totWords + ".");
+
+        $('#clozeWord').val('');
+        $('#clozeWord').focus();
+    }
+}
+
+function nextParagraph() {
+    $("#btnNextWord").show();
+    $("#clozeWord").show();   
+    $("#msgEndParagraph").hide();
+    $("#btnNextPar").hide();
+    nextWord();
 }
 
 function saveWord() {
@@ -146,9 +198,32 @@ function saveWord() {
 }
 
 function refresh() {
-    $("#newTest").hide();
+    $("#inicio").hide();
+    $("#form").hide();
+    $("#train").hide();
     $("#apply").hide();
     $("#" + this.stage).show();
+}
+
+
+function showForm() {
+        stage = "form";
+        refresh();
+}
+
+function showTrainEnd() {
+    $("#btnNextWordTrain").hide();
+    $("#clozeWordTrain").hide();   
+    $("#msgEndTrain").show();
+    $("#btnShowApply").show();
+}
+
+
+function showApply() {
+    stage = "apply";
+    refresh();
+    isTraining = false;
+    nextWord();
 }
 
 
@@ -163,16 +238,21 @@ function continueTest(clozeCode) {
             org: $('#participantOrg').val(),
             ra: $('#participantRA').val(),
             sem: $('#participantSem').val(),
+            birth: $('participantBirthdate').val(),
+            email: $('participantEmail').val(),
+            phone: $('participantPhone').val(),
+            rg: $('participantRG').val(),
+            cpf: $('participantCPF').val()
         }),
         contentType: "application/json"
     }).done(function(data) {
         clozeData = JSON.parse(data);
         console.log(clozeData);
 
-        stage = "apply";
+        stage = "train";
         refresh();
 
-        totParagraphs = clozeData.prgphs.length;
+        totParagraphs = clozeData.prgphs.length - 1;
         clozeData.prgphs[paragraphIdx].sentences.forEach(s => {
             totWords += s.qtw;
         })
