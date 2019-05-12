@@ -10,4 +10,4 @@ Continuação em Go e Elasticsearch do projeto anterior que utilizava Firebase: 
  * Instalar [golang](https://golang.org/)
  * Subir instância do [ElasticSearch](https://www.elastic.co/products/elasticsearch), recomendo: https://github.com/deviantony/docker-elk
  * git clone https://github.com/sidleal/simpligo-pln.git
- * go run simpligo-pln.go
+ * go run *.go
