@@ -248,11 +248,11 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MetrixHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "metrix", true)
+	TemplateHandler(w, r, "nilcmetrix", true)
 }
 
 func MetrixDocHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "metrixdoc", false)
+	TemplateHandler(w, r, "nilcmetrixdoc", false)
 }
 
 func validateSession(w http.ResponseWriter, r *http.Request) error {
