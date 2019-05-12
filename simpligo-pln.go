@@ -55,7 +55,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
-		StaticHash:     "006",
+		StaticHash:     "007",
 		LastPath:       "/",
 	}
 
@@ -122,8 +122,8 @@ func Router() *mux.Router {
 
 	r.HandleFunc("/api/v1/metrix/{subset}/{key}", MetrixAPIPostHandler).Methods("POST")
 
-	r.HandleFunc("/metrix", MetrixHandler).Methods("GET")
-	r.HandleFunc("/metrixdoc", MetrixDocHandler).Methods("GET")
+	r.HandleFunc("/nilcmetrix", MetrixHandler).Methods("GET")
+	r.HandleFunc("/nilcmetrixdoc", MetrixDocHandler).Methods("GET")
 	r.HandleFunc("/metrix/parse", MetrixParseHandler).Methods("POST")
 
 	return r

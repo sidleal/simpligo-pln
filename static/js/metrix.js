@@ -19,7 +19,7 @@ function parse() {
 
         table = "<table style='width:80%;margin-left:auto;margin-right:auto;'><tr><td><b>Nome</b></td><td><b>Valor</b></td></tr>";
         resData.list.forEach(item => {
-            table += "<tr><td><a href='/metrixdoc#" + item.name + "' target='_blank'>"+item.name+"</a></td><td>"+item.val+"</td></tr>";
+            table += "<tr><td><a href='/nilcmetrixdoc#" + item.name + "' target='_blank'>"+item.name+"</a></td><td>"+item.val+"</td></tr>";
         })
         table += "</table>";
         $('#table_results').html(table); 
