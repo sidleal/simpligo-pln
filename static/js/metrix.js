@@ -12,10 +12,18 @@ function parse() {
         }
     }).done(function(data) {
         resData = JSON.parse(data);
-        console.log(resData);
+        // console.log(resData);
 
         $('#results').show();
         $('#output').val(resData.raw); 
+
+        table = "<table><th><td>Nome</td><td>Valor</td></th>";
+        resData.list.forEach(item => {
+            table += "<tr><td>"+item.name+"</td><td>"+item.val+"</td></tr>";
+        })
+        table += "</table>";
+        $('#table_results').html(table); 
+
         document.getElementById("btnparse").style = "cursor:pointer;";      
     }).fail(function(error) {
         console.log(error);

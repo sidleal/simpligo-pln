@@ -55,7 +55,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.1",
 		SessionExpired: false,
-		StaticHash:     "004",
+		StaticHash:     "005",
 		LastPath:       "/",
 	}
 
