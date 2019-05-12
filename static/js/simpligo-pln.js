@@ -41,7 +41,7 @@ function abrirRanker() {
 }
 
 function abrirMetrix() {
-    abrirPagina("metrix");
+    abrirPagina("nilcmetrix");
 }
 
 function abrirPagina(pagina) {
