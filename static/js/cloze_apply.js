@@ -13,13 +13,17 @@ var clozeData;
 var stage;
 
 var startDateTime;
+var timeToFirstLetter;
 
 var isTraining = true;
 
 $("#clozeWord").keypress(function(e) {
     if(e.which == 13) {
         nextWordAction();
+    } else if (timeToFirstLetter == 0) {
+        timeToFirstLetter = new Date().getTime() - startDateTime;
     }
+    
 });
 
 $("#clozeWordTrain").keypress(function(e) {
@@ -89,17 +93,6 @@ function nextWord() {
         $('#clozeSentence').html(sentence);
 
         paragraphIdx++;
-        tokenIdx = 0;
-        wordIdx = 1;
-        sentenceIdx = 0;
-        totWords = 0;
-        sentence = "";
-
-        clozeData.prgphs[paragraphIdx].sentences.forEach(s => {
-            totWords += s.qtw;
-        })
-
-        $('#clozeWord').val('');
 
         if (isTraining) {            
             showTrainEnd();
@@ -107,9 +100,8 @@ function nextWord() {
         } else {
 
             console.log(paragraphIdx, totParagraphs);
-            if (paragraphIdx+1 > totParagraphs) {
+            if (paragraphIdx > totParagraphs) {
                 console.log("Fim teste.");
-                // alert("Agradecemos imensamente sua participação. Pode fechar essa página. Tudo foi gravado corretamente.")
                 $("#btnNextWord").hide();
                 $("#clozeWord").hide();                
                 $("#msgEndTest").show();
@@ -121,6 +113,18 @@ function nextWord() {
                 $("#btnNextPar").show();
             }
         }
+
+        tokenIdx = 0;
+        wordIdx = 1;
+        sentenceIdx = 0;
+        totWords = 0;
+        sentence = "";
+
+        clozeData.prgphs[paragraphIdx].sentences.forEach(s => {
+            totWords += s.qtw;
+        })
+
+        $('#clozeWord').val('');
 
         return
     }
@@ -136,7 +140,9 @@ function nextWord() {
     }
 
 
-    startDateTime = new Date().getTime()
+    startDateTime = new Date().getTime();
+    timeToFirstLetter = 0;
+
     if (isTraining) {
         $('#clozeSentenceTrain').html(sentence);
 
@@ -148,7 +154,7 @@ function nextWord() {
     } else {
         $('#clozeSentence').html(sentence);
 
-        $('#statusTest').html("Parágrafo " + (paragraphIdx+1) + " de " + totParagraphs + " - Palavra " + wordIdx + " de " + totWords + ".");
+        $('#statusTest').html("Parágrafo " + (paragraphIdx) + " de " + totParagraphs + " - Palavra " + wordIdx + " de " + totWords + ".");
 
         $('#clozeWord').val('');
         $('#clozeWord').focus();
@@ -168,18 +174,21 @@ function saveWord() {
     var elapsed = 0;
     if (word != "") {
         elapsed = new Date().getTime() - startDateTime;
+        typingTime = elapsed - timeToFirstLetter;
 
         $.ajax({
             type: 'POST',
             url: '/cloze/apply/save',
             data: JSON.stringify({
                 part: clozeData.part.id,
-                para: paragraphIdx+1,
+                para: paragraphIdx,
                 sent: sentenceIdx+1,
                 wseq: wordIdx-1,
                 tword: targetWord,
                 word: word,
                 time: elapsed,
+                time_to_start: timeToFirstLetter,
+                time_typing: typingTime,
                 par_id: clozeData.prgphs[paragraphIdx].idx,
                 sen_id: clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].idx,
                 tok_id: clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx-1].idx,
