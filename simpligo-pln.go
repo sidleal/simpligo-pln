@@ -123,6 +123,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/api/v1/metrix/{subset}/{key}", MetrixAPIPostHandler).Methods("POST")
 
 	r.HandleFunc("/metrix", MetrixHandler).Methods("GET")
+	r.HandleFunc("/metrixdoc", MetrixDocHandler).Methods("GET")
 	r.HandleFunc("/metrix/parse", MetrixParseHandler).Methods("POST")
 
 	return r
@@ -248,6 +249,10 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 
 func MetrixHandler(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, "metrix", true)
+}
+
+func MetrixDocHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "metrixdoc", false)
 }
 
 func validateSession(w http.ResponseWriter, r *http.Request) error {

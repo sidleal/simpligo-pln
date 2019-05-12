@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -73,6 +74,16 @@ func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type MetrixResult struct {
+	RawList string             `json:"raw"`
+	List    []MetrixResultItem `json:"list"`
+}
+
+type MetrixResultItem struct {
+	Metric string `json:"name"`
+	Val    string `json:"val"`
+}
+
 func MetrixParseHandler(w http.ResponseWriter, r *http.Request) {
 	err := validateSession(w, r)
 	if err != nil {
@@ -83,19 +94,31 @@ func MetrixParseHandler(w http.ResponseWriter, r *http.Request) {
 	content := r.FormValue("content")
 	// options := r.FormValue("options")
 
-	ret := callMetrix(content)
-	feats := strings.Split(ret, ",")
+	fRet := callMetrix(content)
+	feats := strings.Split(fRet, ",")
 
-	ret = ""
+	ret := MetrixResult{}
+
+	sRet := ""
 	for _, feat := range feats {
 		kv := strings.Split(feat, ":")
 		if len(kv) > 1 {
-			ret += kv[0] + " : " + kv[1] + "\n"
+			sRet += kv[0] + " : " + kv[1] + "\n"
+			ret.List = append(ret.List, MetrixResultItem{kv[0], kv[1]})
 		}
+	}
+	ret.RawList = sRet
+
+	cJSON, err := json.Marshal(ret)
+	if err != nil {
+		log.Printf("Erro: %v", err)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text")
-	fmt.Fprint(w, ret)
+	fmt.Fprint(w, string(cJSON))
+
+	// w.WriteHeader(http.StatusOK)
+	// w.Header().Set("Content-Type", "text")
+	// fmt.Fprint(w, ret)
 
 }

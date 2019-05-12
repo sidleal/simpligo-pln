@@ -11,8 +11,11 @@ function parse() {
             content: $('#content').val()
         }
     }).done(function(data) {
+        resData = JSON.parse(data);
+        console.log(resData);
+
         $('#results').show();
-        $('#output').val(data); 
+        $('#output').val(resData.raw); 
         document.getElementById("btnparse").style = "cursor:pointer;";      
     }).fail(function(error) {
         console.log(error);
