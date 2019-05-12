@@ -17,9 +17,9 @@ function parse() {
         $('#results').show();
         $('#output').val(resData.raw); 
 
-        table = "<table><th><td>Nome</td><td>Valor</td></th>";
+        table = "<table style='width:80%;margin-left:auto;margin-right:auto;'><tr><td><b>Nome</b></td><td><b>Valor</b></td></tr>";
         resData.list.forEach(item => {
-            table += "<tr><td>"+item.name+"</td><td>"+item.val+"</td></tr>";
+            table += "<tr><td><a href='/metrixdoc#" + item.name + "' target='_blank'>"+item.name+"</a></td><td>"+item.val+"</td></tr>";
         })
         table += "</table>";
         $('#table_results').html(table); 
