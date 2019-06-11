@@ -380,7 +380,7 @@ func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Dados savos %s\n", put.Id)
+	log.Printf("Dados salvos %s\n", put.Id)
 
 }
 
