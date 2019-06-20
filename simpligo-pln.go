@@ -126,6 +126,8 @@ func Router() *mux.Router {
 	r.HandleFunc("/nilcmetrixdoc", MetrixDocHandler).Methods("GET")
 	r.HandleFunc("/metrix/parse", MetrixParseHandler).Methods("POST")
 
+	r.HandleFunc("/api/v1/sentence-ranker/{key}", SentenceRankerAPIPostHandler).Methods("POST")
+
 	return r
 }
 

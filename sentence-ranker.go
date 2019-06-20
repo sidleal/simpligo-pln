@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sidleal/simpligo-pln/tools/senter"
 )
@@ -97,4 +98,44 @@ func wsEcho(conn *websocket.Conn) {
 			fmt.Println(err)
 		}
 	}
+}
+
+func SentenceRankerAPIPostHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	key := vars["key"]
+
+	if key != "m3tr1x01" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	defer r.Body.Close()
+	text, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Fprintf(w, "Error parsing text. %v", err)
+		return
+	}
+
+	ret := ""
+
+	resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader(text))
+	if err != nil {
+		ret = "Error: " + err.Error()
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			ret = "Error reading response: " + err.Error()
+		} else {
+
+			// log.Println(string(body))
+			resLines := strings.Split(string(body), "\n")
+			ret = resLines[1][17:]
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, ret)
+
 }
