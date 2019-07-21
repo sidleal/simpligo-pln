@@ -100,8 +100,12 @@
             <select id="participantOrg">
               <option value="">Selecione...</option>
               <option value="uspsc">USP - São Carlos</option>
-              <option value="ufc">UFC</option>
+              <option value="ufc">Universidade Federal do Ceará</option>
               <option value="pucrj">PUC - Rio de Janeiro</option>
+              <option value="utfpr">Universidade Tecn. Federal Paraná - Toledo</option>
+              <option value="ufabc">Universidade Federal do ABC</option>
+              <option value="uerj">Universidade Estadual do RJ</option>
+              <option value="outra">Outra</option> 
             </select>
             <label for="participantRA">Número de Registro:</label>
             <input type="text" id="participantRA" placeholder="Registro Acadêmico"/>
@@ -131,16 +135,17 @@
         <div class="row">
           <div class="small-12 large-8 columns centered">
             <h2>Treinamento</h2>
-            <p>TO DO: Texto explicando a tarefa aqui!!!!!!!! E também trocar o parágrafo.</p>
+            <p>A princípio, você verá apenas a primeira palavra de um pequeno parágrafo, como abaixo. Seu papel é adicionar a palavra que você acredita vir a seguir. A cada palavra adicionada, o parágrafo será atualizado. Esse primeiro parágrafo é apenas um treino.</p>
+            <p>A maneira mais fácil de entender é praticando, portanto, mãos à obra!</p>
 
-            <p id="statusTestTrain">Treinamento - Palavra x de xx</p>
+            <p id="statusTestTrain" style="font-weight:bold;">Treinamento - Palavra x de xx</p>
             <p>(Digite a próxima palavra e depois tecle enter, ou clique no botão.)</p>
 
             <label id="clozeSentenceTrain" for="clozeWordTrain" class="clozeSentence">...</label>
             <input type="text" id="clozeWordTrain" placeholder="" class="clozeWord"/>
             <button onclick="nextWordTrainAction()" id="btnNextWordTrain" class="default" style="margin-top: 50px;">Próxima</button>
 
-            <p style="display:none" class="clozeSentence" id="msgEndTrain">A fase de treinamento terminou. Agora, pedimos que fique atento e que complete com a palavra que vem à sua cabeça à medida que vai lendo o parágrafo. Lembramos que você lê apenas a primeira palavra de cada parágrafo. A partir da segunda, já é sua tarefa propor uma palavra para complementar o texto.</p>
+            <p style="display:none" class="clozeSentence" id="msgEndTrain">A fase de treinamento terminou. Agora, pedimos que fique atento e que complete com a palavra que vem à sua cabeça à medida que vai lendo o parágrafo. Lembramos que você lê apenas a primeira palavra de cada sentença. A partir da segunda, já é sua tarefa propor uma palavra para complementar o texto.</p>
             <button onclick="showApply()" style="display:none" id="btnShowApply" class="default" style="margin-top: 50px;">Começar o teste</button>
  
           </div>

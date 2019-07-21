@@ -10,6 +10,7 @@ var totParagraphs = 0;
 var targetWord = "";
 
 var clozeData;
+var clozeCode;
 var stage;
 
 var startDateTime;
@@ -192,6 +193,8 @@ function saveWord() {
                 par_id: clozeData.prgphs[paragraphIdx].idx,
                 sen_id: clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].idx,
                 tok_id: clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx-1].idx,
+                tot_words: totWords,
+                code: clozeCode,
             }),
             contentType: "application/json"
         }).done(function(data) {
@@ -237,6 +240,8 @@ function showApply() {
 
 
 function continueTest(clozeCode) {
+    
+    this.clozeCode = clozeCode;
 
     $.ajax({
         type: 'POST',

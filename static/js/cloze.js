@@ -4,7 +4,7 @@ function newCloze() {
     $('#clozeName').val("");
     $('#clozeCode').val("");
     $('#clozeQtyPar').val("5");
-    $('#clozeClasses').val("2");
+    $('#clozeClasses').val("1");
     $('#textContent').val("")
     this.refresh();
 }

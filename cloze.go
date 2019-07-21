@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"math/rand"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +26,7 @@ type ClozeTest struct {
 	Owners            []string          `json:"owners"`
 	QtyPerParticipant string            `json:"qtyPerPart"`
 	TotalClasses      string            `json:"totClass"`
+	Answers           map[string]int    `json:"answers"`
 }
 
 func ClozeNewHandler(w http.ResponseWriter, r *http.Request) {
@@ -320,6 +321,8 @@ type ClozeParticipantData struct {
 	ParagraphID   int64  `json:"par_id"`
 	SentenceID    int64  `json:"sen_id"`
 	TokenID       int64  `json:"tok_id"`
+	TotWords      int64  `json:"tot_words"`
+	ClozeCode     string `json:"code"`
 }
 
 func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
@@ -338,7 +341,7 @@ func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil || searchResult.Hits.TotalHits < 1 {
 		log.Printf("Não encontrado: %v", err)
-		fmt.Fprintf(w, "Cóidigo não encontrado: %v.", code)
+		fmt.Fprintf(w, "Código não encontrado: %v.", code)
 		return
 	}
 
@@ -382,18 +385,55 @@ func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Dados salvos %s\n", put.Id)
 
-}
+	//atualiza qtd respostas do paragrafo
+	if participantData.WordSeq == participantData.TotWords {
+		clozeTest := getClozeTest(participantData.ClozeCode)
+		if clozeTest.Answers == nil {
+			clozeTest.Answers = map[string]int{}
+		}
+		parID := fmt.Sprintf("%v", participantData.ParagraphID)
+		if _, found := clozeTest.Answers[parID]; !found {
+			clozeTest.Answers[parID] = 0
+		}
 
-func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
+		clozeTest.Answers[parID]++
+		// log.Println("-------", participantData.ClozeCode, clozeTest.Id, clozeTest.Answers)
 
-	decoder := json.NewDecoder(r.Body)
-	var participant ClozeParticipant
-	err = decoder.Decode(&participant)
-	if err != nil {
-		log.Printf("Erro ao tratar payload: %v", err)
+		_, err := elClient.Update().
+			Index(indexPrefix + "cloze").
+			Refresh("true").
+			Type("cloze").
+			Id(clozeTest.Id).
+			Doc(map[string]interface{}{"answers": clozeTest.Answers}).
+			Do(context.Background())
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
-	query := elastic.NewTermQuery("code.keyword", participant.ClozeCode)
+}
+
+type ParagraphData struct {
+	Index         int
+	Class         string
+	TotItensClass int
+	QtyAnswer     int
+	ParsedText    senter.ParsedParagraph
+}
+
+type ParagraphDataOrder []ParagraphData
+
+func (a ParagraphDataOrder) Len() int      { return len(a) }
+func (a ParagraphDataOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ParagraphDataOrder) Less(i, j int) bool {
+	if a[i].QtyAnswer == a[j].QtyAnswer {
+		return a[i].TotItensClass > a[j].TotItensClass
+	}
+	return a[i].QtyAnswer < a[j].QtyAnswer
+}
+
+func getClozeTest(clozeCode string) ClozeTest {
+	query := elastic.NewTermQuery("code.keyword", clozeCode)
 
 	searchResult, err := elClient.Search().
 		Index(indexPrefix + "cloze").
@@ -405,9 +445,6 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Não encontrado: %v", err)
 	}
 
-	clozeData := ClozeData{}
-	clozeData.Code = participant.ClozeCode
-
 	clozeTest := ClozeTest{}
 	if err == nil && searchResult.Hits.TotalHits > 0 {
 		for _, hit := range searchResult.Hits.Hits {
@@ -415,56 +452,86 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("Erro: %v", err)
 			}
-			clozeData.ID = hit.Id
+			clozeTest.Id = hit.Id
 		}
 	}
+
+	return clozeTest
+}
+func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
+
+	decoder := json.NewDecoder(r.Body)
+	var participant ClozeParticipant
+	err = decoder.Decode(&participant)
+	if err != nil {
+		log.Printf("Erro ao tratar payload: %v", err)
+	}
+
+	clozeTest := getClozeTest(participant.ClozeCode)
+
+	clozeData := ClozeData{}
+	clozeData.Code = participant.ClozeCode
+	clozeData.ID = clozeTest.Id
 
 	selectedParagraphs := []int{}
 	totClasses, _ := strconv.Atoi(clozeTest.TotalClasses)
 	qtyPerPart, _ := strconv.Atoi(clozeTest.QtyPerParticipant)
 
-	classes := map[int][]int{}
-	parPerClass := int(clozeTest.Parsed.TotalParagraphs) / totClasses
+	mapClassesCount := map[string]int{}
+	allPars := []ParagraphData{}
+	for _, par := range clozeTest.Parsed.Paragraphs {
 
-	classNum := 1
-	for i := 1; i <= int(clozeTest.Parsed.TotalParagraphs); i++ {
-		classes[classNum] = append(classes[classNum], i)
-		if i%parPerClass == 0 && classNum < totClasses {
-			classNum++
+		pdata := ParagraphData{}
+		pdata.Index = int(par.Idx)
+		pdata.QtyAnswer = clozeTest.Answers[fmt.Sprintf("%v", par.Idx)]
+		if totClasses < 2 {
+			pdata.ParsedText = par
+			pdata.Class = "U"
+		} else {
+			tokens := strings.Split(par.Text, " ")
+			group := tokens[0]
+			newText := par.Text[len(group)+1:]
+			pdata.ParsedText = senter.ParseText(newText).Paragraphs[0]
+			pdata.Class = group
+		}
+		mapClassesCount[pdata.Class]++
+		allPars = append(allPars, pdata)
+
+	}
+
+	for i, par := range allPars {
+		allPars[i].TotItensClass = mapClassesCount[par.Class]
+	}
+
+	sort.Sort(ParagraphDataOrder(allPars))
+
+	// um de cada classe
+	mapClasses := map[string]int{}
+	for _, par := range allPars {
+		log.Println(par.Index, par.QtyAnswer, par.Class, par.ParsedText.QtyWords, par.TotItensClass)
+		if _, found := mapClasses[par.Class]; !found {
+			mapClasses[par.Class] = par.Index
 		}
 	}
 
-	randomTail := qtyPerPart % totClasses
-	for i := 1; i <= qtyPerPart-randomTail; i++ {
-		for _, v := range classes {
-			// log.Println(k, v)
-			randI := rand.Intn(len(v))
-			// log.Println("len:", len(v), "rand:", randI)
-			randPar := v[randI]
-			for isDuplicated(selectedParagraphs, randPar) {
-				randI = rand.Intn(len(v))
-				randPar = v[randI]
+	for _, v := range mapClasses {
+		selectedParagraphs = append(selectedParagraphs, v)
+	}
+
+	//resto, escolhe apenas por ordem de menos respondida
+	tail := qtyPerPart - totClasses
+	if tail > 0 {
+		i := 1
+		for _, par := range allPars {
+			if i > tail {
+				break
 			}
-			selectedParagraphs = append(selectedParagraphs, randPar)
-			i++
+			if mapClasses[par.Class] != par.Index {
+				selectedParagraphs = append(selectedParagraphs, par.Index)
+				i++
+			}
 		}
-	}
 
-	i := 1
-	for i <= randomTail {
-		randC := rand.Intn(len(classes)) + 1
-		randClass := classes[randC]
-		randI := rand.Intn(len(randClass))
-		randPar := randClass[randI]
-		// log.Println("---------------", selectedParagraphs, randPar)
-		if isDuplicated(selectedParagraphs, randPar) {
-			// log.Println("--------------- duplicated")
-			continue
-		}
-		// log.Println("--------------- nao duplicou")
-
-		selectedParagraphs = append(selectedParagraphs, randPar)
-		i++
 	}
 
 	participant.Paragraphs = selectedParagraphs
@@ -475,15 +542,16 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("------", participant.Paragraphs)
 
 	//train
-	trainPar := "O rato roeu a roupa do rei de Roma. A rainha ruim resolveu remendar."
+	trainPar := "O nosso país, Brasil, é cheio de riquezas naturais e culturais. Não importa para onde formos, encontraremos belas paisagens e uma história rica a ser contada."
 	trainSenter := senter.ParseText(trainPar)
 
 	clozeData.Paragraphs = []senter.ParsedParagraph{}
 	clozeData.Paragraphs = append(clozeData.Paragraphs, trainSenter.Paragraphs[0])
-	for _, p := range clozeTest.Parsed.Paragraphs {
+	for _, p := range allPars {
 		for _, pn := range participant.Paragraphs {
-			if int(p.Idx) == pn {
-				clozeData.Paragraphs = append(clozeData.Paragraphs, p)
+			if p.Index == pn {
+				p.ParsedText.Idx = int64(p.Index)
+				clozeData.Paragraphs = append(clozeData.Paragraphs, p.ParsedText)
 			}
 		}
 	}

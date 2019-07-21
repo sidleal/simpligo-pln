@@ -66,11 +66,11 @@
             <input type="text" id="clozeName" placeholder="Nome"/>
             <label for="clozeCode">Código de acesso:</label>
             <input type="text" id="clozeCode" placeholder="Código de acesso (apenas letras e números)"/>
-            <label for="clozeClasses">Quantidade de gêneros (por ex: 2 gêneros e 30 parágrafos implica em 1-15 no gênero 1 e 16-30 no gênero 2):</label>
+            <label for="clozeClasses">Quantidade de grupos (por ex: quantidade de gêneros, para melhor sortear os parágrafos):</label>
             <input type="text" id="clozeClasses" placeholder="Quantidade de gêneros textuais dos parágrafos"/>
-            <label for="clozeQtyPar">Quantidade de parágrafos por participante:</label>
+            <label for="clozeQtyPar">Quantidade de parágrafos por participante (deve ser igual ou maior que a quantidade de grupos):</label>
             <input type="text" id="clozeQtyPar" placeholder="Quantos parágrafos cada particpante vai ler"/>
-            <label for="textContent">Parágrafos:</label>    
+            <label for="textContent">Parágrafos (Se a quantidade de grupos for maior que um, a primeira palavra de cada parágrafo deve ser o identificador do grupo.):</label>    
             <textarea placeholder="Parágrafos, separados por enter" id="textContent" rows="20"></textarea>
             <button onclick="saveCloze()" id="btnSaveCloze" class="default"><i class="fa fa-save fa-2x"></i><br/>Gravar</button>
           </div>
