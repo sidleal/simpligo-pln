@@ -188,7 +188,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//participantes
-	query = elastic.NewTermQuery("code", c.Code)
+	query = elastic.NewTermQuery("code.keyword", c.Code)
 
 	searchResult, err = elClient.Search().
 		Index(indexPrefix + "cloze-participants").
