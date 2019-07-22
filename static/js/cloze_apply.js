@@ -70,7 +70,7 @@ function nextWord() {
     tokenIdx++;
 
     lastToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
-    while (lastToken.w == 0) {
+    while (lastToken != null && lastToken.w == 0) {
         if ('.,)]}!?:'.indexOf(lastToken.token) < 0 && '([{'.indexOf(sentence.substr(-1)) < 0) {
             sentence += ' ' + lastToken.token;
         } else {
