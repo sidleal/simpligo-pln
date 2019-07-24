@@ -53,9 +53,9 @@ func Init() {
 	parseFlags()
 
 	pageInfo = PageInfo{
-		Version:        "0.5.1",
+		Version:        "0.5.2",
 		SessionExpired: false,
-		StaticHash:     "019",
+		StaticHash:     "020",
 		LastPath:       "/",
 	}
 

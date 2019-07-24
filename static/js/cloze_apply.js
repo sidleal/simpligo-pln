@@ -15,6 +15,8 @@ var stage;
 
 var startDateTime;
 var timeToFirstLetter;
+var timeTotalTest = 0;
+var timeTotalParagraph = 0;
 
 var isTraining = true;
 
@@ -89,6 +91,8 @@ function nextWord() {
 
     if (wordIdx > totWords) {
         console.log('Fim paragrafo');
+
+        timeTotalParagraph = 0;
 
         $('#clozeSentenceTrain').html(sentence);
         $('#clozeSentence').html(sentence);
@@ -176,6 +180,8 @@ function saveWord() {
     if (word != "") {
         elapsed = new Date().getTime() - startDateTime;
         typingTime = elapsed - timeToFirstLetter;
+        timeTotalTest = timeTotalTest + elapsed;
+        timeTotalParagraph = timeTotalParagraph + elapsed;
 
         $.ajax({
             type: 'POST',
@@ -190,6 +196,8 @@ function saveWord() {
                 time: elapsed,
                 time_to_start: timeToFirstLetter,
                 time_typing: typingTime,
+                time_total: timeTotalTest,
+                time_total_par: timeTotalParagraph,
                 par_id: clozeData.prgphs[paragraphIdx].idx,
                 sen_id: clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].idx,
                 tok_id: clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx-1].idx,

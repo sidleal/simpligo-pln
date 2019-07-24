@@ -213,7 +213,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ret += "Código, Nome Teste, Quantidade Gêneros, Parágrafos por Participante, Nome Participante, Organização, Registro, Semestre, Parágrafos Lidos, Data Início, Hora Início, Parágrafo, Sentença, Índice Palavra, Palavra, Resposta, Tempo Início(ms), Tempo Digitação(ms), Tempo(ms)\n"
+	ret += "Código, Nome Teste, Quantidade Gêneros, Parágrafos por Participante, Nome Participante, Organização, Registro, Semestre, Parágrafos Lidos, Data Início, Hora Início, Parágrafo, Sentença, Índice Palavra, Palavra, Resposta, Tempo Início(ms), Tempo Digitação(ms), Tempo(ms), Tempo Acumulado Parágrafo(ms), Tempo Acumulado Teste(ms)\n"
 
 	for _, part := range participantList {
 		paragraphs := ""
@@ -257,7 +257,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 			ret += fmt.Sprintf("%v,%v,%v,%v,", c.Code, c.Name, c.TotalClasses, c.QtyPerParticipant)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,", part.Name, part.Organization, part.RegNumber, part.Semester, paragraphs, createdDate, createdTime)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v,", item.ParagraphID, item.SentenceSeq, item.WordSeq, item.TargetWord, item.GuessWord)
-			ret += fmt.Sprintf("%v,%v,%v\n", item.TimeToStart, item.TypingTime, item.ElapsedTime)
+			ret += fmt.Sprintf("%v,%v,%v,%v,%v\n", item.TimeToStart, item.TypingTime, item.ElapsedTime, item.TimeTotalPar, item.TimeTotal)
 		}
 
 	}
@@ -317,6 +317,8 @@ type ClozeParticipantData struct {
 	ElapsedTime   int64  `json:"time"`
 	TypingTime    int64  `json:"time_typing"`
 	TimeToStart   int64  `json:"time_to_start"`
+	TimeTotal     int64  `json:"time_total"`
+	TimeTotalPar  int64  `json:"time_total_par"`
 	Saved         string `json:"saved"`
 	ParagraphID   int64  `json:"par_id"`
 	SentenceID    int64  `json:"sen_id"`
