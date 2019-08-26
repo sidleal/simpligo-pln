@@ -24,6 +24,7 @@ func callMetrix(text string) string {
 		Timeout: timeout,
 	}
 
+	log.Println("MetrixAPIPostHandler - calling", "http://"+mainServerIP+":8008/metrics_all")
 	resp, err := client.Post("http://"+mainServerIP+":8008/metrics_all", "text", bytes.NewReader([]byte(text)))
 	if err != nil {
 		return fmt.Sprintf("Error extracting metrics: %v", err)
@@ -74,6 +75,8 @@ func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 	}
+
+	log.Println("MetrixAPIPostHandler - Ret", ret)
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, ret)
