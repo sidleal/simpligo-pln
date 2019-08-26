@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -18,7 +19,12 @@ func callMetrix(text string) string {
 	text = strings.Replace(text, "\n", "{{enter}}", -1)
 	text = strings.Replace(text, "!", "{{exclamation}}", -1)
 
-	resp, err := http.Post("http://"+mainServerIP+":8008/metrics_all", "text", bytes.NewReader([]byte(text)))
+	timeout := time.Duration(120 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+
+	resp, err := client.Post("http://"+mainServerIP+":8008/metrics_all", "text", bytes.NewReader([]byte(text)))
 	if err != nil {
 		return fmt.Sprintf("Error extracting metrics: %v", err)
 	}
