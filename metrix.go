@@ -19,7 +19,7 @@ func callMetrix(text string) string {
 	text = strings.Replace(text, "\n", "{{enter}}", -1)
 	text = strings.Replace(text, "!", "{{exclamation}}", -1)
 
-	timeout := time.Duration(120 * time.Second)
+	timeout := time.Duration(300 * time.Second)
 	client := http.Client{
 		Timeout: timeout,
 	}
