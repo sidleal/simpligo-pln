@@ -199,9 +199,9 @@ func parseFlags() {
 func makeHTTPServer() *http.Server {
 	mux := Router()
 	return &http.Server{
-		ReadTimeout:  180 * time.Second,
-		WriteTimeout: 180 * time.Second,
-		IdleTimeout:  240 * time.Second,
+		ReadTimeout:  300 * time.Second,
+		WriteTimeout: 300 * time.Second,
+		IdleTimeout:  360 * time.Second,
 		Handler:      mux,
 	}
 }
