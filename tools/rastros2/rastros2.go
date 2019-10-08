@@ -11,17 +11,17 @@ import (
 	"strings"
 )
 
-func main1() {
+func mainx() {
 
 	log.Println("starting")
 
-	f, err := os.OpenFile("/home/sidleal/sid/usp/rastros/rastros100_feats_rev_joao.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile("/home/sidleal/sid/usp/rastros/maisum/rastros150.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
 	defer f.Close()
 
-	raw := readFile("/home/sidleal/sid/usp/rastros/rastros100_rev_joao.txt")
+	raw := readFile("/home/sidleal/sid/usp/rastros/maisum/rastros150.txt")
 	lines := strings.Split(raw, "\n")
 
 	for i, line := range lines {

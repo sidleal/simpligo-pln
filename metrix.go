@@ -13,11 +13,25 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var charsToReplace = map[string]string{"è": "e", "ì": "i", "ò": "o", "ù": "u", "`": "'", "´": "'"}
+
 func callMetrix(text string) string {
 
 	text = strings.Replace(text, "\"", "{{quotes}}", -1)
 	text = strings.Replace(text, "\n", "{{enter}}", -1)
 	text = strings.Replace(text, "!", "{{exclamation}}", -1)
+	text = strings.Replace(text, "#", "{{sharp}}", -1)
+	text = strings.Replace(text, "&", "{{ampersand}}", -1)
+	text = strings.Replace(text, "%", "{{percent}}", -1)
+	text = strings.Replace(text, "$", "{{dollar}}", -1)
+
+	text = strings.Replace(text, " à ", "{{crase}}", -1)
+	text = strings.Replace(text, "à", "a", -1)
+	text = strings.Replace(text, "{{crase}}", "à", -1)
+
+	for k, v := range charsToReplace {
+		text = strings.ReplaceAll(text, k, v)
+	}
 
 	timeout := time.Duration(300 * time.Second)
 	client := http.Client{

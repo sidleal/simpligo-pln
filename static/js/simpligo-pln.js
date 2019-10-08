@@ -44,6 +44,10 @@ function abrirMetrix() {
     abrirPagina("nilcmetrix");
 }
 
+function abrirAnalysis() {
+    abrirPagina("analysis");
+}
+
 function abrirPagina(pagina) {
     $.ajax({
         type: 'GET',

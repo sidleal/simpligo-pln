@@ -55,7 +55,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.2",
 		SessionExpired: false,
-		StaticHash:     "020",
+		StaticHash:     "021",
 		LastPath:       "/",
 	}
 
@@ -127,6 +127,12 @@ func Router() *mux.Router {
 	r.HandleFunc("/metrix/parse", MetrixParseHandler).Methods("POST")
 
 	r.HandleFunc("/api/v1/sentence-ranker/{key}", SentenceRankerAPIPostHandler).Methods("POST")
+
+	r.HandleFunc("/analysis", AnalysisHandler)
+	r.HandleFunc("/analysis/new", AnalysisNewHandler).Methods("POST")
+	r.HandleFunc("/analysis/list", AnalysisListHandler)
+	r.HandleFunc("/analysis/{id}", AnalysisGetHandler).Methods("GET")
+	r.HandleFunc("/analysis/{id}", AnalysisRemoveHandler).Methods("DELETE")
 
 	return r
 }
@@ -255,6 +261,10 @@ func MetrixHandler(w http.ResponseWriter, r *http.Request) {
 
 func MetrixDocHandler(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, "nilcmetrixdoc", false)
+}
+
+func AnalysisHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "analysis", true)
 }
 
 func validateSession(w http.ResponseWriter, r *http.Request) error {
