@@ -57,7 +57,7 @@ func callMetrix(text string) string {
 func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	subset := vars["subset"]
+	// subset := vars["subset"]
 	key := vars["key"]
 
 	if key != "m3tr1x01" {
@@ -73,22 +73,6 @@ func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret := callMetrix(string(text))
-
-	if subset == "sel79" {
-		feats := strings.Split(ret, ",")
-		sel79 := []string{"adjective_ratio", "adverbs", "syllables_per_content_word", "words_per_sentence", "noun_ratio", "pronoun_ratio", "verbs", "negation_ratio", "cw_freq", "min_cw_freq", "first_person_pronouns", "ttr", "conn_ratio", "add_neg_conn_ratio", "add_pos_conn_ratio", "cau_neg_conn_ratio", "cau_pos_conn_ratio", "log_neg_conn_ratio", "log_pos_conn_ratio", "tmp_neg_conn_ratio", "tmp_pos_conn_ratio", "adjectives_ambiguity", "adverbs_ambiguity", "nouns_ambiguity", "verbs_ambiguity", "yngve", "frazier", "dep_distance", "words_before_main_verb", "mean_noun_phrase", "min_noun_phrase", "max_noun_phrase", "std_noun_phrase", "passive_ratio", "adj_arg_ovl", "arg_ovl", "adj_stem_ovl", "stem_ovl", "adj_cw_ovl", "third_person_pronouns", "concretude_mean", "concretude_std", "concretude_1_25_ratio", "concretude_25_4_ratio", "concretude_4_55_ratio", "concretude_55_7_ratio", "content_word_diversity", "familiaridade_mean", "familiaridade_std", "familiaridade_1_25_ratio", "familiaridade_25_4_ratio", "familiaridade_4_55_ratio", "familiaridade_55_7_ratio", "idade_aquisicao_mean", "idade_aquisicao_std", "idade_aquisicao_1_25_ratio", "idade_aquisicao_4_55_ratio", "idade_aquisicao_55_7_ratio", "idade_aquisicao_25_4_ratio", "imageabilidade_mean", "imageabilidade_std", "imageabilidade_1_25_ratio", "imageabilidade_25_4_ratio", "imageabilidade_4_55_ratio", "imageabilidade_55_7_ratio", "sentence_length_max", "sentence_length_min", "sentence_length_standard_deviation", "verb_diversity", "adj_mean", "adj_std", "all_mean", "all_std", "givenness_mean", "givenness_std", "span_mean", "span_std", "content_density", "ratio_function_to_content_words"}
-
-		ret = ""
-		for _, feat := range feats {
-			kv := strings.Split(feat, ":")
-			for _, selfeat := range sel79 {
-				if len(kv) > 1 && kv[0] == selfeat {
-					ret += kv[0] + ":" + kv[1] + ","
-				}
-			}
-
-		}
-	}
 
 	log.Println("MetrixAPIPostHandler - Ret", ret)
 

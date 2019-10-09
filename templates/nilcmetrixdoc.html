@@ -4198,14 +4198,111 @@
       <b>Resultado Obtido</b>: 9,0<br>
       
       
-      
+      <br>
+      <br>
+      <h4 id="concretude_mean">Média dos valores de concretude das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: concretude_mean<br>
+      <br>
+      <b>Interpretação</b>: Quanto maior a média de concretude, menor a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, lematizam-se essas palavras, usando o DELAF, e procuram-se seus respectivos valores de concretude. Calcula-se a média desses valores (somam-se os valores e divide-se o resultado pela quantidade de palavras de conteúdo do texto presentes no repositório psicolinguístico).<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: são consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Concretude é uma característica psicolinguística das palavras de conteúdo e significa o quanto a palavra pode ser traduzida por uma imagem na opinião dos falantes da língua. Os valores variam de 1 a 7 e quanto maior o valor, maior a concretude.<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
+                
+      <br>
+      <br>
+      <h4 id="concretude_std">Desvio padrão do valor de concretude das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: concretude_std<br>
+      <br>
+      <b>Interpretação</b>: Quanto maior o desvio padrão, menos confiável é a média; não tem relação direta com a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, lematizam-se essas palavras, usando o DELAF, e procuram-se seus respectivos valores de concretude. Calcula-se o desvio-padrão desses valores.<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: são consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Concretude é uma característica psicolinguística das palavras de conteúdo e significa o quanto a palavra pode ser traduzida por uma imagem na opinião dos falantes da língua. Os valores variam de 1 a 7 e quanto maior o valor, maior a concretude.<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
+                
+        
+      <br>
+      <br>
+      <h4 id="idade_aquisicao_mean">Média dos valores de idade de aquisição das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: idade_aquisicao_mean<br>
+      <br>
+      <b>Interpretação</b>: quanto menor a média, menor a idade de aquisição e menor a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, contam-se as palavras de conteúdo que estão no repositório psicolinguístico e procuram-se seus respectivos valores de idade de aquisição. Calcula-se a média desses valores (somam-se os valores e divide-se o resultado pela quantidade de palavras de conteúdo do texto presentes no repositório psicolinguístico).<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: são consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Idade de aquisição é uma característica psicolinguística das palavras de conteúdo e representa o intervalo de idade em que a palavra foi adquirida. Os valores variam de 1 a 7 e quanto menor o valor, menor a idade de aquisição. Os valores correspondem a faixas de idade. 1 (de 0 a 2 anos); 2 (de 3 a 4 anos), 3 (de 5 a 6 anos), 4 (de 7 a 8 anos), 5 (de 9 a 10 anos), 6 (de 11 a 12 anos), 7 (13 anos ou mais).<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
+                
+      <br>
+      <br>
+      <h4 id="idade_aquisicao_std">Desvio padrão dos valores de idade de aquisição das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: idade_aquisicao_std<br>
+      <br>
+      <b>Interpretação</b>: quanto maior o desvio padrão, menos confiável é a média; não tem relação direta com a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, contam-se as palavras de conteúdo que estão no repositório psicolinguístico e procuram-se seus respectivos valores de idade de aquisição. Calcula-se o desvio-padrão desses valores.<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: são consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Idade de aquisição é uma característica psicolinguística das palavras de conteúdo e representa o intervalo de idade em que a palavra foi adquirida. Os valores variam de 1 a 7 e quanto menor o valor, menor a idade de aquisição. Os valores correspondem a faixas de idade. 1 (de 0 a 2 anos); 2 (de 3 a 4 anos), 3 (de 5 a 6 anos), 4 (de 7 a 8 anos), 5 (de 9 a 10 anos), 6 (de 11 a 12 anos), 7 (13 anos ou mais).<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
        
+      <br>
+      <br>
+      <h4 id="familiaridade_mean">Média dos valores de familiaridade das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: familiaridade_mean<br>
+      <br>
+      <b>Interpretação</b>: quanto menor for a média, maior a familiaridade e menor a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, contam-se as palavras de conteúdo que estão no repositório psicolinguístico e procuram-se seus respectivos valores de familiaridade. Calcula-se a média desses valores (somam-se os valores e divide-se o resultado pela quantidade de palavras de conteúdo do texto presentes no repositório psicolinguístico).<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: São consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Familiaridade é uma característica psicolinguística das palavras de conteúdo e representa o quanto os falantes da língua conhecem e usam uma palavra em suas vidas cotidianas. Os valores variam de 1 a 7 e quanto menor o valor, maior a familiaridade.<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
                 
+      <br>
+      <br>
+      <h4 id="familiaridade_std">Desvio padrão dos valores de familiaridade das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: familiaridade_std<br>
+      <br>
+      <b>Interpretação</b>: quanto maior o desvio padrão, menos confiável é a média; não tem relação direta com a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, contam-se as palavras de conteúdo que estão no repositório psicolinguístico e procuram-se seus respectivos valores de familiaridade. Calcula-se o desvio-padrão desses valores.<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: São consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Familiaridade é uma característica psicolinguística das palavras de conteúdo e representa o quanto os falantes da língua conhecem e usam uma palavra em suas vidas cotidianas. Os valores variam de 1 a 7 e quanto menor o valor, maior a familiaridade.<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
+  
+      <br>
+      <br>
+      <h4 id="imageabilidade_mean">Média dos valores de imageabilidade das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: imageabilidade_mean<br>
+      <br>
+      <b>Interpretação</b>: quanto menor for a média, maior a familiaridade e menor a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, contam-se as palavras de conteúdo que estão no repositório psicolinguístico e procuram-se seus respectivos valores de imageabilidade. Calcula-se a média desses valores (somam-se os valores e divide-se o resultado pela quantidade de palavras de conteúdo do texto presentes no repositório psicolinguístico).<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: São consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Familiaridade é uma característica psicolinguística das palavras de conteúdo e representa o quanto os falantes da língua conhecem e usam uma palavra em suas vidas cotidianas. Os valores variam de 1 a 7 e quanto menor o valor, maior a imageabilidade.<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
                 
-                
-                
-                
-                
+      <br>
+      <br>
+      <h4 id="imageabilidade_std">Desvio padrão dos valores de imageabilidade das palavras de conteúdo do texto</h4><br>
+      <b>Nome da Métrica</b>: imageabilidade_std<br>
+      <br>
+      <b>Interpretação</b>: quanto maior o desvio padrão, menos confiável é a média; não tem relação direta com a complexidade textual<br>
+      <br>
+      <b>Descrição da métrica</b>: Identificam-se as palavras de conteúdo do texto. Em seguida, contam-se as palavras de conteúdo que estão no repositório psicolinguístico e procuram-se seus respectivos valores de imageabilidade. Calcula-se o desvio-padrão desses valores.<br>
+      <br>
+      <b>Definição dos termos que aparecem na descrição da métrica</b>: São consideradas palavras de conteúdo: substantivos, verbos, adjetivos e advérbios. Familiaridade é uma característica psicolinguística das palavras de conteúdo e representa o quanto os falantes da língua conhecem e usam uma palavra em suas vidas cotidianas. Os valores variam de 1 a 7 e quanto menor o valor, maior a imageabilidade.<br>
+      <br>
+      <b>Limitações da métrica</b>: O repositório psicolinguístico tem 26.874 palavras e pode não conter todas as palavras procuradas. O repositório psicolinguístico foi construído automaticamente (e por isso, sujeito a vieses), usando como semente listas de palavras com seus respectivos valores de concretude, familiaridade, idade de aquisição e imageabilidade levantados junto a usuários da língua por psicolinguistas e psicólogos.<br>
+
 </div>
 
 </body>
