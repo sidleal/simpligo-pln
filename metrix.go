@@ -27,7 +27,7 @@ func callMetrix(text string) string {
 
 	text = strings.Replace(text, " à ", "{{crase}}", -1)
 	text = strings.Replace(text, "à", "a", -1)
-	text = strings.Replace(text, "{{crase}}", "à", -1)
+	text = strings.Replace(text, "{{crase}}", " à ", -1)
 
 	for k, v := range charsToReplace {
 		text = strings.ReplaceAll(text, k, v)
