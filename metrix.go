@@ -39,7 +39,7 @@ func callMetrix(subset string, text string) string {
 	}
 
 	log.Println("MetrixAPIPostHandler - calling", "http://"+mainServerIP+":8008/metrics/"+subset)
-	resp, err := client.Post("http://"+mainServerIP+":8008/metrics"+subset, "text", bytes.NewReader([]byte(text)))
+	resp, err := client.Post("http://"+mainServerIP+":8008/metrics/"+subset, "text", bytes.NewReader([]byte(text)))
 	if err != nil {
 		return fmt.Sprintf("Error extracting metrics: %v", err)
 	}
