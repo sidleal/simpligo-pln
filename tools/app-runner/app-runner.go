@@ -23,7 +23,7 @@ func Router() *mux.Router {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
 	r.HandleFunc("/ranker", RankerHandler).Methods("POST")
-	r.HandleFunc("/metrics_all", MetricsAllHandler).Methods("POST")
+	r.HandleFunc("/metrics/{subset}", MetricsHandler).Methods("POST")
 
 	return r
 }
@@ -145,7 +145,14 @@ func RankerHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprint(w, ret)
 }
 
-func MetricsAllHandler(w http.ResponseWriter, r *http.Request) {
+func MetricsHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	subset := vars["subset"]
+
+	if subset == "all" {
+		subset = ""
+	}
 
 	w.Header().Set("Content-Type", "text")
 
@@ -166,9 +173,9 @@ func MetricsAllHandler(w http.ResponseWriter, r *http.Request) {
 	ret += "-------------------------------" + "\n"
 
 	// log.Println(text)
-	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+text+"\"")
+	log.Println("/bin/bash", "-c", "coh-metrix-nilc/run"+subset+".sh \""+text+"\"")
 
-	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run.sh \""+text+"\"")
+	cmd := exec.Command("/bin/bash", "-c", "coh-metrix-nilc/run"+subset+".sh \""+text+"\"")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		ret += "cmd.Run() failed with " + err.Error()

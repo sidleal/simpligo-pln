@@ -15,7 +15,7 @@ import (
 
 var charsToReplace = map[string]string{"è": "e", "ì": "i", "ò": "o", "ù": "u", "`": "'", "´": "'"}
 
-func callMetrix(text string) string {
+func callMetrix(subset string, text string) string {
 
 	text = strings.Replace(text, "\"", "{{quotes}}", -1)
 	text = strings.Replace(text, "\n", "{{enter}}", -1)
@@ -38,8 +38,8 @@ func callMetrix(text string) string {
 		Timeout: timeout,
 	}
 
-	log.Println("MetrixAPIPostHandler - calling", "http://"+mainServerIP+":8008/metrics_all")
-	resp, err := client.Post("http://"+mainServerIP+":8008/metrics_all", "text", bytes.NewReader([]byte(text)))
+	log.Println("MetrixAPIPostHandler - calling", "http://"+mainServerIP+":8008/metrics/"+subset)
+	resp, err := client.Post("http://"+mainServerIP+":8008/metrics"+subset, "text", bytes.NewReader([]byte(text)))
 	if err != nil {
 		return fmt.Sprintf("Error extracting metrics: %v", err)
 	}
@@ -57,7 +57,7 @@ func callMetrix(text string) string {
 func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	// subset := vars["subset"]
+	subset := vars["subset"]
 	key := vars["key"]
 
 	if key != "m3tr1x01" {
@@ -72,7 +72,7 @@ func MetrixAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret := callMetrix(string(text))
+	ret := callMetrix(subset, string(text))
 
 	log.Println("MetrixAPIPostHandler - Ret", ret)
 
@@ -101,7 +101,7 @@ func MetrixParseHandler(w http.ResponseWriter, r *http.Request) {
 	content := r.FormValue("content")
 	// options := r.FormValue("options")
 
-	fRet := callMetrix(content)
+	fRet := callMetrix("all", content)
 	feats := strings.Split(fRet, ",")
 
 	ret := MetrixResult{}
