@@ -141,6 +141,8 @@ function nextWord() {
     if (tokenIdx >= totTokens) {
         tokenIdx = 0;
         sentenceIdx++;
+
+        /*
         //primeira palavra da nova sentença
         lastToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx];
         sentence += ' ' + lastToken.token;
@@ -149,12 +151,10 @@ function nextWord() {
 
         nextToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx]; //trata sentença com 1 palavra
         if (nextToken != null && nextToken.w == 0) {
-            // sentence += nextToken.token;
-            // tokenIdx++;
             nextWord();
         }
+        */
     }
-
 
     startDateTime = new Date().getTime();
     timeToFirstLetter = 0;
