@@ -67,6 +67,8 @@ function nextWord() {
             sentence += lastToken.token;
         }
         targetWord = lastToken.token;
+    } else {
+        sentence += lastToken.token;
     }
 
     tokenIdx++;
@@ -125,9 +127,11 @@ function nextWord() {
         totWords = 0;
         sentence = "";
 
-        clozeData.prgphs[paragraphIdx].sentences.forEach(s => {
-            totWords += s.qtw;
-        })
+        if (paragraphIdx <= totParagraphs) {
+            clozeData.prgphs[paragraphIdx].sentences.forEach(s => {
+                totWords += s.qtw;
+            })
+        }
 
         $('#clozeWord').val('');
 
@@ -142,6 +146,13 @@ function nextWord() {
         sentence += ' ' + lastToken.token;
         tokenIdx++;
         wordIdx++;
+
+        nextToken = clozeData.prgphs[paragraphIdx].sentences[sentenceIdx].tokens[tokenIdx]; //trata sentença com 1 palavra
+        if (nextToken != null && nextToken.w == 0) {
+            // sentence += nextToken.token;
+            // tokenIdx++;
+            nextWord();
+        }
     }
 
 
@@ -229,6 +240,7 @@ function refresh() {
 function showForm() {
         stage = "form";
         refresh();
+        $("#participantName").focus();
 }
 
 function showTrainEnd() {
@@ -257,14 +269,16 @@ function continueTest(clozeCode) {
         data: JSON.stringify({
             code: clozeCode,
             name: $('#participantName').val(),
-            org: $('#participantOrg').val(),
-            ra: $('#participantRA').val(),
+            rg: $('#participantRG').val(),
+            age: $('#participantAge').val(),
+            gender: $('#participantGender').val(),
+            course: $('#participantCourse').val(),
             sem: $('#participantSem').val(),
-            birth: $('participantBirthdate').val(),
-            email: $('participantEmail').val(),
-            phone: $('participantPhone').val(),
-            rg: $('participantRG').val(),
-            cpf: $('participantCPF').val()
+            lang: $('#participantLang').val(),
+            org: $('#participantOrg').val(),
+            email: $('#participantEmail').val(),
+            phone: $('#participantPhone').val(),
+            cpf: $('#participantCPF').val(),
         }),
         contentType: "application/json"
     }).done(function(data) {

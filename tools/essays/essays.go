@@ -20,7 +20,7 @@ func main() {
 
 	log.Println("starting")
 
-	f, err := os.OpenFile("/home/sidleal/sid/usp/Essays/100k_essays_metricas_56.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile("/home/sidleal/sid/usp/Essays/100k_essays_metricas_178feat.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
@@ -70,9 +70,9 @@ func main() {
 		// 	break
 		// }
 
-		if theme != "56" {
-			continue
-		}
+		// if theme != "56" && theme != "11" && theme != "3" {
+		// 	continue
+		// }
 		count++
 
 		text = strings.ReplaceAll(text, "\\r\\n", "{{enter}}")

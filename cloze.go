@@ -255,7 +255,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 			item.GuessWord = strings.ReplaceAll(item.GuessWord, ",", ".")
 
 			ret += fmt.Sprintf("%v,%v,%v,%v,", c.Code, c.Name, c.TotalClasses, c.QtyPerParticipant)
-			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,", part.Name, part.Organization, part.RegNumber, part.Semester, paragraphs, createdDate, createdTime)
+			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,", part.Name, part.Organization, part.RG, part.Semester, paragraphs, createdDate, createdTime)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v,", item.ParagraphID, item.SentenceSeq, item.WordSeq, item.TargetWord, item.GuessWord)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v\n", item.TimeToStart, item.TypingTime, item.ElapsedTime, item.TimeTotalPar, item.TimeTotal)
 		}
@@ -295,15 +295,17 @@ type ClozeParticipant struct {
 	ID           string `json:"id"`
 	ClozeCode    string `json:"code"`
 	Name         string `json:"name"`
-	Organization string `json:"org"`
-	RegNumber    string `json:"ra"`
+	RG           string `json:"rg"`
+	Age          string `json:"age"`
+	Gender       string `json:"gender"`
+	Course       string `json:"course"`
+	Languages    string `json:"lang"`
 	Semester     string `json:"sem"`
-	Created      string `json:"created"`
-	Birthdate    string `json:"birth"`
+	Organization string `json:"org"`
 	Email        string `json:"email"`
 	Phone        string `json:"phone"`
-	RG           string `json:"rg"`
 	CPF          string `json:"cpf"`
+	Created      string `json:"created"`
 	Paragraphs   []int  `json:"prgphs"`
 }
 
@@ -368,6 +370,7 @@ func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var participantData ClozeParticipantData
 	err = decoder.Decode(&participantData)
+
 	if err != nil {
 		log.Printf("Erro ao tratar payload: %v", err)
 	}
@@ -583,8 +586,8 @@ func createClozeParticipantIfNotExists(participant ClozeParticipant) ClozePartic
 
 	query := elastic.NewBoolQuery()
 	query = query.Must(elastic.NewTermQuery("code.keyword", participant.ClozeCode))
-	query = query.Must(elastic.NewTermQuery("org.keyword", participant.Organization))
-	query = query.Must(elastic.NewTermQuery("ra.keyword", participant.RegNumber))
+	// query = query.Must(elastic.NewTermQuery("org.keyword", participant.Organization))
+	query = query.Must(elastic.NewTermQuery("rg.keyword", participant.RG))
 
 	searchResult, err := elClient.Search().
 		Index(indexPrefix + "cloze-participants").
