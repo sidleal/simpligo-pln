@@ -238,9 +238,16 @@ function refresh() {
 
 
 function showForm() {
-        stage = "form";
-        refresh();
-        $("#participantName").focus();
+    if ($("#participantNameTerm").val() == "" || $("#participantRGTerm").val() == "") {
+        alert( "Por favor, preencha seu nome completo e número do documento para continuar." );
+        $("#participantNameTerm").focus();
+        return
+    }
+    stage = "form";
+    refresh();
+    $("#participantName").val($("#participantNameTerm").val());
+    $("#participantRG").val($("#participantRGTerm").val());
+    $("#participantAge").focus();
 }
 
 function showTrainEnd() {
@@ -261,6 +268,32 @@ function showApply() {
 
 function continueTest(clozeCode) {
     
+    if ($('#participantName').val() == "") {
+        alert("Por favor, preencha seu nome.");
+        $('#participantName').focus();
+        return
+    }
+    if ($('#participantRG').val() == "") {
+        alert("Por favor, preencha seu RG.");
+        $('#participantRG').focus();
+        return
+    }
+    if ($('#participantAge').val() == "") {
+        alert("Por favor, preencha sua idade.");
+        $('#participantAge').focus();
+        return
+    }
+    if ($('#participantSem').val() == "") {
+        alert("Por favor, preencha o semestre que está cursando.");
+        $('#participantSem').focus();
+        return
+    }
+    if ($('#participantEmail').val() == "") {
+        alert("Por favor, preencha seu email para contato.");
+        $('#participantEmail').focus();
+        return
+    }
+
     this.clozeCode = clozeCode;
 
     $.ajax({
