@@ -1,5 +1,6 @@
 FROM gobase:1.1
 
+RUN apk add wkhtmltopdf
 RUN mkdir -p /go/src/github.com/sidleal/simpligo-pln
 ADD . /go/src/github.com/sidleal/simpligo-pln
 RUN go install github.com/sidleal/simpligo-pln

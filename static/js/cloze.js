@@ -6,6 +6,7 @@ function newCloze() {
     $('#clozeQtyPar').val("5");
     $('#clozeClasses').val("1");
     $('#textContent').val("")
+    $('#textTerm').val("")
     this.refresh();
 }
 
@@ -51,6 +52,7 @@ function saveCloze() {
             name: $('#clozeName').val(),
             code: $('#clozeCode').val(),
             content: $('#textContent').val(),
+            term: $('#textTerm').val(),
             qtyPerPart: $('#clozeQtyPar').val(),
             totClass: $('#clozeClasses').val(),
         }),

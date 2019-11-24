@@ -55,7 +55,7 @@ func Init() {
 	pageInfo = PageInfo{
 		Version:        "0.5.2",
 		SessionExpired: false,
-		StaticHash:     "030",
+		StaticHash:     "031",
 		LastPath:       "/",
 	}
 
@@ -119,6 +119,8 @@ func Router() *mux.Router {
 	r.HandleFunc("/cloze/apply/new", ClozeApplyNewHandler).Methods("POST")
 	r.HandleFunc("/cloze/apply/save", ClozeApplySaveHandler).Methods("POST")
 	r.HandleFunc("/cloze/{id}", ClozeRemoveHandler).Methods("DELETE")
+
+	r.HandleFunc("/cloze/term/{code}.pdf", ClozeGetTermPDFHandler).Methods("GET")
 
 	r.HandleFunc("/api/v1/metrix/{subset}/{key}", MetrixAPIPostHandler).Methods("POST")
 

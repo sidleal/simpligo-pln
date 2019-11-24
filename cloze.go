@@ -7,11 +7,13 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/gorilla/mux"
 	"github.com/olivere/elastic"
 	"github.com/sidleal/simpligo-pln/tools/senter"
@@ -22,6 +24,7 @@ type ClozeTest struct {
 	Name              string            `json:"name"`
 	Code              string            `json:"code"`
 	Content           string            `json:"content"`
+	Term              string            `json:"term"`
 	Parsed            senter.ParsedText `json:"parsed"`
 	Owners            []string          `json:"owners"`
 	QtyPerParticipant string            `json:"qtyPerPart"`
@@ -117,7 +120,7 @@ func ClozeGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
-
+	//here
 	query := elastic.NewTermQuery("_id", id)
 
 	searchResult, err := elClient.Search().
@@ -289,6 +292,7 @@ type ClozeData struct {
 	Participant ClozeParticipant         `json:"part"`
 	Paragraphs  []senter.ParsedParagraph `json:"prgphs"`
 	StaticHash  string                   `json:"shash"`
+	Term        template.HTML            `json:"term"`
 }
 
 type ClozeParticipant struct {
@@ -334,16 +338,9 @@ func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code := vars["code"]
 
-	query := elastic.NewTermQuery("code.keyword", code)
+	clozeTest := getClozeTest(code)
 
-	searchResult, err := elClient.Search().
-		Index(indexPrefix + "cloze").
-		Type("cloze").
-		Query(query).
-		From(0).Size(1).
-		Do(context.Background())
-
-	if err != nil || searchResult.Hits.TotalHits < 1 {
+	if clozeTest.Code == "" {
 		log.Printf("Não encontrado: %v", err)
 		fmt.Fprintf(w, "Código não encontrado: %v.", code)
 		return
@@ -352,6 +349,10 @@ func ClozeApplyHandler(w http.ResponseWriter, r *http.Request) {
 	clozeData := ClozeData{}
 	clozeData.Code = code
 	clozeData.StaticHash = pageInfo.StaticHash
+
+	termHTML := clozeTest.Term
+	termHTML = strings.ReplaceAll(termHTML, "<data-atual-extenso>", formatDateBRFull(time.Now()))
+	clozeData.Term = template.HTML(termHTML)
 
 	t, err := template.New("cloze_apply.html").Delims("[[", "]]").ParseFiles("./templates/cloze_apply.html")
 	if err != nil {
@@ -463,6 +464,7 @@ func getClozeTest(clozeCode string) ClozeTest {
 
 	return clozeTest
 }
+
 func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
@@ -651,4 +653,57 @@ func ClozeRemoveHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "ok")
 
+}
+
+func ClozeGetTermPDFHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	code := vars["code"]
+
+	name := r.FormValue("name")
+	doc := r.FormValue("doc")
+
+	clozeTest := getClozeTest(code)
+
+	pdfg, err := wkhtmltopdf.NewPDFGenerator()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	termHTML := clozeTest.Term
+
+	regEx := regexp.MustCompile(`<input.*id="name"[^>]+>`)
+	termHTML = regEx.ReplaceAllString(termHTML, "<b>"+name+"</b>")
+
+	regEx = regexp.MustCompile(`<input.*id="doc"[^>]+>`)
+	termHTML = regEx.ReplaceAllString(termHTML, "<b>"+doc+"</b>")
+
+	termHTML = strings.ReplaceAll(termHTML, "<data-atual-extenso>", formatDateBRFull(time.Now()))
+
+	termHTML = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></head><body>\n" + termHTML + "\n</body></html>"
+	// fmt.Println(strings.NewReader(termHTML))
+
+	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(termHTML)))
+
+	pdfg.PageSize.Set(wkhtmltopdf.PageSizeA4)
+	pdfg.Dpi.Set(300)
+
+	err = pdfg.Create()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Write(pdfg.Bytes())
+
+}
+
+func formatDateBRFull(t time.Time) string {
+	return fmt.Sprintf("%02d de %s de %4d",
+		t.Day(), months[t.Month()-1], t.Year(),
+	)
+}
+
+var months = [...]string{
+	"janeiro", "fevereiro", "março", "abril", "maio", "junho",
+	"julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 }

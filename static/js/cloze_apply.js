@@ -238,16 +238,16 @@ function refresh() {
 
 
 function showForm() {
-    if ($("#participantNameTerm").val() == "" || $("#participantRGTerm").val() == "") {
+    if ($("#name").val() == "" || $("#doc").val() == "") {
         alert( "Por favor, preencha seu nome completo e número do documento para continuar." );
-        $("#participantNameTerm").focus();
+        $("#name").focus();
         return
     }
     stage = "form";
     refresh();
-    $("#participantName").val($("#participantNameTerm").val());
-    $("#participantRG").val($("#participantRGTerm").val());
-    $("#participantAge").focus();
+    $("#participantName").val($("#name").val());
+    $("#participantRG").val($("#doc").val());
+    $("#participantName").focus();
 }
 
 function showTrainEnd() {
