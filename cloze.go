@@ -681,7 +681,7 @@ func ClozeGetTermPDFHandler(w http.ResponseWriter, r *http.Request) {
 	termHTML = strings.ReplaceAll(termHTML, "<data-atual-extenso>", formatDateBRFull(time.Now()))
 
 	termHTML = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></head><body>\n" + termHTML + "\n</body></html>"
-	// fmt.Println(strings.NewReader(termHTML))
+	fmt.Println(strings.NewReader(termHTML))
 
 	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(termHTML)))
 
