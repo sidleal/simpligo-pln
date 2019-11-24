@@ -1,0 +1,9 @@
+FROM golang:1.12
+
+RUN apt update \
+    && apt install -y git \
+    && apt install -y wkhtmltopdf \
+    && go get golang.org/x/crypto/md4 \
+    && go get golang.org/x/net/context \
+    && go get golang.org/x/crypto/acme/autocert
+
