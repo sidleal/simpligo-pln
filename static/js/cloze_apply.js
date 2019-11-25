@@ -237,12 +237,16 @@ function refresh() {
 }
 
 
-function showForm() {
+function showForm(clozeCode) {
     if ($("#name").val() == "" || $("#doc").val() == "") {
         alert( "Por favor, preencha seu nome completo e número do documento para continuar." );
         $("#name").focus();
         return
     }
+    
+    $("#doc").val($("#doc").val().replace(" ", ""));
+    saveTCLE(clozeCode, $("#name").val(), $("#doc").val());
+
     stage = "form";
     refresh();
     $("#participantName").val($("#name").val());
@@ -333,4 +337,20 @@ function continueTest(clozeCode) {
     });
 
 
+}
+
+function saveTCLE(code, name, doc) {
+    $.ajax({
+        type: 'POST',
+        url: '/cloze/term/'+code+'/save',
+        data: {
+            name: name,
+            doc: doc
+        },
+    }).done(function(data) {
+        console.log("TCLE salvo.")
+    }).fail(function(error) {
+        console.log( "Erro TCLE" );
+        console.log( error );
+    });
 }

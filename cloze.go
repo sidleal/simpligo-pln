@@ -5,18 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/gorilla/mux"
 	"github.com/olivere/elastic"
 	"github.com/sidleal/simpligo-pln/tools/senter"
+	"github.com/thecodingmachine/gotenberg-go-client"
 )
 
 type ClozeTest struct {
@@ -659,16 +662,24 @@ func ClozeGetTermPDFHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	code := vars["code"]
+	doc := vars["doc"]
+
+	pdfPath := fmt.Sprintf("/shared/cloze-data/term/tcle-%s-%s.pdf", code, doc)
+	pdf := readFileBytes(pdfPath)
+
+	w.Write(pdf)
+
+}
+
+func ClozeSaveTermPDFHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	code := vars["code"]
 
 	name := r.FormValue("name")
 	doc := r.FormValue("doc")
 
 	clozeTest := getClozeTest(code)
-
-	pdfg, err := wkhtmltopdf.NewPDFGenerator()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	termHTML := clozeTest.Term
 
@@ -681,19 +692,27 @@ func ClozeGetTermPDFHandler(w http.ResponseWriter, r *http.Request) {
 	termHTML = strings.ReplaceAll(termHTML, "<data-atual-extenso>", formatDateBRFull(time.Now()))
 
 	termHTML = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></head><body>\n" + termHTML + "\n</body></html>"
-	fmt.Println(strings.NewReader(termHTML))
 
-	pdfg.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(termHTML)))
+	tempDir := "/shared/cloze-data/tmp/"
+	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
+		os.MkdirAll(tempDir, os.ModePerm)
+	}
+	htmlTempFile := fmt.Sprintf("%s/termo-%s-%s.html", tempDir, code, doc)
 
-	pdfg.PageSize.Set(wkhtmltopdf.PageSizeA4)
-	pdfg.Dpi.Set(300)
+	saveFile(htmlTempFile, termHTML)
 
-	err = pdfg.Create()
-	if err != nil {
-		log.Fatal(err)
+	termDir := "/shared/cloze-data/term/"
+	if _, err := os.Stat(termDir); os.IsNotExist(err) {
+		os.MkdirAll(termDir, os.ModePerm)
 	}
 
-	w.Write(pdfg.Bytes())
+	c := &gotenberg.Client{Hostname: "http://" + mainServerIP + ":3000"}
+	req, _ := gotenberg.NewHTMLRequest(htmlTempFile)
+	pdfDestFile := fmt.Sprintf("%s/tcle-%s-%s.pdf", termDir, code, doc)
+	req.PaperSize(gotenberg.A4)
+	req.Margins(gotenberg.NormalMargins)
+	req.Landscape(false)
+	c.Store(req, pdfDestFile)
 
 }
 
@@ -706,4 +725,60 @@ func formatDateBRFull(t time.Time) string {
 var months = [...]string{
 	"janeiro", "fevereiro", "março", "abril", "maio", "junho",
 	"julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+}
+
+func saveFile(path string, content string) {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f.Close()
+	f.Write([]byte(content))
+}
+
+func removeFile(path string) {
+	err := os.Remove(path)
+	if err != nil {
+		log.Println("Erro delete:", err)
+	}
+}
+
+func readFile(path string) string {
+	f, err := os.Open(path)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// r := charmap.ISO8859_1.NewDecoder().Reader(f)
+	r := io.Reader(f)
+
+	ret := ""
+
+	buf := make([]byte, 32*1024)
+	for {
+		n, err := r.Read(buf)
+		if n > 0 {
+			ret += string(buf[:n])
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Println(err)
+			break
+		}
+	}
+
+	return ret
+
+}
+
+func readFileBytes(path string) []byte {
+
+	dat, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Println(err)
+	}
+	return dat
+
 }

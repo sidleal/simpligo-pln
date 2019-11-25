@@ -1,4 +1,4 @@
-FROM gobase:1.1
+FROM gobase:1.13
 
 RUN mkdir -p /go/src/github.com/sidleal/simpligo-pln
 ADD . /go/src/github.com/sidleal/simpligo-pln

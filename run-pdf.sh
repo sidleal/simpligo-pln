@@ -1,0 +1,1 @@
+docker run -d --name pdfgo --restart always -p 3000:3000 thecodingmachine/gotenberg:6

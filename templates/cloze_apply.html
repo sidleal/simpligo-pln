@@ -63,7 +63,7 @@
               [[ .Term ]]
     
               <div style="text-align: center;">
-                <button onclick="showForm();" style="margin:30px;" id="btnContinue" class="default"><i class="fa fa-play fa-2x"></i><br/>Concordo com o termo e quero continuar</button>
+                <button onclick="showForm('[[ .Code ]]');" style="margin:30px;" id="btnContinue" class="default"><i class="fa fa-play fa-2x"></i><br/>Concordo com o termo e quero continuar</button>
               </div>
           </div>
         </div>
@@ -75,7 +75,7 @@
             <h2>Dados do Participante</h2>
             <p>Por favor, preencha os dados abaixo antes de continuar:</p>
 
-            <p style="text-align: center;"><a onclick="window.open('/cloze/term/[[ .Code ]].pdf?name='+$('#name').val()+'&doc='+$('#doc').val());">Clique aqui para salvar sua cópia do Termo de Consentimento, se desejar.</a></p>
+            <p style="text-align: center;"><a onclick="window.open('/cloze/term/[[ .Code ]]/'+$('#doc').val()+'.pdf');">Clique aqui para salvar sua cópia do Termo de Consentimento, se desejar.</a></p>
 
             <label for="participantName">Qual seu nome?</label>
             <input type="text" id="participantName" placeholder="Nome"/>
