@@ -14,7 +14,7 @@ type RegraOut struct {
 	regra   string
 }
 
-func main() {
+func mainy() {
 
 	log.Println("starting")
 
