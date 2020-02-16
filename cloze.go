@@ -33,6 +33,7 @@ type ClozeTest struct {
 	QtyPerParticipant string            `json:"qtyPerPart"`
 	TotalClasses      string            `json:"totClass"`
 	Answers           map[string]int    `json:"answers"`
+	FinalAnswers      map[string]int    `json:"f_answers"`
 }
 
 func ClozeNewHandler(w http.ResponseWriter, r *http.Request) {
@@ -219,7 +220,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ret += "Código, Nome Teste, Quantidade Gêneros, Parágrafos por Participante, Nome Participante, Organização, Registro, Semestre, Parágrafos Lidos, Data Início, Hora Início, Parágrafo, Sentença, Índice Palavra, Palavra, Resposta, Tempo Início(ms), Tempo Digitação(ms), Tempo(ms), Tempo Acumulado Parágrafo(ms), Tempo Acumulado Teste(ms)\n"
+	ret += "Código,Nome Teste,Quantidade Gêneros,Parágrafos por Participante,Nome Participante,Organização,Registro,Semestre,Parágrafos Lidos,Data Início,Hora Início,Parágrafo,Sentença,Índice Palavra,Palavra,Resposta,Tempo Início(ms),Tempo Digitação(ms),Tempo(ms),Tempo Acumulado Parágrafo(ms),Tempo Acumulado Teste(ms)\n"
 
 	for _, part := range participantList {
 		paragraphs := ""
@@ -252,6 +253,11 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 				participantDataList = append(participantDataList, partData)
 			}
 		}
+
+		part.Name = strings.ReplaceAll(part.Name, ",", "")
+		part.Organization = strings.ReplaceAll(part.Organization, ",", "")
+		part.RG = strings.ReplaceAll(part.RG, ",", "")
+		part.Semester = strings.ReplaceAll(part.Semester, ",", "")
 
 		for _, item := range participantDataList {
 			created, _ := isoToDate(part.Created)
@@ -397,15 +403,15 @@ func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
 	//atualiza qtd respostas do paragrafo
 	if participantData.WordSeq == participantData.TotWords {
 		clozeTest := getClozeTest(participantData.ClozeCode)
-		if clozeTest.Answers == nil {
-			clozeTest.Answers = map[string]int{}
+		if clozeTest.FinalAnswers == nil {
+			clozeTest.FinalAnswers = map[string]int{}
 		}
 		parID := fmt.Sprintf("%v", participantData.ParagraphID)
-		if _, found := clozeTest.Answers[parID]; !found {
-			clozeTest.Answers[parID] = 0
+		if _, found := clozeTest.FinalAnswers[parID]; !found {
+			clozeTest.FinalAnswers[parID] = 0
 		}
 
-		clozeTest.Answers[parID]++
+		clozeTest.FinalAnswers[parID]++
 		// log.Println("-------", participantData.ClozeCode, clozeTest.Id, clozeTest.Answers)
 
 		_, err := elClient.Update().
@@ -413,7 +419,7 @@ func ClozeApplySaveHandler(w http.ResponseWriter, r *http.Request) {
 			Refresh("true").
 			Type("cloze").
 			Id(clozeTest.Id).
-			Doc(map[string]interface{}{"answers": clozeTest.Answers}).
+			Doc(map[string]interface{}{"f_answers": clozeTest.FinalAnswers}).
 			Do(context.Background())
 		if err != nil {
 			log.Println(err)
@@ -562,6 +568,7 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 			if p.Index == pn {
 				p.ParsedText.Idx = int64(p.Index)
 				clozeData.Paragraphs = append(clozeData.Paragraphs, p.ParsedText)
+				updateParagraphAnswers(clozeData.Code, p.Index)
 			}
 		}
 	}
@@ -573,6 +580,30 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, string(cJSON))
+}
+
+func updateParagraphAnswers(clozeCode string, paragraphID int) {
+	clozeTest := getClozeTest(clozeCode)
+	if clozeTest.Answers == nil {
+		clozeTest.Answers = map[string]int{}
+	}
+	parID := fmt.Sprintf("%v", paragraphID)
+	if _, found := clozeTest.Answers[parID]; !found {
+		clozeTest.Answers[parID] = 0
+	}
+
+	clozeTest.Answers[parID]++
+
+	_, err := elClient.Update().
+		Index(indexPrefix + "cloze").
+		Refresh("true").
+		Type("cloze").
+		Id(clozeTest.Id).
+		Doc(map[string]interface{}{"answers": clozeTest.Answers}).
+		Do(context.Background())
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func isDuplicated(selectedParagraphs []int, newVal int) bool {
