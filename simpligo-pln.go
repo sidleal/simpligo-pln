@@ -149,9 +149,9 @@ func main() {
 	var httpsSrv *http.Server
 	if env == "prod" {
 		hostPolicy := func(ctx context.Context, host string) error {
-			allowedHost := "simpligo.sidle.al"
-			if host != allowedHost {
-				return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
+			allowedHosts := []string{"simpligo.sidle.al", "simpligo.sid.pro.br"}
+			if host != allowedHosts[0] && host != allowedHosts[1] {
+				return fmt.Errorf("acme/autocert: only %v host is allowed", allowedHosts)
 			}
 			return nil
 		}
