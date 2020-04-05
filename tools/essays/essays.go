@@ -16,7 +16,7 @@ import (
 // var regEx = regexp.MustCompile(`"id_texto" : ([0-9]+).*\n.*"composition_raw" : "(.*)"`)
 var regEx = regexp.MustCompile(`(?s)"id_texto" : ([0-9]+).*?"composition_raw" : "(.*?)",\n.*?"tema_id" : ([0-9]+)`)
 
-func main() {
+func main2() {
 
 	log.Println("starting")
 

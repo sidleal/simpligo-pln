@@ -37,7 +37,7 @@ $("#clozeWordTrain").keypress(function(e) {
 
 function nextWordAction() {
     word = $('#clozeWord').val();
-    if (word == "") {
+    if (word.trim() == "") {
         alert("Preencha com a palavra que ache mais provável que venha a seguir.")
         return
     }
