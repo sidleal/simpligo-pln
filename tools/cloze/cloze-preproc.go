@@ -17,7 +17,9 @@ type Word struct {
 	QtdGenre string // Quantidade Gêneros
 	Pars     string // Parágrafos por Participante
 	Part     string // Nome Participante
-	Org      string // Organização
+	Email    string // Email
+	Age      string // Age
+	Gender   string // Gender
 	Reg      string // Registro
 	Sem      string // Semestre
 	ParsRead string // Parágrafos Lidos
@@ -108,17 +110,17 @@ func main() {
 	// list := map[string]Word{}
 
 	rawFiles := []string{
-		"cloze_baJwn24BmRI7xu8F5xxd_data7.csv",
-		"cloze_bqJxn24BmRI7xu8Fqhz6_data7.csv",
-		"cloze_bKJwn24BmRI7xu8FSBzU_data7.csv",
-		"cloze_UgXZ-28BaYrNtDuxSkMf_data7.csv",
-		"cloze_ogW4nXABaYrNtDuxrk04_data7.csv",
-		"cloze_YwXxiHABaYrNtDux7Uh8_data7.csv",
+		"cloze_baJwn24BmRI7xu8F5xxd_data8.csv",
+		"cloze_bqJxn24BmRI7xu8Fqhz6_data8.csv",
+		"cloze_bKJwn24BmRI7xu8FSBzU_data8.csv",
+		"cloze_UgXZ-28BaYrNtDuxSkMf_data8.csv",
+		"cloze_ogW4nXABaYrNtDuxrk04_data8.csv",
+		"cloze_YwXxiHABaYrNtDux7Uh8_data8.csv",
 	}
 
 	path := "/home/sidleal/sid/usp/cloze_exps/"
 
-	exportDate := "2020_03_19"
+	exportDate := "2020_04_05"
 	outFiles := []string{
 		"cloze_puc_" + exportDate + ".csv",
 		"cloze_usp_" + exportDate + ".csv",
@@ -171,46 +173,53 @@ func main() {
 			word.QtdGenre = cols[2]
 			word.Pars = cols[3]
 			word.Part = cols[4]
-			word.Org = cols[5]
-			word.Reg = cols[6]
-			word.Sem = cols[7]
-			word.ParsRead = cols[8]
-			word.DTBegin = cols[9]
-			word.HRBegin = cols[10]
-			word.ParID, _ = strconv.Atoi(cols[11])
-			word.SentID, _ = strconv.Atoi(cols[12])
-			word.WordID, _ = strconv.Atoi(cols[13])
-			word.Word = cols[14]
-			word.Resp = cols[15]
-			word.TBegin, _ = strconv.Atoi(cols[16])
-			word.TDig, _ = strconv.Atoi(cols[17])
-			word.TTot, _ = strconv.Atoi(cols[18])
-			word.TPar, _ = strconv.Atoi(cols[19])
-			word.TTest, _ = strconv.Atoi(cols[20])
+			word.Email = cols[5]
+			word.Age = cols[6]
+			word.Gender = cols[7]
+			word.Reg = cols[8]
+			word.Sem = cols[9]
+			word.ParsRead = cols[10]
+			word.DTBegin = cols[11]
+			word.HRBegin = cols[12]
+			word.ParID, _ = strconv.Atoi(cols[13])
+			word.SentID, _ = strconv.Atoi(cols[14])
+			word.WordID, _ = strconv.Atoi(cols[15])
+			word.Word = cols[16]
+			word.Resp = cols[17]
+			word.TBegin, _ = strconv.Atoi(cols[18])
+			word.TDig, _ = strconv.Atoi(cols[19])
+			word.TTot, _ = strconv.Atoi(cols[20])
+			word.TPar, _ = strconv.Atoi(cols[21])
+			word.TTest, _ = strconv.Atoi(cols[22])
 
 			//descarta participantes:
 			discard := map[string]int{
 				"55.019.616-x": 1, // não entendeu a tarefa - UTFPR
 				"362726343":    1, // teste UFABC
+				"098512262":    1, // não entendeu a tarefa  -  UERJ
 			}
 			if _, found := discard[word.Reg]; found {
 				continue
 			}
 
-			//another cleaning
-			if word.Resp == `"` {
-				word.Resp = "a"
+			//ajuste... ufabc e uerj não tem o primeiro paragrafo
+			if strings.Index(outFiles[k], "ufabc") > 0 || strings.Index(outFiles[k], "uerj") > 0 {
+				word.ParID++
 			}
+
+			//another cleaning
+			word.Resp = strings.ReplaceAll(word.Resp, `"`, "")
 
 			wordList = append(wordList, word)
 
-			if _, found := mapParticipants[word.Part]; !found {
-				mapParticipants[word.Part] = map[int]int{}
+			partKey := fmt.Sprintf("%s_%s", word.Part, word.Email)
+			if _, found := mapParticipants[partKey]; !found {
+				mapParticipants[partKey] = map[int]int{}
 			}
-			if _, found := mapParticipants[word.Part][word.ParID]; !found {
-				mapParticipants[word.Part][word.ParID] = 0
+			if _, found := mapParticipants[partKey][word.ParID]; !found {
+				mapParticipants[partKey][word.ParID] = 0
 			}
-			mapParticipants[word.Part][word.ParID]++
+			mapParticipants[partKey][word.ParID]++
 
 		}
 
@@ -347,9 +356,9 @@ func main() {
 }
 
 func formatLine(w Word, cont int) string {
-	return fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v\n",
+	return fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v\n",
 		w.Code, w.Name, w.QtdGenre, w.Pars, w.Part,
-		w.Org, w.Reg, w.Sem, w.ParsRead, w.DTBegin,
+		w.Email, w.Age, w.Gender, w.Reg, w.Sem, w.ParsRead, w.DTBegin,
 		w.HRBegin, w.ParID, w.SentID, cont, w.Word,
 		w.Resp, w.TBegin, w.TDig, w.TTot, w.TPar, w.TTest)
 }

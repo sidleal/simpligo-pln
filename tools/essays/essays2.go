@@ -15,13 +15,14 @@ func main() {
 
 	log.Println("starting")
 
-	f, err := os.OpenFile("/home/sidleal/sid/usp/arthur/out.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// f, err := os.OpenFile("/home/sidleal/sid/usp/arthur/out.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile("out-esic.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
 	defer f.Close()
 
-	raw := readFile("/home/sidleal/sid/usp/arthur/eSIC-Respostas-Clareza-Balanced-Multiclass.csv")
+	raw := readFile("esic.csv")
 	lines := strings.Split(raw, "\n")
 
 	for i, line := range lines {
@@ -53,7 +54,12 @@ func main() {
 		fRet := callMetrixNilc(text)
 		log.Println(fRet)
 
-		feats := strings.Split(fRet, ",")
+		fTokens := strings.Split(fRet, "-------------------------------\n")
+		if len(fTokens) < 2 {
+			continue
+		}
+
+		feats := strings.Split(fTokens[1], ",")
 
 		header := "id_texto,"
 		ret := textID + ","
