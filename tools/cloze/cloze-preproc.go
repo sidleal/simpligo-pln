@@ -110,17 +110,17 @@ func main() {
 	// list := map[string]Word{}
 
 	rawFiles := []string{
-		"cloze_baJwn24BmRI7xu8F5xxd_data8.csv",
-		"cloze_bqJxn24BmRI7xu8Fqhz6_data8.csv",
-		"cloze_bKJwn24BmRI7xu8FSBzU_data8.csv",
-		"cloze_UgXZ-28BaYrNtDuxSkMf_data8.csv",
-		"cloze_ogW4nXABaYrNtDuxrk04_data8.csv",
-		"cloze_YwXxiHABaYrNtDux7Uh8_data8.csv",
+		"cloze_baJwn24BmRI7xu8F5xxd_data9.csv",
+		"cloze_bqJxn24BmRI7xu8Fqhz6_data9.csv",
+		"cloze_bKJwn24BmRI7xu8FSBzU_data9.csv",
+		"cloze_UgXZ-28BaYrNtDuxSkMf_data9.csv",
+		"cloze_ogW4nXABaYrNtDuxrk04_data9.csv",
+		"cloze_YwXxiHABaYrNtDux7Uh8_data9.csv",
 	}
 
 	path := "/home/sidleal/sid/usp/cloze_exps/"
 
-	exportDate := "2020_04_05"
+	exportDate := "2020_04_14"
 	outFiles := []string{
 		"cloze_puc_" + exportDate + ".csv",
 		"cloze_usp_" + exportDate + ".csv",
@@ -212,7 +212,7 @@ func main() {
 
 			wordList = append(wordList, word)
 
-			partKey := fmt.Sprintf("%s_%s", word.Part, word.Email)
+			partKey := fmt.Sprintf("%s\t%s", word.Part, word.Email)
 			if _, found := mapParticipants[partKey]; !found {
 				mapParticipants[partKey] = map[int]int{}
 			}
