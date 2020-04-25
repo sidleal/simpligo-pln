@@ -258,6 +258,10 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 		part.Organization = strings.ReplaceAll(part.Organization, ",", "")
 		part.RG = strings.ReplaceAll(part.RG, ",", "")
 		part.Semester = strings.ReplaceAll(part.Semester, ",", "")
+		part.Languages = strings.ReplaceAll(part.Languages, ",", "")
+		part.Course = strings.ReplaceAll(part.Course, ",", "")
+		part.CPF = strings.ReplaceAll(part.CPF, ",", "")
+		part.Phone = strings.ReplaceAll(part.Phone, ",", "")
 
 		for _, item := range participantDataList {
 			created, _ := isoToDate(part.Created)

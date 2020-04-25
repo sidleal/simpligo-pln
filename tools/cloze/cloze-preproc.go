@@ -22,6 +22,13 @@ type Word struct {
 	Gender   string // Gender
 	Reg      string // Registro
 	Sem      string // Semestre
+
+	Org      string // Instituição
+	Course   string // Curso
+	Language string // Lingua
+	Phone    string // Fone
+	CPF      string // cpf
+
 	ParsRead string // Parágrafos Lidos
 	DTBegin  string // Data Início
 	HRBegin  string // Hora Início
@@ -110,17 +117,17 @@ func main() {
 	// list := map[string]Word{}
 
 	rawFiles := []string{
-		"cloze_baJwn24BmRI7xu8F5xxd_data9.csv",
-		"cloze_bqJxn24BmRI7xu8Fqhz6_data9.csv",
-		"cloze_bKJwn24BmRI7xu8FSBzU_data9.csv",
-		"cloze_UgXZ-28BaYrNtDuxSkMf_data9.csv",
-		"cloze_ogW4nXABaYrNtDuxrk04_data9.csv",
-		"cloze_YwXxiHABaYrNtDux7Uh8_data9.csv",
+		"cloze_baJwn24BmRI7xu8F5xxd_data12.csv",
+		"cloze_bqJxn24BmRI7xu8Fqhz6_data12.csv",
+		"cloze_bKJwn24BmRI7xu8FSBzU_data12.csv",
+		"cloze_UgXZ-28BaYrNtDuxSkMf_data12.csv",
+		"cloze_ogW4nXABaYrNtDuxrk04_data12.csv",
+		"cloze_YwXxiHABaYrNtDux7Uh8_data12.csv",
 	}
 
 	path := "/home/sidleal/sid/usp/cloze_exps/"
 
-	exportDate := "2020_04_14"
+	exportDate := "2020_04_25"
 	outFiles := []string{
 		"cloze_puc_" + exportDate + ".csv",
 		"cloze_usp_" + exportDate + ".csv",
@@ -178,19 +185,26 @@ func main() {
 			word.Gender = cols[7]
 			word.Reg = cols[8]
 			word.Sem = cols[9]
-			word.ParsRead = cols[10]
-			word.DTBegin = cols[11]
-			word.HRBegin = cols[12]
-			word.ParID, _ = strconv.Atoi(cols[13])
-			word.SentID, _ = strconv.Atoi(cols[14])
-			word.WordID, _ = strconv.Atoi(cols[15])
-			word.Word = cols[16]
-			word.Resp = cols[17]
-			word.TBegin, _ = strconv.Atoi(cols[18])
-			word.TDig, _ = strconv.Atoi(cols[19])
-			word.TTot, _ = strconv.Atoi(cols[20])
-			word.TPar, _ = strconv.Atoi(cols[21])
-			word.TTest, _ = strconv.Atoi(cols[22])
+
+			word.Org = cols[10]
+			word.Course = cols[11]
+			word.Language = cols[12]
+			word.Phone = cols[13]
+			word.CPF = cols[14]
+
+			word.ParsRead = cols[15]
+			word.DTBegin = cols[16]
+			word.HRBegin = cols[17]
+			word.ParID, _ = strconv.Atoi(cols[18])
+			word.SentID, _ = strconv.Atoi(cols[19])
+			word.WordID, _ = strconv.Atoi(cols[20])
+			word.Word = cols[21]
+			word.Resp = cols[22]
+			word.TBegin, _ = strconv.Atoi(cols[23])
+			word.TDig, _ = strconv.Atoi(cols[24])
+			word.TTot, _ = strconv.Atoi(cols[25])
+			word.TPar, _ = strconv.Atoi(cols[26])
+			word.TTest, _ = strconv.Atoi(cols[27])
 
 			//descarta participantes:
 			discard := map[string]int{
@@ -212,7 +226,7 @@ func main() {
 
 			wordList = append(wordList, word)
 
-			partKey := fmt.Sprintf("%s\t%s", word.Part, word.Email)
+			partKey := fmt.Sprintf("%s\t%s\t%s", word.Part, word.Email, word.Org)
 			if _, found := mapParticipants[partKey]; !found {
 				mapParticipants[partKey] = map[int]int{}
 			}
@@ -356,9 +370,9 @@ func main() {
 }
 
 func formatLine(w Word, cont int) string {
-	return fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v\n",
+	return fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v\n",
 		w.Code, w.Name, w.QtdGenre, w.Pars, w.Part,
-		w.Email, w.Age, w.Gender, w.Reg, w.Sem, w.ParsRead, w.DTBegin,
+		w.Email, w.Age, w.Gender, w.Reg, w.Sem, w.Org, w.Course, w.Language, w.Phone, w.CPF, w.ParsRead, w.DTBegin,
 		w.HRBegin, w.ParID, w.SentID, cont, w.Word,
 		w.Resp, w.TBegin, w.TDig, w.TTot, w.TPar, w.TTest)
 }
