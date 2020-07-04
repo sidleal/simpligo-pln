@@ -17,7 +17,7 @@ if (window.WebSocket === undefined) {
 }
 
 function initWS() {
-    var socket = new WebSocket("wss://simpligo.sidle.al:443/ranker/ws");
+    var socket = new WebSocket("wss://simpligo.sidle.al:443/ranking/ws");
 
     socket.onopen = function() {
         console.log("Socket is open.");

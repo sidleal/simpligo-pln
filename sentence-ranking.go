@@ -13,14 +13,14 @@ import (
 	"github.com/sidleal/simpligo-pln/tools/senter"
 )
 
-type MsgWSRanker struct {
+type MsgWSRanking struct {
 	Authorization string `json:"auth"`
 	Content       string `json:"content"`
 	Options       string `json:"options"`
 	RawResult     string `json:"raw_result"`
 }
 
-func RankerWebSocketHandler(w http.ResponseWriter, r *http.Request) {
+func RankingWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Upgrade(w, r, w.Header(), 1024, 1024)
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
@@ -31,7 +31,7 @@ func RankerWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 func wsEcho(conn *websocket.Conn) {
 	for {
-		m := MsgWSRanker{}
+		m := MsgWSRanking{}
 
 		err := conn.ReadJSON(&m)
 		if err != nil {
@@ -48,7 +48,7 @@ func wsEcho(conn *websocket.Conn) {
 
 		if options == "unique" {
 
-			resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(content)))
+			resp, err := http.Post("http://"+mainServerIP+":8008/ranking", "text", bytes.NewReader([]byte(content)))
 			if err != nil {
 				m.RawResult = "Error: " + err.Error()
 			} else {
@@ -71,7 +71,7 @@ func wsEcho(conn *websocket.Conn) {
 			for _, p := range parsed.Paragraphs {
 				for _, s := range p.Sentences {
 
-					resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader([]byte(s.Text)))
+					resp, err := http.Post("http://"+mainServerIP+":8008/ranking", "text", bytes.NewReader([]byte(s.Text)))
 					if err != nil {
 						m.RawResult = "Error: " + err.Error()
 					} else {
@@ -100,7 +100,7 @@ func wsEcho(conn *websocket.Conn) {
 	}
 }
 
-func SentenceRankerAPIPostHandler(w http.ResponseWriter, r *http.Request) {
+func SentenceRankingAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -119,7 +119,7 @@ func SentenceRankerAPIPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	ret := ""
 
-	resp, err := http.Post("http://"+mainServerIP+":8008/ranker", "text", bytes.NewReader(text))
+	resp, err := http.Post("http://"+mainServerIP+":8008/ranking", "text", bytes.NewReader(text))
 	if err != nil {
 		ret = "Error: " + err.Error()
 	} else {

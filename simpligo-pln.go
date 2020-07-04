@@ -106,10 +106,10 @@ func Router() *mux.Router {
 	r.HandleFunc("/anotador/corpus/{corpusId}/simpl/{id}", AnotadorSimplGetHandler).Methods("GET")
 
 	r.HandleFunc("/cloze", ClozeHandler)
-	r.HandleFunc("/ranker", RankerHandler)
+	r.HandleFunc("/ranking", RankingHandler)
 	r.HandleFunc("/privacidade", PrivacidadeHandler)
 
-	r.HandleFunc("/ranker/ws", RankerWebSocketHandler)
+	r.HandleFunc("/ranking/ws", RankingWebSocketHandler)
 
 	r.HandleFunc("/cloze/new", ClozeNewHandler).Methods("POST")
 	r.HandleFunc("/cloze/list", ClozeListHandler)
@@ -129,7 +129,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/nilcmetrixdoc", MetrixDocHandler).Methods("GET")
 	r.HandleFunc("/metrix/parse", MetrixParseHandler).Methods("POST")
 
-	r.HandleFunc("/api/v1/sentence-ranker/{key}", SentenceRankerAPIPostHandler).Methods("POST")
+	r.HandleFunc("/api/v1/sentence-ranking/{key}", SentenceRankingAPIPostHandler).Methods("POST")
 
 	r.HandleFunc("/analysis", AnalysisHandler)
 	r.HandleFunc("/analysis/new", AnalysisNewHandler).Methods("POST")
@@ -254,8 +254,8 @@ func AnotadorHandler(w http.ResponseWriter, r *http.Request) {
 	TemplateHandler(w, r, "anotador", true)
 }
 
-func RankerHandler(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, "ranker", true)
+func RankingHandler(w http.ResponseWriter, r *http.Request) {
+	TemplateHandler(w, r, "ranking", true)
 }
 
 func MetrixHandler(w http.ResponseWriter, r *http.Request) {
