@@ -36,8 +36,8 @@ function abrirAnotador() {
     abrirPagina("anotador");
 }
 
-function abrirRanker() {
-    abrirPagina("ranker");
+function abrirRanking() {
+    abrirPagina("ranking");
 }
 
 function abrirMetrix() {
