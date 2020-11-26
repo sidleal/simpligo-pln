@@ -288,7 +288,11 @@ func getRawWord(c ClozeTest, partData ClozeParticipantData) string {
 	p := c.Parsed.Paragraphs[partData.ParagraphID-1]
 	// s := p.Sentences[partData.SentenceID-1]
 	// log.Println(p.Text)
-	rawWords := strings.Split(p.Text, " ")
+	pText := p.Text
+	if partData.ParagraphID-1 == 3 {
+		pText = strings.ReplaceAll(pText, "prevê-se", "prevê se")
+	}
+	rawWords := strings.Split(pText, " ")
 	log.Println(rawWords)
 	log.Println(partData.ParagraphID-1, partData.WordSeq-1, partData.TargetWord)
 	rawWord := rawWords[partData.WordSeq-1]
