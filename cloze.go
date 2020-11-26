@@ -270,13 +270,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 			item.TargetWord = strings.ReplaceAll(item.TargetWord, ",", ".")
 			item.GuessWord = strings.ReplaceAll(item.GuessWord, ",", ".")
 
-			p := c.Parsed.Paragraphs[item.ParagraphID]
-			s := p.Sentences[item.SentenceID]
-			log.Println(s.Text)
-			rawWords := strings.Split(s.Text, " ")
-			log.Println(rawWords)
-			log.Println(item.WordSeq)
-			rawWord := rawWords[item.WordSeq]
+			rawWord := getRawWord(c, item)
 
 			ret += fmt.Sprintf("%v,%v,%v,%v,", c.Code, c.Name, c.TotalClasses, c.QtyPerParticipant)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,", part.Name, part.Email, part.Age, part.Gender, part.RG, part.Semester, part.Organization, part.Course, part.Languages, part.Phone, part.CPF, paragraphs, createdDate, createdTime)
@@ -288,6 +282,17 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, htmlSafeString(ret))
 
+}
+
+func getRawWord(c ClozeTest, partData ClozeParticipantData) string {
+	p := c.Parsed.Paragraphs[partData.ParagraphID]
+	s := p.Sentences[partData.SentenceID]
+	log.Println(s.Text)
+	rawWords := strings.Split(s.Text, " ")
+	log.Println(rawWords)
+	log.Println(partData.WordSeq - 1)
+	rawWord := rawWords[partData.WordSeq]
+	return rawWord
 }
 
 func dateToISO(date time.Time) string {
