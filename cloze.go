@@ -220,7 +220,7 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ret += "Código,Nome Teste,Quantidade Gêneros,Parágrafos por Participante,Nome Participante,Email,Idade,Gênero,Registro,Semestre,Organização,Curso,Línguas,Fone,CPF,Parágrafos Lidos,Data Início,Hora Início,Parágrafo,Sentença,Índice Palavra,Palavra,Resposta,Tempo Início(ms),Tempo Digitação(ms),Tempo(ms),Tempo Acumulado Parágrafo(ms),Tempo Acumulado Teste(ms)\n"
+	ret += "Código,Nome Teste,Quantidade Gêneros,Parágrafos por Participante,Nome Participante,Email,Idade,Gênero,Registro,Semestre,Organização,Curso,Línguas,Fone,CPF,Parágrafos Lidos,Data Início,Hora Início,Parágrafo,Sentença,Índice Palavra,Palavra Crua,Palavra,Resposta,Tempo Início(ms),Tempo Digitação(ms),Tempo(ms),Tempo Acumulado Parágrafo(ms),Tempo Acumulado Teste(ms)\n"
 
 	for _, part := range participantList {
 		paragraphs := ""
@@ -270,9 +270,17 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 			item.TargetWord = strings.ReplaceAll(item.TargetWord, ",", ".")
 			item.GuessWord = strings.ReplaceAll(item.GuessWord, ",", ".")
 
+			p := c.Parsed.Paragraphs[item.ParagraphID]
+			s := p.Sentences[item.SentenceID]
+			log.Println(s.Text)
+			rawWords := strings.Split(s.Text, " ")
+			log.Println(rawWords)
+			log.Println(item.WordSeq)
+			rawWord := rawWords[item.WordSeq]
+
 			ret += fmt.Sprintf("%v,%v,%v,%v,", c.Code, c.Name, c.TotalClasses, c.QtyPerParticipant)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,", part.Name, part.Email, part.Age, part.Gender, part.RG, part.Semester, part.Organization, part.Course, part.Languages, part.Phone, part.CPF, paragraphs, createdDate, createdTime)
-			ret += fmt.Sprintf("%v,%v,%v,%v,%v,", item.ParagraphID, item.SentenceSeq, item.WordSeq, item.TargetWord, item.GuessWord)
+			ret += fmt.Sprintf("%v,%v,%v,%v,%v,%v,", item.ParagraphID, item.SentenceSeq, item.WordSeq, rawWord, item.TargetWord, item.GuessWord)
 			ret += fmt.Sprintf("%v,%v,%v,%v,%v\n", item.TimeToStart, item.TypingTime, item.ElapsedTime, item.TimeTotalPar, item.TimeTotal)
 		}
 
