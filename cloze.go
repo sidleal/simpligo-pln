@@ -286,11 +286,11 @@ func ClozeExportHandler(w http.ResponseWriter, r *http.Request) {
 
 func getRawWord(c ClozeTest, partData ClozeParticipantData) string {
 	p := c.Parsed.Paragraphs[partData.ParagraphID-1]
-	s := p.Sentences[partData.SentenceID-1]
-	log.Println(s.Text)
-	rawWords := strings.Split(s.Text, " ")
+	// s := p.Sentences[partData.SentenceID-1]
+	log.Println(p.Text)
+	rawWords := strings.Split(p.Text, " ")
 	log.Println(rawWords)
-	log.Println(partData.ParagraphID-1, partData.SentenceID-1, partData.WordSeq-1, partData.TargetWord)
+	log.Println(partData.ParagraphID-1, partData.WordSeq-1, partData.TargetWord)
 	rawWord := rawWords[partData.WordSeq-1]
 	return rawWord
 }
