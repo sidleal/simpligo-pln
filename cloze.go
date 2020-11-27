@@ -292,7 +292,9 @@ func getRawWord(c ClozeTest, partData ClozeParticipantData) string {
 	if partData.ParagraphID-1 == 3 {
 		pText = strings.ReplaceAll(pText, "prevê-se", "prevê se")
 	} else if partData.ParagraphID-1 == 49 {
-		pText = strings.ReplaceAll(pText, "procurá-los", "prevê se")
+		pText = strings.ReplaceAll(pText, "procurá-los", "procurá los")
+	} else if partData.ParagraphID-1 == 27 {
+		pText = strings.ReplaceAll(pText, "descartá-los", "descartá los")
 	}
 	rawWords := strings.Split(pText, " ")
 	log.Println(rawWords)
