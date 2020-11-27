@@ -295,7 +295,14 @@ func getRawWord(c ClozeTest, partData ClozeParticipantData) string {
 		pText = strings.ReplaceAll(pText, "procurá-los", "procurá los")
 	} else if partData.ParagraphID-1 == 27 {
 		pText = strings.ReplaceAll(pText, "descartá-los", "descartá los")
+	} else if partData.ParagraphID-1 == 2 {
+		pText = strings.ReplaceAll(pText, "- de", "-de")
+		pText = strings.ReplaceAll(pText, "inédita -", "inédita-")
+	} else if partData.ParagraphID-1 == 32 {
+		pText = strings.ReplaceAll(pText, "-- os", "--os")
+		pText = strings.ReplaceAll(pText, "natureza --", "natureza--")
 	}
+
 	rawWords := strings.Split(pText, " ")
 	log.Println(rawWords)
 	log.Println(partData.ParagraphID-1, partData.WordSeq, partData.TargetWord)
