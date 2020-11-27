@@ -296,8 +296,8 @@ func getRawWord(c ClozeTest, partData ClozeParticipantData) string {
 	}
 	rawWords := strings.Split(pText, " ")
 	log.Println(rawWords)
-	log.Println(partData.ParagraphID-1, partData.WordSeq-2, partData.TargetWord)
-	rawWord := rawWords[partData.WordSeq-2]
+	log.Println(partData.ParagraphID-1, partData.WordSeq, partData.TargetWord)
+	rawWord := rawWords[partData.WordSeq]
 	log.Println("---", rawWord)
 	return rawWord
 }
