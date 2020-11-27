@@ -289,19 +289,19 @@ func getRawWord(c ClozeTest, partData ClozeParticipantData) string {
 	// s := p.Sentences[partData.SentenceID-1]
 	// log.Println(p.Text)
 	pText := p.Text
-	if partData.ParagraphID-1 == 3 {
-		pText = strings.ReplaceAll(pText, "prevê-se", "prevê se")
-	} else if partData.ParagraphID-1 == 49 {
-		pText = strings.ReplaceAll(pText, "procurá-los", "procurá los")
-	} else if partData.ParagraphID-1 == 27 {
-		pText = strings.ReplaceAll(pText, "descartá-los", "descartá los")
-	} else if partData.ParagraphID == 2 {
-		pText = strings.ReplaceAll(pText, "- de", "-de")
-		pText = strings.ReplaceAll(pText, "inédita -", "inédita-")
-	} else if partData.ParagraphID == 32 {
-		pText = strings.ReplaceAll(pText, "-- os", "--os")
-		pText = strings.ReplaceAll(pText, "natureza --", "natureza--")
-	}
+	// if partData.ParagraphID-1 == 3 {
+	pText = strings.ReplaceAll(pText, "prevê-se", "prevê se")
+	// } else if partData.ParagraphID-1 == 49 {
+	pText = strings.ReplaceAll(pText, "procurá-los", "procurá los")
+	// } else if partData.ParagraphID-1 == 27 {
+	pText = strings.ReplaceAll(pText, "descartá-los", "descartá los")
+	// } else if partData.ParagraphID == 2 {
+	pText = strings.ReplaceAll(pText, "- de", "-de")
+	pText = strings.ReplaceAll(pText, "inédita -", "inédita-")
+	// } else if partData.ParagraphID == 32 {
+	pText = strings.ReplaceAll(pText, "-- os", "--os")
+	pText = strings.ReplaceAll(pText, "natureza --", "natureza--")
+	// }
 
 	rawWords := strings.Split(pText, " ")
 	// log.Println(rawWords)
