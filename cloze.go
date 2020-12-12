@@ -523,6 +523,42 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 	clozeData.Code = participant.ClozeCode
 	clozeData.ID = clozeTest.Id
 
+	// allPars, selectedParagraphs := getSelectedParagraphs(clozeTest)
+	allPars, selectedParagraphs := getMultiCenterSelectedParagraphs(clozeTest)
+
+	participant.Paragraphs = selectedParagraphs
+	participant = createClozeParticipantIfNotExists(participant)
+
+	clozeData.Participant = participant
+
+	log.Println("------", participant.Paragraphs)
+
+	//train
+	trainPar := "O nosso país, Brasil, é cheio de riquezas naturais e culturais. Não importa para onde formos, encontraremos belas paisagens e uma história rica a ser contada."
+	trainSenter := senter.ParseText(trainPar)
+
+	clozeData.Paragraphs = []senter.ParsedParagraph{}
+	clozeData.Paragraphs = append(clozeData.Paragraphs, trainSenter.Paragraphs[0])
+	for _, p := range allPars {
+		for _, pn := range participant.Paragraphs {
+			if p.Index == pn {
+				p.ParsedText.Idx = int64(p.Index)
+				clozeData.Paragraphs = append(clozeData.Paragraphs, p.ParsedText)
+				updateParagraphAnswers(clozeData.Code, p.Index)
+			}
+		}
+	}
+
+	cJSON, err := json.Marshal(clozeData)
+	if err != nil {
+		log.Printf("Erro: %v", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, string(cJSON))
+}
+
+func getSelectedParagraphs(clozeTest ClozeTest) ([]ParagraphData, []int) {
 	selectedParagraphs := []int{}
 	totClasses, _ := strconv.Atoi(clozeTest.TotalClasses)
 	qtyPerPart, _ := strconv.Atoi(clozeTest.QtyPerParticipant)
@@ -583,37 +619,82 @@ func ClozeApplyNewHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+	return allPars, selectedParagraphs
+}
 
-	participant.Paragraphs = selectedParagraphs
-	participant = createClozeParticipantIfNotExists(participant)
+func getMultiCenterSelectedParagraphs(clozeTest ClozeTest) ([]ParagraphData, []int) {
+	selectedParagraphs := []int{}
+	totClasses, _ := strconv.Atoi(clozeTest.TotalClasses)
+	qtyPerPart, _ := strconv.Atoi(clozeTest.QtyPerParticipant)
 
-	clozeData.Participant = participant
+	mapClassesCount := map[string]int{}
+	allParsMap := map[string]ParagraphData{}
+	for _, par := range clozeTest.Parsed.Paragraphs {
 
-	log.Println("------", participant.Paragraphs)
+		pdata := ParagraphData{}
+		pdata.Index = int(par.Idx)
+		pdata.QtyAnswer = clozeTest.Answers[fmt.Sprintf("%v", par.Idx)]
+		if totClasses < 2 {
+			pdata.ParsedText = par
+			pdata.Class = "U"
+		} else {
+			tokens := strings.Split(par.Text, " ")
+			group := tokens[0]
+			newText := par.Text[len(group)+1:]
+			pdata.ParsedText = senter.ParseText(newText).Paragraphs[0]
+			pdata.Class = group
+		}
+		mapClassesCount[pdata.Class]++
+		allParsMap[fmt.Sprintf("%v", par.Idx)] = pdata
+		// allPars = append(allPars, pdata)
 
-	//train
-	trainPar := "O nosso país, Brasil, é cheio de riquezas naturais e culturais. Não importa para onde formos, encontraremos belas paisagens e uma história rica a ser contada."
-	trainSenter := senter.ParseText(trainPar)
+	}
 
-	clozeData.Paragraphs = []senter.ParsedParagraph{}
-	clozeData.Paragraphs = append(clozeData.Paragraphs, trainSenter.Paragraphs[0])
-	for _, p := range allPars {
-		for _, pn := range participant.Paragraphs {
-			if p.Index == pn {
-				p.ParsedText.Idx = int64(p.Index)
-				clozeData.Paragraphs = append(clozeData.Paragraphs, p.ParsedText)
-				updateParagraphAnswers(clozeData.Code, p.Index)
+	allParsMap2 := map[string]ParagraphData{}
+	for k, v := range allParsMap {
+		v.TotItensClass = mapClassesCount[v.Class]
+		allParsMap2[k] = v
+	}
+
+	allTests := []string{"rastros-ufabc", "rastros-usp", "rastros-ufc", "rastros-utfpr", "rastros-uerj", "rastros-puc-rj"}
+	for _, test := range allTests {
+		if test == clozeTest.Code {
+			continue
+		}
+		clozeTestInfo := getClozeTest(test)
+		for k, v := range allParsMap2 {
+			if test == "rastros-ufabc" || test == "rastros-uerj" {
+				kTmp, _ := strconv.Atoi(k)
+				kTmp--
+				if value, found := clozeTestInfo.Answers[fmt.Sprintf("%v", kTmp)]; found {
+					v.QtyAnswer += value
+				}
+			} else {
+				v.QtyAnswer += clozeTestInfo.Answers[k]
 			}
+			allParsMap[k] = v
+			log.Println("-->-->", k, v.QtyAnswer, test)
 		}
 	}
 
-	cJSON, err := json.Marshal(clozeData)
-	if err != nil {
-		log.Printf("Erro: %v", err)
+	allPars := []ParagraphData{}
+	for _, v := range allParsMap {
+		allPars = append(allPars, v)
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, string(cJSON))
+	sort.Sort(ParagraphDataOrder(allPars))
+
+	//escolhe apenas por ordem de menos respondida
+	i := 1
+	for _, par := range allPars {
+		if i > qtyPerPart {
+			break
+		}
+		selectedParagraphs = append(selectedParagraphs, par.Index)
+		i++
+	}
+
+	return allPars, selectedParagraphs
 }
 
 func updateParagraphAnswers(clozeCode string, paragraphID int) {
