@@ -666,11 +666,11 @@ func getMultiCenterSelectedParagraphs(clozeTest ClozeTest) ([]ParagraphData, []i
 			if test == "rastros-ufabc" || test == "rastros-uerj" {
 				kTmp, _ := strconv.Atoi(k)
 				kTmp--
-				if value, found := clozeTestInfo.Answers[fmt.Sprintf("%v", kTmp)]; found {
-					v.QtyAnswer += value
+				if value, found := clozeTestInfo.FinalAnswers[fmt.Sprintf("%v", kTmp)]; found {
+					v.QtyAnswer = allParsMap[k].QtyAnswer + value
 				}
 			} else {
-				v.QtyAnswer += clozeTestInfo.Answers[k]
+				v.QtyAnswer = allParsMap[k].QtyAnswer + clozeTestInfo.FinalAnswers[k]
 			}
 			allParsMap[k] = v
 			log.Println("-->-->", k, v.QtyAnswer, test)
