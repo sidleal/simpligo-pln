@@ -29,7 +29,7 @@ var pageInfo PageInfo
 var elAddress = "http://elasticsearch:9200" // TODO: yml
 var jwtKey = "a2lskdjf4jaks2dhfks"
 var admEmail = "admin@sidle.al"
-var admKey = "simples"
+var admKey = "complexity"
 var indexPrefix = "simpligo-pln-"
 var abbrevList = []string{"Prof.", "A.C.", "a.C.", "prof."}
 
@@ -126,7 +126,7 @@ func Router() *mux.Router {
 	r.HandleFunc("/api/v1/metrix/{subset}/{key}", MetrixAPIPostHandler).Methods("POST")
 
 	r.HandleFunc("/nilcmetrix", MetrixHandler).Methods("GET")
-	r.HandleFunc("/nilcmetrixdoc", MetrixDocHandler).Methods("GET")
+	// r.HandleFunc("/nilcmetrixdoc", MetrixDocHandler).Methods("GET")
 	r.HandleFunc("/metrix/parse", MetrixParseHandler).Methods("POST")
 
 	r.HandleFunc("/api/v1/sentence-ranking/{key}", SentenceRankingAPIPostHandler).Methods("POST")
