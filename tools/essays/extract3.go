@@ -1,38 +1,41 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
-	"time"
 )
 
-func main_2() {
+func main() {
 
-	log.Println("starting")
+	log.Println("starting ---")
 
 	// f, err := os.OpenFile("/home/sidleal/sid/usp/arthur/out.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	f, err := os.OpenFile("out-esic.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile("/home/sidleal/sid/usp/adole-sendo/metrics.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
 	defer f.Close()
 
-	raw := readFile("esic.csv")
+	raw := readFile("/home/sidleal/sid/usp/adole-sendo/versao_entrega_corrigida_sandra.txt")
 	lines := strings.Split(raw, "\n")
 
+	textID := ""
+	firstLine := true
 	for i, line := range lines {
-		if i == 0 || line == "" {
+		if line == "" {
 			continue
 		}
-		tokens := strings.Split(line, ";")
+		if strings.Index(line, " ") < 1 {
+			textID = strings.ReplaceAll(line, "\r", "")
+			continue
+		}
 
-		textID := tokens[0]
-		text := tokens[1]
+		if textID != "VF_A071" && textID != "VF_A074" && textID != "VF_A077" {
+			continue
+		}
+
+		text := line
 
 		text = strings.ReplaceAll(text, "\\r\\n", "{{enter}}")
 		text = strings.ReplaceAll(text, "\\n", "{{enter}}")
@@ -66,19 +69,20 @@ func main_2() {
 		for _, feat := range feats {
 			kv := strings.Split(feat, ":")
 			if len(kv) > 1 {
-				if i == 1 {
+				if firstLine {
 					header += kv[0] + ","
 				}
 				ret += kv[1] + ","
 			}
 		}
 
-		if i == 1 {
+		if firstLine {
 			header = strings.TrimRight(header, ",")
 			_, err := f.WriteString(header + "\n")
 			if err != nil {
 				log.Println("ERRO", err)
 			}
+			firstLine = false
 		}
 
 		ret = strings.TrimRight(ret, ",")
@@ -91,29 +95,4 @@ func main_2() {
 
 	// log.Println(header, ret)
 
-}
-
-func callMetrixNilc(text string) string {
-
-	timeout := time.Duration(300 * time.Second)
-	client := http.Client{
-		Timeout: timeout,
-	}
-
-	url := "http://fw.nilc.icmc.usp.br:23380/api/v1/metrix/182/m3tr1x01Big?format=plain"
-
-	resp, err := client.Post(url, "text", bytes.NewReader([]byte(text)))
-	if err != nil {
-		return fmt.Sprintf("Error: %v", err)
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Sprintf("Error parsing response. %v", err)
-	}
-
-	ret := string(body)
-
-	return ret
 }

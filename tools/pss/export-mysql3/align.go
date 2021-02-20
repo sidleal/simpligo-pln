@@ -7,8 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
-
-	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/go-sql-driver/mysql"
 )
 
 func main() {

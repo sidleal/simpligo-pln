@@ -119,9 +119,9 @@ func mainx() {
 		eyeData.textID = cols[1]
 		eyeData.wordID = cols[3]
 		eyeData.word = cols[4]
-		eyeData.firstPass = cols[19]
-		eyeData.regression = cols[34]
-		eyeData.totalPass = cols[24]
+		eyeData.firstPass = cols[19]  //IA_FIRST_RUN_DWELL_TIME
+		eyeData.regression = cols[34] // IA_REGRESSION_PATH_DURATION
+		eyeData.totalPass = cols[24]  // IA_DWELL_TIME
 
 		mapEyeData[fmt.Sprintf("%v_%v_%v", eyeData.sessID, eyeData.textID, eyeData.wordID)] = eyeData
 

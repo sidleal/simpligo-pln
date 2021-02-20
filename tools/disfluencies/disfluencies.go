@@ -16,7 +16,7 @@ import (
 
 var regEx = regexp.MustCompile(`([A-Z]+[0-9_]*[0-9_]+[0-9]+)(.*)`)
 
-func main() {
+func main_disflu() {
 
 	log.Println("starting")
 
@@ -124,7 +124,8 @@ func callMetrix(text string) string {
 		Timeout: timeout,
 	}
 
-	resp, err := client.Post("https://simpligo.sidle.al/api/v1/metrix/all/m3tr1x01", "text", bytes.NewReader([]byte(text)))
+	resp, err := client.Post("http://fw.nilc.icmc.usp.br:23380/api/v1/metrix/all/m3tr1x01?format=plain", "text", bytes.NewReader([]byte(text)))
+	// resp, err := client.Post("https://simpligo.sidle.al/api/v1/metrix/all/m3tr1x01", "text", bytes.NewReader([]byte(text)))
 	if err != nil {
 		return fmt.Sprintf("Error: %v", err)
 	}

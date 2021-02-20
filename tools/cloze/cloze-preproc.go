@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"golang.org/x/text/encoding/charmap"
 )
 
 type Word struct {
@@ -35,6 +37,7 @@ type Word struct {
 	ParID    int    // Parágrafo
 	SentID   int    // Sentença
 	WordID   int    // Índice Palavra
+	RawWord  string // Palavra Crua
 	Word     string // Palavra
 	Resp     string // Resposta
 	TBegin   int    // Tempo Início(ms)
@@ -58,6 +61,20 @@ func (a WordOrder) Less(i, j int) bool {
 	}
 }
 
+type FinalWordOrder []Word
+
+func (a FinalWordOrder) Len() int      { return len(a) }
+func (a FinalWordOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a FinalWordOrder) Less(i, j int) bool {
+	if a[i].WordID == a[j].WordID && a[i].ParID == a[j].ParID {
+		return a[i].Reg < a[j].Reg
+	} else if a[i].ParID == a[j].ParID {
+		return a[i].WordID < a[j].WordID
+	} else {
+		return a[i].ParID < a[j].ParID
+	}
+}
+
 func readFile(path string) string {
 	f, err := os.Open(path)
 	if err != nil {
@@ -72,6 +89,36 @@ func readFile(path string) string {
 	for {
 		// n, err := r.Read(buf)
 		n, err := f.Read(buf)
+		if n > 0 {
+			ret += string(buf[:n])
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Println(err)
+			break
+		}
+	}
+
+	return ret
+
+}
+
+func readFileISO(path string) string {
+	f, err := os.Open(path)
+	if err != nil {
+		log.Println(err)
+	}
+
+	r := charmap.ISO8859_1.NewDecoder().Reader(f)
+
+	ret := ""
+
+	buf := make([]byte, 32*1024)
+	for {
+		n, err := r.Read(buf)
+		// n, err := f.Read(buf)
 		if n > 0 {
 			ret += string(buf[:n])
 		}
@@ -112,22 +159,20 @@ func readFileLines(path string) []string {
 
 // ------------------------------------
 
-func main() {
-
-	// list := map[string]Word{}
+func main_preproc() {
 
 	rawFiles := []string{
-		"cloze_baJwn24BmRI7xu8F5xxd_data12.csv",
-		"cloze_bqJxn24BmRI7xu8Fqhz6_data12.csv",
-		"cloze_bKJwn24BmRI7xu8FSBzU_data12.csv",
-		"cloze_UgXZ-28BaYrNtDuxSkMf_data12.csv",
-		"cloze_ogW4nXABaYrNtDuxrk04_data12.csv",
-		"cloze_YwXxiHABaYrNtDux7Uh8_data12.csv",
+		"cloze_baJwn24BmRI7xu8F5xxd_data25.csv", //puc
+		"cloze_bqJxn24BmRI7xu8Fqhz6_data25.csv", //usp
+		"cloze_bKJwn24BmRI7xu8FSBzU_data25.csv", //ufc
+		"cloze_UgXZ-28BaYrNtDuxSkMf_data25.csv", //utfpr
+		"cloze_ogW4nXABaYrNtDuxrk04_data25.csv", //ufabc
+		"cloze_YwXxiHABaYrNtDux7Uh8_data25.csv", //uerj
 	}
 
-	path := "/home/sidleal/sid/usp/cloze_exps/"
+	path := "/home/sidleal/sid/usp/cloze_exps3/data/"
 
-	exportDate := "2020_04_25"
+	exportDate := "2020_11_26"
 	outFiles := []string{
 		"cloze_puc_" + exportDate + ".csv",
 		"cloze_usp_" + exportDate + ".csv",
@@ -136,6 +181,19 @@ func main() {
 		"cloze_ufabc_" + exportDate + ".csv",
 		"cloze_uerj_" + exportDate + ".csv",
 	}
+
+	f2, err := os.Create(path + "cloze_status_" + exportDate + ".tsv")
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f2.Close()
+
+	_, err = f2.WriteString("arquivo\tnome\te-mail\torg\tidade\tgênero\tcurso\tsemestre\ttextos\tqtde\trespondidos\n")
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+
+	total_lines_original := 0
 
 	for k, rf := range rawFiles {
 		data := readFile(path + rf)
@@ -155,11 +213,7 @@ func main() {
 				continue
 			}
 
-			// line = strings.ReplaceAll(line, "Atualmente, estou", "Atualmente estou")
-			// line = strings.ReplaceAll(line, ", ", ",")
-			// line = strings.ReplaceAll(line, " ,", ",")
-
-			cols := strings.Split(line, ",")
+			cols := strings.Split(line, "\t")
 			if i == 0 {
 				// log.Println(line)
 
@@ -173,6 +227,8 @@ func main() {
 				// }
 				continue
 			}
+
+			// log.Println("-----", line)
 
 			word := Word{}
 			word.Code = cols[0]
@@ -198,19 +254,26 @@ func main() {
 			word.ParID, _ = strconv.Atoi(cols[18])
 			word.SentID, _ = strconv.Atoi(cols[19])
 			word.WordID, _ = strconv.Atoi(cols[20])
-			word.Word = cols[21]
-			word.Resp = cols[22]
-			word.TBegin, _ = strconv.Atoi(cols[23])
-			word.TDig, _ = strconv.Atoi(cols[24])
-			word.TTot, _ = strconv.Atoi(cols[25])
-			word.TPar, _ = strconv.Atoi(cols[26])
-			word.TTest, _ = strconv.Atoi(cols[27])
+			word.RawWord = cols[21]
+			word.Word = cols[22]
+			word.Resp = cols[23]
+			word.TBegin, _ = strconv.Atoi(cols[24])
+			word.TDig, _ = strconv.Atoi(cols[25])
+			word.TTot, _ = strconv.Atoi(cols[26])
+			word.TPar, _ = strconv.Atoi(cols[27])
+			word.TTest, _ = strconv.Atoi(cols[28])
+
+			total_lines_original++
 
 			//descarta participantes:
 			discard := map[string]int{
-				"55.019.616-x": 1, // não entendeu a tarefa - UTFPR
 				"362726343":    1, // teste UFABC
+				"78093609":     1, // teste utfpr
+				"93002194465":  1, // teste ufc
+				"55.019.616-x": 1, // não entendeu a tarefa - UTFPR
 				"098512262":    1, // não entendeu a tarefa  -  UERJ
+				"350330001":    1, // não entendeu a tarefa  - USP
+				"369128771":    1, // não entendeu a tarefa  - UFABC
 			}
 			if _, found := discard[word.Reg]; found {
 				continue
@@ -221,12 +284,53 @@ func main() {
 				word.ParID++
 			}
 
+			discardParagraphs := map[string][]int{
+				"12.294.189-1":  []int{2},  // falha alinhamento (erro browser)
+				"17976454":      []int{2},  // falha alinhamento (erro browser)
+				"V528596-D":     []int{32}, // falha alinhamento (erro browser)
+				"2000012026485": []int{28}, // falha alinhamento (erro browser)
+
+			}
+			if _, found := discardParagraphs[word.Reg]; found {
+				itemToDiscard := false
+				for _, par := range discardParagraphs[word.Reg] {
+					if word.ParID == par {
+						itemToDiscard = true
+					}
+				}
+				if itemToDiscard {
+					continue
+				}
+			}
+
 			//another cleaning
 			word.Resp = strings.ReplaceAll(word.Resp, `"`, "")
 
 			wordList = append(wordList, word)
 
-			partKey := fmt.Sprintf("%s\t%s\t%s", word.Part, word.Email, word.Org)
+			gender := word.Gender
+			gender = strings.ToLower(gender)
+			gender = strings.TrimSpace(gender)
+			mapGender := map[string]string{
+				"feminino":        "F",
+				"femenino":        "F",
+				"feminio":         "F",
+				"femino":          "F",
+				"fem":             "F",
+				"f":               "F",
+				"ferminino":       "F",
+				"masculino":       "M",
+				"homem":           "M",
+				"masc":            "M",
+				"m":               "M",
+				"masculimo":       "M",
+				"homem cisgenero": "O",
+			}
+			if val, found := mapGender[gender]; found {
+				gender = val
+			}
+
+			partKey := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s", word.Part, word.Email, word.Org, word.Age, gender, word.Course, word.Sem)
 			if _, found := mapParticipants[partKey]; !found {
 				mapParticipants[partKey] = map[int]int{}
 			}
@@ -361,18 +465,120 @@ func main() {
 		}
 
 		f.Close()
+
 		// log.Println("============", outFiles[k], "============")
 		for key, val := range mapParticipants {
-			fmt.Println(outFiles[k], "\t", key, "\t", val, "\t", len(val))
+			str := fmt.Sprintf("%v\t%v\t%v\t%v\n", outFiles[k], key, val, len(val))
+			// fmt.Println(outFiles[k], "\t", key, "\t", val, "\t", len(val))
+			// fmt.Println(str)
+			_, err = f2.WriteString(str)
+			if err != nil {
+				log.Println("ERRO", err)
+			}
+
 		}
 	}
+
+	wordList := []Word{}
+	header := ""
+	for k, of := range outFiles {
+		log.Println(k, of)
+		data := readFile(path + of)
+
+		lines := strings.Split(data, "\n")
+		for i, line := range lines {
+			if line == "" {
+				continue
+			}
+
+			cols := strings.Split(line, "\t")
+			if i == 0 {
+				header = line
+				// for j, col := range cols {
+				// 	log.Println(j, "->", col)
+				// }
+				continue
+			}
+
+			// log.Println("-----", line)
+
+			word := Word{}
+			word.Code = cols[0]
+			word.Name = cols[1]
+			word.QtdGenre = cols[2]
+			word.Pars = cols[3]
+			word.Part = cols[4]
+			word.Email = cols[5]
+			word.Age = cols[6]
+			word.Gender = cols[7]
+			word.Reg = cols[8]
+			word.Sem = cols[9]
+
+			word.Org = cols[10]
+			word.Course = cols[11]
+			word.Language = cols[12]
+			word.Phone = cols[13]
+			word.CPF = cols[14]
+
+			word.ParsRead = cols[15]
+			word.DTBegin = cols[16]
+			word.HRBegin = cols[17]
+			word.ParID, _ = strconv.Atoi(cols[18])
+			word.SentID, _ = strconv.Atoi(cols[19])
+			word.WordID, _ = strconv.Atoi(cols[20])
+			word.RawWord = cols[21]
+			word.Word = cols[22]
+			word.Resp = cols[23]
+			word.TBegin, _ = strconv.Atoi(cols[24])
+			word.TDig, _ = strconv.Atoi(cols[25])
+			word.TTot, _ = strconv.Atoi(cols[26])
+			word.TPar, _ = strconv.Atoi(cols[27])
+			word.TTest, _ = strconv.Atoi(cols[28])
+
+			wordList = append(wordList, word)
+
+		}
+
+	}
+
+	sort.Sort(FinalWordOrder(wordList))
+
+	finalOutFile := "cloze_all_" + exportDate + ".csv"
+	f3, err := os.Create(path + finalOutFile)
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+	defer f3.Close()
+
+	_, err = f3.WriteString(header + "\n")
+	if err != nil {
+		log.Println("ERRO", err)
+	}
+
+	lastPart := ""
+	lastWordID := 0
+	for _, w := range wordList {
+
+		// log.Println(i, w)
+		if w.Reg == lastPart && w.WordID == lastWordID {
+			continue
+		}
+		lastPart = w.Reg
+		lastWordID = w.WordID
+
+		_, err = f3.WriteString(formatLine(w, w.WordID))
+		if err != nil {
+			log.Println("ERRO", err)
+		}
+	}
+	log.Println("Original: ", total_lines_original, "Após limpeza 1:", len(wordList))
 
 }
 
 func formatLine(w Word, cont int) string {
-	return fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v,%v\n",
+	return fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n",
 		w.Code, w.Name, w.QtdGenre, w.Pars, w.Part,
 		w.Email, w.Age, w.Gender, w.Reg, w.Sem, w.Org, w.Course, w.Language, w.Phone, w.CPF, w.ParsRead, w.DTBegin,
-		w.HRBegin, w.ParID, w.SentID, cont, w.Word,
+		w.HRBegin, w.ParID, w.SentID, cont, w.RawWord, w.Word,
 		w.Resp, w.TBegin, w.TDig, w.TTot, w.TPar, w.TTest)
 }

@@ -3,108 +3,39 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
-	"os"
+	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	senter "github.com/sidleal/simpligo-pln/tools/senter"
+	"golang.org/x/text/encoding/charmap"
 )
-
-type Word struct {
-	UID             string
-	TextID          int
-	TextPar         string
-	TextSent        string
-	WordNum         int
-	SentenceNum     int
-	WordInSent      int
-	Word            string
-	WordClean       string
-	OrtoMatch       float64
-	Certainty       float64
-	PoS             string
-	WordType        string
-	PoSMatch        float64
-	InflectionMatch float64
-	FreqBra         int
-	FreqBrWaC       int
-	Genre           string
-	Top10Resp       []string
-	ParsedSent      senter.ParsedSentence
-}
-
-type WordOrderUID []Word
-
-func (a WordOrderUID) Len() int      { return len(a) }
-func (a WordOrderUID) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a WordOrderUID) Less(i, j int) bool {
-	return a[i].UID < a[j].UID
-}
-
-type Phrase struct {
-	PhraseNum  int
-	PhraseText string
-	PhraseType string
-	Sentence   string
-	ParInfo    Word
-	SentData   []Word
-}
-
-type PhraseOrder []Phrase
-
-func (a PhraseOrder) Len() int      { return len(a) }
-func (a PhraseOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a PhraseOrder) Less(i, j int) bool {
-	if a[i].ParInfo.TextID == a[j].ParInfo.TextID {
-		if a[i].ParInfo.SentenceNum == a[j].ParInfo.SentenceNum {
-			return a[i].PhraseNum < a[j].PhraseNum
-		}
-		return a[i].ParInfo.SentenceNum < a[j].ParInfo.SentenceNum
-	}
-	return a[i].ParInfo.TextID < a[j].ParInfo.TextID
-}
-
-func readFile(path string) string {
-	f, err := os.Open(path)
-	if err != nil {
-		log.Println(err)
-	}
-
-	// r := charmap.ISO8859_1.NewDecoder().Reader(f)
-
-	ret := ""
-
-	buf := make([]byte, 32*1024)
-	for {
-		// n, err := r.Read(buf)
-		n, err := f.Read(buf)
-		if n > 0 {
-			ret += string(buf[:n])
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Println(err)
-			break
-		}
-	}
-
-	return ret
-
-}
 
 // ------------------------------------
 
-var mapRespPoS = map[string]string{}
+type WordCandidate struct {
+	Word      string
+	PoS       string
+	FreqBrWaC int
+	OrtoMatch float64
+	Certainty float64
+	Resps     []string
+}
 
-var auditWords1 = map[string]int{}
-var auditWords2 = map[string]int{}
+type WordCandidateOrder []WordCandidate
 
-func main1() {
+func (a WordCandidateOrder) Len() int      { return len(a) }
+func (a WordCandidateOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a WordCandidateOrder) Less(i, j int) bool {
+	return a[i].FreqBrWaC < a[j].FreqBrWaC
+}
+
+func main_2() {
 
 	path := "/home/sidleal/sid/usp/cloze_exps/"
 
@@ -141,8 +72,12 @@ func main1() {
 		word.WordInSent, _ = strconv.Atoi(cols[5])
 		word.Word = cols[6]
 		word.WordClean = cols[7]
-		word.OrtoMatch, _ = strconv.ParseFloat(cols[11], 64)
-		word.Certainty, _ = strconv.ParseFloat(cols[16], 64)
+		ortoStr := strings.ReplaceAll(cols[11], ",", ".")
+		ortoStr = (ortoStr + "000")[0:4]
+		word.OrtoMatch, _ = strconv.ParseFloat(ortoStr, 64)
+		certStr := strings.ReplaceAll(cols[16], ",", ".")
+		certStr = (certStr + "000")[0:4]
+		word.Certainty, _ = strconv.ParseFloat(certStr, 64)
 		word.PoS = cols[17]
 		word.WordType = cols[18]
 		word.PoSMatch, _ = strconv.ParseFloat(cols[20], 64)
@@ -279,7 +214,7 @@ func main1() {
 	lastParID = 0
 	lastSentID = 0
 	phraseCount = 0
-	maskedSent := ""
+	// maskedSent := ""
 	totTextWords := 0
 	totTextSents := 0
 	respList := []string{}
@@ -287,11 +222,15 @@ func main1() {
 		// log.Println(lastParID, i, item.ParInfo.TextID, item.PhraseText)
 		if lastParID != it.ParInfo.TextID {
 
-			fmt.Println(" -> ", maskedSent)
-			for _, r := range respList {
-				fmt.Println("    - ", r)
+			if it.ParInfo.TextID < 41 {
+				continue
 			}
-			fmt.Print("\n")
+
+			// fmt.Println(" -> ", maskedSent)
+			// for _, r := range respList {
+			// 	fmt.Println("    - ", r)
+			// }
+			// fmt.Print("\n")
 			respList = []string{}
 
 			fmt.Println("\n================================================")
@@ -321,19 +260,21 @@ func main1() {
 		}
 		if lastSentID != it.ParInfo.SentenceNum {
 
-			if lastSentID != 0 {
-				fmt.Println(" -> ", maskedSent)
-				for _, r := range respList {
-					fmt.Println("    - ", r)
-				}
-				fmt.Print("\n")
-				respList = []string{}
-			}
+			fmt.Println("\n -> ", it.Sentence, "\n")
+
+			// if lastSentID != 0 {
+			// 	fmt.Println(" -> ", maskedSent)
+			// 	for _, r := range respList {
+			// 		fmt.Println("    - ", r)
+			// 	}
+			// 	fmt.Print("\n")
+			// 	respList = []string{}
+			// }
 
 			// fmt.Println("-------------------------------------------------")
 			// fmt.Println("  Sentença: ", it.ParInfo.SentenceNum, " - ", it.Sentence)
 			phraseCount = 1
-			maskedSent = it.Sentence
+			// maskedSent = it.Sentence
 
 			mapStats["sent_tot"]++
 
@@ -374,16 +315,56 @@ func main1() {
 
 		// fmt.Println("----->", it.SentData)
 
-		w := getPhraseWordLessFrequent(it.SentData, it.PhraseText)
+		candidateList := []WordCandidate{}
+		phraseTokens := strings.Split(it.PhraseText, " ")
+		phraseLen := len(phraseTokens)
+		for i := phraseLen/2 - 1; i < phraseLen; i++ {
+			token := phraseTokens[i]
+			wo := getPhraseWord(it.SentData, token)
+			if wo.Word != "" && wo.WordType == "Content" {
+				// log.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", token, wo.FreqBrWaC, wo.OrtoMatch, wo.Certainty)
 
-		if w.Word != "" {
-			maskedSent = strings.ReplaceAll(maskedSent, w.Word, "_____")
-			// fmt.Println(" --- ", maskedSent)
-			resps := getRespList(w.WordClean, w.PoS, w.Top10Resp, map[string]int{})
-			// fmt.Println("--->", w.WordClean, "(", w.PoS, ")", resps)
-			respList = append(respList, fmt.Sprintf("%v (%v) %v", w.WordClean, w.PoS, resps))
-			// fmt.Print("\n")
+				synonyms := map[string]int{}
+				// synonyms := callSinonimos(wo.WordClean)
+				// log.Println(synonyms)
+
+				resps := getRespList(wo.WordClean, wo.PoS, wo.Top10Resp, synonyms)
+				respList = append(respList, fmt.Sprintf("%v (%v) Frq: %v Match: %v Cert %v  -- %v", wo.WordClean, wo.PoS, wo.FreqBrWaC, wo.OrtoMatch, wo.Certainty, resps))
+				candidate := WordCandidate{}
+				candidate.Word = wo.WordClean
+				candidate.PoS = wo.PoS
+				candidate.FreqBrWaC = wo.FreqBrWaC
+				candidate.OrtoMatch = wo.OrtoMatch
+				candidate.Certainty = wo.Certainty
+				candidate.Resps = resps
+				candidateList = append(candidateList, candidate)
+
+				// time.Sleep(2 * time.Second)
+			}
 		}
+
+		sort.Sort(WordCandidateOrder(candidateList))
+
+		for _, wc := range candidateList {
+			fmt.Println("    - ", fmt.Sprintf("%v (%v) Frq: %v Match: %v Cert %v -- %v", wc.Word, wc.PoS, wc.FreqBrWaC, wc.OrtoMatch, wc.Certainty, wc.Resps))
+		}
+
+		// for _, r := range respList {
+		// 	fmt.Println("    - ", r)
+		// }
+		fmt.Print("\n")
+		respList = []string{}
+
+		// w := getPhraseWordLessFrequent(it.SentData, it.PhraseText)
+
+		// if w.Word != "" {
+		// 	maskedSent = strings.ReplaceAll(maskedSent, w.Word, "_____")
+		// 	// fmt.Println(" --- ", maskedSent)
+		// 	resps := getRespList(w.WordClean, w.PoS, w.Top10Resp)
+		// 	// fmt.Println("--->", w.WordClean, "(", w.PoS, ")", resps)
+		// 	respList = append(respList, fmt.Sprintf("%v (%v) %v", w.WordClean, w.PoS, resps))
+		// 	// fmt.Print("\n")
+		// }
 
 		lastParID = it.ParInfo.TextID
 		lastSentID = it.ParInfo.SentenceNum
@@ -392,13 +373,13 @@ func main1() {
 
 	}
 
-	if lastSentID != 0 {
-		fmt.Println(" -> ", maskedSent)
-		for _, r := range respList {
-			fmt.Println("    - ", r)
-		}
-		fmt.Print("\n")
-	}
+	// if lastSentID != 0 {
+	// 	fmt.Println(" -> ", maskedSent)
+	// 	for _, r := range respList {
+	// 		fmt.Println("    - ", r)
+	// 	}
+	// 	fmt.Print("\n")
+	// }
 
 	if totTextWords > mapStats["max_text_words"] {
 		mapStats["max_text_words"] = totTextWords
@@ -435,11 +416,11 @@ func main1() {
 	log.Println("----- max_text_sents ->", mapStats["max_text_sents"])
 	log.Println("----- avg_text_sents ->", mapStats["tot_text_sents"]/mapStats["text_tot"])
 
-	for k := range auditWords1 {
-		if m, found := auditWords2[k]; !found {
-			log.Println("--", k, m)
-		}
-	}
+	// for k := range auditWords1 {
+	// 	if m, found := auditWords2[k]; !found {
+	// 		log.Println("--", k, m)
+	// 	}
+	// }
 	// // for k, v := range sentList {
 	// // 	log.Println("\n---------------", k, v[0].TextSent)
 	// // 	// for i, w := range v {
@@ -464,114 +445,123 @@ func main1() {
 	// 	sentID++
 	// }
 
+	// synonyms := callSinonimos("divisei")
+	// synonyms := callSinonimos("espécie")
+	// log.Println(synonyms)
+
 }
 
-func getParInfo(sentList map[string][]Word, sent string) Word {
-	for _, v := range sentList {
-		for _, w := range v {
-			if w.TextSent == sent {
-				return w
-			}
-		}
+func isSynonym(word string, list map[string]int) bool {
+	if _, found := list[word]; found {
+		return true
 	}
-	return Word{}
+	return false
 }
 
-func getRespList(resp string, respPoS string, respList []string, synonyms map[string]int) []string {
-	ret := []string{}
-	for _, item := range respList {
-		tokens := strings.Split(item, ":")
-		tResp := strings.TrimSpace(tokens[0])
-		tResp = strings.Trim(tResp, "'")
-		if tResp != resp && !isSynonym(tResp, synonyms) {
-			if _, found := mapRespPoS[fmt.Sprintf("%v_%v", resp, tResp)]; found {
-				ret = append(ret, tResp)
-			}
-		}
-	}
-	// if len(ret) > 4 {
-	// 	ret = ret[0:4]
-	// }
-	return ret
-}
-
-func getWordLessFrequent(wordList []Word) Word {
-
-	discardedWords := map[string]int{"UID_26_40": 1, "UID_46_18": 1}
-	discardedPoS := map[string]int{"NPROP": 1, "ERR": 1}
-
-	var regEx = regexp.MustCompile(`[0-9,\.]+`)
-
-	ret := wordList[1]
-	for _, item := range wordList {
-		if item.WordNum == 1 {
-			continue
-		}
-		if _, found := discardedWords[item.UID]; found {
-			continue
-		}
-		if _, found := discardedPoS[item.PoS]; found {
-			continue
-		}
-		matchContent := regEx.FindStringSubmatch(item.WordClean)
-		if len(matchContent) > 0 {
-			continue
-		}
-
-		if item.FreqBrWaC < ret.FreqBrWaC {
-			ret = item
-		}
-	}
-	return ret
-}
-
-func getPhraseWordLessFrequent(wordList []Word, phrase string) Word {
-	// log.Println("-------xx-----", phrase)
-
-	discardedWords := map[string]int{"UID_26_40": 1, "UID_46_18": 1}
-	discardedPoS := map[string]int{"NPROP": 1, "ERR": 1}
-
-	var regEx = regexp.MustCompile(`[0-9,\.]+`)
-
-	phraseWordList := strings.Split(phrase, " ")
-
+func getPhraseWord(wordList []Word, word string) Word {
 	ret := Word{}
-	ret.FreqBrWaC = 1000000
-	defaultWord := Word{}
-	lastPhraseWord := phraseWordList[len(phraseWordList)-1]
 	for _, item := range wordList {
-		if strings.ToLower(item.Word) == strings.ToLower(lastPhraseWord) {
-			defaultWord = item
-		}
-		if item.WordNum == 1 {
-			continue
-		}
-		if _, found := discardedWords[item.UID]; found {
-			continue
-		}
-		if _, found := discardedPoS[item.PoS]; found {
-			continue
-		}
-		matchContent := regEx.FindStringSubmatch(item.WordClean)
-		if len(matchContent) > 0 {
-			continue
-		}
-
-		wordInPhrase := false
-		for _, pw := range phraseWordList {
-			if strings.ToLower(item.Word) == strings.ToLower(pw) {
-				wordInPhrase = true
-			}
-		}
-		if !wordInPhrase {
-			continue
-		}
-		if item.FreqBrWaC < ret.FreqBrWaC {
+		if strings.ToLower(item.Word) == strings.ToLower(word) {
 			ret = item
 		}
 	}
-	if ret.Word == "" {
-		ret = defaultWord
+	return ret
+}
+
+func callSinonimos(word string) map[string]int {
+
+	ret := map[string]int{}
+
+	// return ret
+	time.Sleep(800 * time.Millisecond)
+
+	timeout := time.Duration(300 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
 	}
+
+	word, err := charmap.ISO8859_1.NewEncoder().String(word)
+	if err != nil {
+		log.Println("Erro utf to iso", err)
+	}
+	// log.Println("----", word)
+	resp, err := client.Get("https://www.sinonimos.com.br/" + word + "/")
+	if err != nil {
+		log.Println(fmt.Sprintf("Error: %v", err))
+	}
+
+	rdrBody := io.Reader(resp.Body)
+	rdrBody = charmap.ISO8859_1.NewDecoder().Reader(rdrBody)
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(rdrBody)
+	// body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error: %v", err))
+	}
+
+	bodyStr := string(body)
+
+	// log.Println(bodyStr)
+
+	regEx := regexp.MustCompile(`class="sinonimos"\>(.*?)\<\/p\>`)
+	regEx2 := regexp.MustCompile(`sinonimo"\>(.*?)\<\/a\>`)
+	regEx3 := regexp.MustCompile(`\<span\>(.*?)\<\/span\>`)
+
+	matches := regEx.FindAllStringSubmatch(bodyStr, -1)
+	for _, match := range matches {
+		// log.Println("-------", match[1])
+		matches2 := regEx2.FindAllStringSubmatch(match[1], -1)
+		for _, match2 := range matches2 {
+			ret[strings.TrimSpace(match2[1])] = 1
+		}
+		matches3 := regEx3.FindAllStringSubmatch(match[1], -1)
+		for _, match3 := range matches3 {
+			ret[strings.TrimSpace(match3[1])] = 1
+		}
+
+		// tokens := strings.Split(match[1], ",")
+		// for _, w := range tokens {
+		// 	ret[strings.TrimSpace(w)] = 1
+		// }
+	}
+
+	return ret
+}
+
+func callSinonimos1(word string) map[string]int {
+
+	ret := map[string]int{}
+
+	timeout := time.Duration(300 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+
+	resp, err := client.Get("https://www.xn--sinnimo-v0a.com/" + word + ".html")
+	if err != nil {
+		log.Println(fmt.Sprintf("Error: %v", err))
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error: %v", err))
+	}
+
+	bodyStr := string(body)
+
+	// log.Println(bodyStr)
+
+	regEx := regexp.MustCompile(`\<div class="item"\>\<p.*?\>(.*?)\<span`)
+	matches := regEx.FindAllStringSubmatch(bodyStr, -1)
+	for _, match := range matches {
+		// log.Println("-------", match[1])
+		tokens := strings.Split(match[1], ",")
+		for _, w := range tokens {
+			ret[strings.TrimSpace(w)] = 1
+		}
+	}
+
 	return ret
 }
