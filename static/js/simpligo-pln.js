@@ -41,7 +41,8 @@ function abrirRanking() {
 }
 
 function abrirMetrix() {
-    abrirPagina("nilcmetrix");
+    // abrirPagina("nilcmetrix");
+    window.location.href = 'http://simpligo.sidle.al:23380/nilcmetrix';
 }
 
 function abrirAnalysis() {
