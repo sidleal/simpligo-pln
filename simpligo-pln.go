@@ -29,7 +29,7 @@ var pageInfo PageInfo
 var elAddress = "http://elasticsearch:9200" // TODO: yml
 var jwtKey = "a2lskdjf4jaks2dhfks"
 var admEmail = "admin@sidle.al"
-var admKey = "complexity"
+var admKey = "yyyy"
 var indexPrefix = "simpligo-pln-"
 var abbrevList = []string{"Prof.", "A.C.", "a.C.", "prof."}
 
