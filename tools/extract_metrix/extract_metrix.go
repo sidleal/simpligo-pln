@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
@@ -11,21 +12,47 @@ import (
 	"time"
 )
 
+func getProcessedFilenames(filePath string) []string {
+	f, _ := os.Open(filePath)
+	defer f.Close()
+
+	r := csv.NewReader(f)
+	records, _ := r.ReadAll()
+
+	var filenames []string
+	for _, rec := range records[1:] {
+		filenames = append(filenames, rec[0])
+	}
+
+	return filenames
+}
+
+func checkExists(name string, arr []string) bool {
+	for _, n := range arr {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
 
 	log.Println("starting ---")
 
-	path := "/home/sidleal/sources/500redacoes"
+	path := "/home/sidleal/sources/lucilene"
 	files, err := os.ReadDir(path)
 	if err != nil {
 		log.Println("Erro", err)
 	}
 
-	fout, err := os.OpenFile(path+"/jeane_500redacoes_metricas.csv", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+	fout, err := os.OpenFile(path+"/lucilene_metricas_v2.csv", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
 	defer fout.Close()
+
+	processed_filenames := getProcessedFilenames(path + "/lucilene_metricas.csv")
 
 	for i, f := range files {
 		fileName := f.Name()
@@ -37,6 +64,11 @@ func main() {
 			continue
 		}
 		raw := readFile(path + "/" + fileName)
+
+		if checkExists(idTexto, processed_filenames) {
+			print("ignoring: " + fileName)
+			continue
+		}
 
 		log.Println(raw)
 
@@ -86,7 +118,8 @@ func callMetrixNilc(text string) string {
 		Timeout: timeout,
 	}
 
-	url := "http://fw.nilc.icmc.usp.br:23380/api/v1/metrix/all/m3tr1x01?format=plain"
+	url := "http://fw.nilc.icmc.usp.br:23380/api/v1/metrix/all/m3tr1x2024?format=plain"
+	//url := "http://localhost:8080/api/v1/metrix/_min/yyy?format=plain"
 	resp, err := client.Post(url, "text", bytes.NewReader([]byte(text)))
 	if err != nil {
 		return fmt.Sprintf("Error: %v", err)
@@ -101,6 +134,12 @@ func callMetrixNilc(text string) string {
 	}
 
 	ret := string(body)
+
+	print("\n--------------------------------------------------------------------------------------\n")
+	print(text + "\n")
+	print("\n--------------------------------------------------------------------------------------\n")
+	print(ret + "\n")
+	print("\n--------------------------------------------------------------------------------------\n")
 
 	ret = strings.Split(ret, "++")[1]
 
