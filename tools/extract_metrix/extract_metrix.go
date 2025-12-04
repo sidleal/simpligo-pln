@@ -5,11 +5,15 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"golang.org/x/text/encoding/charmap"
 )
 
 func getProcessedFilenames(filePath string) []string {
@@ -20,6 +24,9 @@ func getProcessedFilenames(filePath string) []string {
 	records, _ := r.ReadAll()
 
 	var filenames []string
+	if len(records) == 0 {
+		return filenames
+	}
 	for _, rec := range records[1:] {
 		filenames = append(filenames, rec[0])
 	}
@@ -36,26 +43,50 @@ func checkExists(name string, arr []string) bool {
 	return false
 }
 
+func listFilesRecursively(rootPath string) ([]string, error) {
+	var fileList []string
+
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			fmt.Printf("Error accessing path %q: %v\n", path, err)
+			return nil
+		}
+
+		if !d.IsDir() {
+			fileList = append(fileList, path)
+		}
+
+		return nil
+	})
+
+	return fileList, err
+}
+
 func main() {
 
 	log.Println("starting ---")
 
-	path := "/home/sidleal/sources/lucilene"
-	files, err := os.ReadDir(path)
+	//path := "/home/sidleal/sources/lucilene"
+	//path := "/home/sidleal/sources/gabriel_2025_10"
+	//path := "/home/sidleal/sources/cristiane/frases/txt"
+	path := "/home/sidleal/sources/Ingrid"
+	//files, err := os.ReadDir(path)
+	files, err := listFilesRecursively(path)
 	if err != nil {
 		log.Println("Erro", err)
 	}
 
-	fout, err := os.OpenFile(path+"/lucilene_metricas_v2.csv", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+	fout, err := os.OpenFile(path+"/ingrid_metricas.csv", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println("ERRO", err)
 	}
 	defer fout.Close()
 
-	processed_filenames := getProcessedFilenames(path + "/lucilene_metricas.csv")
+	processed_filenames := getProcessedFilenames(path + "/ingrid_metricas.csv")
 
-	for i, f := range files {
-		fileName := f.Name()
+	for i, file_path := range files {
+		//fileName := filepath.Base(file_path)
+		fileName := strings.ReplaceAll(file_path, path, "")
 		log.Println("---------------------------------------------------------------")
 		log.Println(fileName)
 		idTexto := strings.Split(fileName, ".")[0]
@@ -118,7 +149,7 @@ func callMetrixNilc(text string) string {
 		Timeout: timeout,
 	}
 
-	url := "http://fw.nilc.icmc.usp.br:23380/api/v1/metrix/all/m3tr1x2024?format=plain"
+	url := "http://fw.nilc.icmc.usp.br:23380/api/v1/metrix/all/xxx?format=plain"
 	//url := "http://localhost:8080/api/v1/metrix/_min/yyy?format=plain"
 	resp, err := client.Post(url, "text", bytes.NewReader([]byte(text)))
 	if err != nil {
@@ -141,7 +172,9 @@ func callMetrixNilc(text string) string {
 	print(ret + "\n")
 	print("\n--------------------------------------------------------------------------------------\n")
 
+	//if ret != "" {
 	ret = strings.Split(ret, "++")[1]
+	//}
 
 	return ret
 }
@@ -152,8 +185,8 @@ func readFile(path string) string {
 		log.Println(err)
 	}
 
-	// r := charmap.ISO8859_1.NewDecoder().Reader(f)
-	r := io.Reader(f)
+	r := charmap.ISO8859_1.NewDecoder().Reader(f)
+	//r := io.Reader(f)
 
 	ret := ""
 
